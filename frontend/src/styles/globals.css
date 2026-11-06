@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #6848E8;
+  --color-primary-button: #6040F0;
+  --color-primary-hover: #5639D8;
+  --color-primary-light: #8870F0;
+  --color-lavender: #AFA7DB;
+  --color-canvas-lavender: #F5F4FC;
+  --color-canvas-main: #F9F9FB;
+  --color-surface-sidebar: #F8F8FC;
+  --color-surface-card: #FFFFFF;
+  --color-border-subtle: #E5E5EF;
+  --color-text-primary: #141529;
+  --color-text-secondary: #5C5C70;
+  --color-text-muted: #9C9CA9;
+  --severity-blocker: #F55354;
+  --severity-critical: #F8A040;
+  --severity-major: #F8C048;
+  --status-open: #3888F8;
+  --status-wip: #6848E8;
+  --status-on-hold: #F8A040;
+  --status-resolved: #28C078;
+  --status-closed: #9C9CA9;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-canvas-main);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
