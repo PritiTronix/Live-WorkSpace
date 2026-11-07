@@ -72,13 +72,15 @@ export const ProjectsListPage = () => {
         if (!matchesName && !matchesDesc && !matchesKey && !matchesLead) return false;
       }
 
-      // Status filter
+      // Status filter (case-insensitive & format-agnostic)
       if (statusFilter !== 'ALL') {
-        if (statusFilter === 'Active' && project.status !== 'Active') return false;
-        if (statusFilter === 'Planning' && project.status !== 'Planning') return false;
-        if (statusFilter === 'On Hold' && project.status !== 'On Hold') return false;
-        if (statusFilter === 'Completed' && project.status !== 'Completed') return false;
-        if (statusFilter === 'Archived' && !project.is_archived && project.status !== 'Archived') return false;
+        const pStatus = (project.status || '').toLowerCase().replace(/[\s_-]/g, '');
+        const fStatus = statusFilter.toLowerCase().replace(/[\s_-]/g, '');
+        if (fStatus === 'archived') {
+          if (!project.is_archived && pStatus !== 'archived') return false;
+        } else if (pStatus !== fStatus) {
+          return false;
+        }
       }
 
       // Lead filter
@@ -86,10 +88,12 @@ export const ProjectsListPage = () => {
         return false;
       }
 
-      // Scope filter
+      // Scope filter (supports organization/public and restricted/private)
       if (scopeFilter !== 'ALL') {
-        if (scopeFilter === 'public' && project.visibility !== 'public') return false;
-        if (scopeFilter === 'private' && project.visibility !== 'private') return false;
+        const pVis = (project.visibility || '').toLowerCase();
+        const fScope = scopeFilter.toLowerCase();
+        if ((fScope === 'public' || fScope === 'organization') && (pVis !== 'organization' && pVis !== 'public')) return false;
+        if ((fScope === 'private' || fScope === 'restricted') && (pVis !== 'restricted' && pVis !== 'private')) return false;
       }
 
       return true;

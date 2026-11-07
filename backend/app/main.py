@@ -3,11 +3,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.routes import api_router
+from backend.app.database import engine, Base
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks (e.g. database connection check)
+    # Startup tasks: automatically create database tables if running against Postgres
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception:
+        pass
     yield
     # Shutdown tasks (e.g. pool cleanup)
 

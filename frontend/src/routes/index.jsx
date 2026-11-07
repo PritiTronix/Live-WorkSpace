@@ -33,6 +33,7 @@ export const AppRoutes = () => {
       <Route path="/workspace" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
+        <Route path="inbox" element={<DashboardOverviewPage />} />
         <Route path="projects" element={<ProjectsListPage />} />
         <Route path="projects/*" element={<ProjectsListPage />} />
         <Route path="tasks/*" element={<DashboardOverviewPage />} />

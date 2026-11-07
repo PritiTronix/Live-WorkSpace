@@ -1,8 +1,5 @@
 # Live Workspace — Enterprise SaaS Engineering Operations Platform
-Good Morning
 
-
-hi my name is Ashlesha afdfghjghjfghjkldfghjdfgsdfghjsyjhdghsdcgusdhsjdsjhgdsydgjshdgsjhdgbsajhdbasjhgsd
 An enterprise-grade SaaS engineering operations and incident management platform designed to unify project tracking, task execution, and operational ticketing with dual-timer Service Level Agreement (SLA) guarantees, root cause analysis (RCA), and organization-level workspace isolation.
 
 Engineered using modern clean architecture, strict client-server decoupling, and visual specifications directly extracted from the **Google Stitch Design System** (72 production screens audited in `STITCH_SCREEN_INVENTORY.md`).
