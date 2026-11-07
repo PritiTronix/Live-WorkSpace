@@ -11,6 +11,8 @@ from backend.app.routes.files import router as files_router
 from backend.app.routes.analytics import router as analytics_router
 from backend.app.routes.audit_logs import router as audit_logs_router
 from backend.app.routes.settings import router as settings_router
+from backend.app.routes.dashboard import router as dashboard_router
+from backend.app.routes.search import router as search_router
 
 api_router = APIRouter()
 
@@ -26,3 +28,5 @@ api_router.include_router(files_router, prefix="/files", tags=["Files"])
 api_router.include_router(analytics_router, prefix="/analytics", tags=["Analytics & Reports"])
 api_router.include_router(audit_logs_router, prefix="/audit-logs", tags=["Audit Logs"])
 api_router.include_router(settings_router, prefix="/settings", tags=["Settings"])
+api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(search_router, prefix="/search", tags=["Global Search"])

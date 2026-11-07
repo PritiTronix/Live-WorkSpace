@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
+import LandingPage from '../pages/LandingPage';
+import DashboardOverviewPage from '../modules/dashboard/pages/DashboardOverviewPage';
 
 /**
  * AppRoutes
@@ -13,7 +15,7 @@ export const AppRoutes = () => {
     <Routes>
       {/* Public Landing & Marketing */}
       <Route path="/" element={<MainLayout />}>
-        <Route index element={<div className="p-8 text-center"><h1 className="text-3xl font-bold font-heading">Live Workspace</h1><p className="text-[#5C5C70] mt-2">SaaS Collaboration & Engineering Operations Platform</p></div>} />
+        <Route index element={<LandingPage />} />
       </Route>
 
       {/* Authentication & Onboarding Routes */}
@@ -29,18 +31,18 @@ export const AppRoutes = () => {
       {/* Authenticated Dashboard Workspace Routes */}
       <Route path="/workspace" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
-        <Route path="dashboard" element={<div>Dashboard</div>} />
-        <Route path="projects/*" element={<div>Projects Module</div>} />
-        <Route path="tasks/*" element={<div>Tasks Module</div>} />
-        <Route path="tickets/*" element={<div>Tickets Module</div>} />
-        <Route path="sla/*" element={<div>SLA Module</div>} />
-        <Route path="rca/*" element={<div>RCA Module</div>} />
-        <Route path="discussions/*" element={<div>Discussions Module</div>} />
-        <Route path="files/*" element={<div>Files Module</div>} />
-        <Route path="analytics/*" element={<div>Analytics Module</div>} />
-        <Route path="members/*" element={<div>Members Module</div>} />
-        <Route path="audit-logs/*" element={<div>Audit Logs Module</div>} />
-        <Route path="settings/*" element={<div>Settings Module</div>} />
+        <Route path="dashboard" element={<DashboardOverviewPage />} />
+        <Route path="projects/*" element={<DashboardOverviewPage />} />
+        <Route path="tasks/*" element={<DashboardOverviewPage />} />
+        <Route path="tickets/*" element={<DashboardOverviewPage />} />
+        <Route path="sla/*" element={<DashboardOverviewPage />} />
+        <Route path="rca/*" element={<DashboardOverviewPage />} />
+        <Route path="discussions/*" element={<DashboardOverviewPage />} />
+        <Route path="files/*" element={<DashboardOverviewPage />} />
+        <Route path="analytics/*" element={<DashboardOverviewPage />} />
+        <Route path="members/*" element={<DashboardOverviewPage />} />
+        <Route path="audit-logs/*" element={<DashboardOverviewPage />} />
+        <Route path="settings/*" element={<DashboardOverviewPage />} />
       </Route>
 
       {/* Fallback */}
