@@ -1,0 +1,550 @@
+﻿<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-resolved": "#28C078", "error": "#ba1a1a", "secondary-fixed-dim": "#c9c0f6", "severity-critical": "#F8A040", "surface-bright": "#fcf8ff", "primary-fixed": "#e6deff", "on-secondary": "#ffffff", "inverse-on-surface": "#f1efff", "text-secondary": "#5C5C70", "surface-card": "#FFFFFF", "on-primary-fixed-variant": "#471ac8", "inverse-surface": "#2e2f41", "on-primary-container": "#e9e2ff", "secondary": "#5f5887", "secondary-container": "#d1c8fe", "on-surface-variant": "#484555", "primary": "#4f28cf", "secondary-fixed": "#e5deff", "primary-container": "#6848e8", "severity-blocker": "#F55354", "tertiary": "#7f3b00", "primary-light": "#8870F0", "outline": "#797586", "primary-hover": "#5639D8", "surface-tint": "#603edf", "text-muted": "#9C9CA9", "on-background": "#191a2b", "btn-primary": "#6040F0", "on-error": "#ffffff", "on-secondary-fixed-variant": "#47416e", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#743500", "status-on-hold": "#F8A040", "status-wip": "#6848E8", "surface": "#fcf8ff", "background": "#fcf8ff", "error-container": "#ffdad6", "on-error-container": "#93000a", "on-primary-fixed": "#1c0062", "tertiary-fixed-dim": "#ffb689", "tertiary-fixed": "#ffdbc8", "inverse-primary": "#cabeff", "on-secondary-fixed": "#1b1540", "surface-container": "#eeecff", "surface-container-high": "#e8e6fe", "canvas-main": "#F9F9FB", "on-surface": "#191a2b", "status-open": "#3888F8", "on-secondary-container": "#595280", "surface-sidebar": "#F8F8FC", "severity-major": "#F8C048", "tertiary-container": "#a44e00", "status-closed": "#9C9CA9", "surface-variant": "#e2e0f8", "border-subtle": "#E5E5EF", "primary-fixed-dim": "#cabeff", "canvas-lavender": "#F5F4FC", "on-tertiary-fixed": "#311300", "surface-container-lowest": "#ffffff", "text-primary": "#141529", "surface-container-highest": "#e2e0f8", "surface-dim": "#d9d8f0", "on-tertiary-container": "#ffdfcd", "outline-variant": "#c9c4d8", "surface-container-low": "#f5f2ff", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xl": "2rem", "gutter-sm": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "1rem", "space-2xl": "3rem" }, "fontFamily": { "label-sm": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-lg": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "body-lg": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }] } } } };</script></head><body class="bg-canvas-main font-body-md text-text-primary min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto"><div class="p-space-md"><div class="flex items-center justify-between pb-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">LW</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">Live Workspace</span><span class="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud</span></div></div><button aria-label="Collapse sidebar" class="w-7 h-7 rounded-lg hover:bg-canvas-lavender hover:text-text-primary text-text-muted flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">dock_to_right</span></button></div><div class="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold">AT</span><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary truncate max-w-[120px]">Acme Tech</span><span class="font-label-sm text-label-sm text-primary">Enterprise Pro</span></div></div><span class="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span></div><div class="mt-space-sm mb-space-md"><button class="w-full h-10 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>Create Action</span></button></div><nav class="space-y-space-md" data-active-classes="bg-canvas-lavender text-primary font-headline-sm font-semibold"><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Workspace</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">home</span><span class="font-label-md text-label-md">Home</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">task_alt</span><span class="font-label-md text-label-md">My Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span class="font-label-md text-label-md">My Tickets</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">inbox</span><span class="font-label-md text-label-md">Inbox</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold">3</span></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Project Management</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="projects" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-label-md text-label-md">Projects</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span><span class="font-label-md text-label-md">All Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_late</span><span class="font-label-md text-label-md">All Tickets</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Collaboration</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="team-members" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-label-md text-label-md">Team Members</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="discussions" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">forum</span><span class="font-label-md text-label-md">Discussions</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="files" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">attach_file</span><span class="font-label-md text-label-md">Files</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Monitoring</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="priority-issues" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">warning</span><span class="font-label-md text-label-md">Priority Issues</span></div><span class="w-2 h-2 rounded-full bg-severity-blocker"></span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="sla-overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">timer</span><span class="font-label-md text-label-md">SLA Overview</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="activity-logs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">history</span><span class="font-label-md text-label-md">Activity Logs</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="reports" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">analytics</span><span class="font-label-md text-label-md">Reports</span></div></a></div></div></nav></div><div class="p-space-md space-y-space-sm"><nav class="space-y-0.5" data-active-classes="bg-canvas-lavender text-primary font-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="help-support" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Help &amp; Support</span></a></nav><div class="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary leading-tight">Aarav Mehta</span><span class="font-body-sm text-body-sm text-text-secondary leading-tight">Project Manager</span></div></div><span class="material-symbols-outlined text-text-muted text-[18px]">more_vert</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><nav aria-label="Breadcrumb" class="flex items-center space-x-1.5 font-label-md text-label-md"><span class="text-text-muted">Live Workspace</span><span class="text-text-muted">/</span><span class="text-text-muted">Platform Revamp</span><span class="text-text-muted">/</span><span class="font-headline-sm text-headline-sm text-text-primary">Overview</span></nav></div><div class="flex-1 max-w-lg mx-space-xl"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span><input class="w-full h-10 pl-9 pr-4 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search tickets, tasks, projects... (Ctrl + K)" type="text"/></div></div><div class="flex items-center gap-space-md"><button class="h-10 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[0_2px_8px_rgba(104,72,232,0.2)] transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>New Ticket</span></button><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-severity-blocker"></span></button><button aria-label="Help Documentation" class="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">menu_book</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-card"></span></div></div></div></header><main class="relative pt-16 min-h-screen bg-canvas-main w-full px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<div class="relative w-full overflow-hidden rounded-2xl bg-surface-card p-space-lg shadow-sm">
+<div class="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md relative z-10">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm uppercase tracking-wide">Design Specification &amp; Interaction Canvas</span>
+<span class="font-label-sm text-label-sm text-text-muted font-mono">SPEC-DS-014</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Global Creation Trigger &amp; Multi-Tier Action System</h1>
+<p class="font-body-md text-body-md text-text-secondary max-w-2xl">
+          Complete component states and contextual interaction design for the high-velocity Live Workspace global quick-action hub, including permission boundaries, SLA triggers, and keyboard shortcuts.
+        </p>
+</div>
+<div class="flex items-center gap-space-sm bg-canvas-lavender p-1.5 rounded-xl self-start lg:self-auto">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-card shadow-sm text-text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px] text-primary">keyboard</span>
+<span>Shortcut Hub</span>
+<kbd class="ml-1 px-1.5 py-0.5 rounded bg-canvas-main font-label-sm text-label-sm text-text-secondary border-none">C</kbd>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors font-label-md text-label-md" id="toggleDemoMenuBtn">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Live Overlay Mode</span>
+</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg mt-space-lg items-start">
+<div class="xl:col-span-4 flex flex-col gap-space-lg">
+<div class="bg-surface-card rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">touch_app</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Trigger Button Anatomy</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Spec #6040F0</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+          High-contrast action triggers placed systematically across workspace navigation tiers with persistent affordance.
+        </p>
+<div class="space-y-space-md pt-2">
+<div class="p-space-md rounded-xl bg-canvas-main flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Default State</span>
+<span class="font-label-sm text-label-sm text-text-secondary font-mono">h-10 #6040F0</span>
+</div>
+<div class="flex items-center gap-space-sm pt-1">
+<button class="h-10 px-4 rounded-lg bg-btn-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-md transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Create Action</span>
+</button>
+<button class="h-10 w-10 rounded-lg bg-btn-primary text-on-primary font-label-md text-label-md flex items-center justify-center shadow-md transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-main flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Hover State</span>
+<span class="font-label-sm text-label-sm text-primary font-mono">bg-primary-hover (-1px Y)</span>
+</div>
+<div class="flex items-center gap-space-sm pt-1">
+<button class="h-10 px-4 rounded-lg bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-lg transform -translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Create Action</span>
+</button>
+<button class="h-10 w-10 rounded-lg bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center shadow-lg transform -translate-y-0.5 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-main flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Active / Pressed</span>
+<span class="font-label-sm text-label-sm text-primary font-mono">scale-98 #4f28cf</span>
+</div>
+<div class="flex items-center gap-space-sm pt-1">
+<button class="h-10 px-4 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs scale-[0.98] shadow-inner transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Create Action</span>
+</button>
+<button class="h-10 w-10 rounded-lg bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center scale-[0.98] shadow-inner transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-main flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Keyboard Focused</span>
+<span class="font-label-sm text-label-sm text-primary-light font-mono">outline-primary-light 2px</span>
+</div>
+<div class="flex items-center gap-space-sm pt-1">
+<button class="h-10 px-4 rounded-lg bg-btn-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-md outline outline-2 outline-offset-2 outline-primary-light transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Create Action</span>
+</button>
+<button class="h-10 w-10 rounded-lg bg-btn-primary text-on-primary font-label-md text-label-md flex items-center justify-center shadow-md outline outline-2 outline-offset-2 outline-primary-light transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-card rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Operational Metrics</h2>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+          Velocity telemetry recorded from the global + trigger within current enterprise session.
+        </p>
+<div class="grid grid-cols-2 gap-space-sm pt-1">
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col">
+<span class="font-label-sm text-label-sm text-text-muted uppercase">Avg Creation Latency</span>
+<span class="font-headline-lg text-headline-lg text-text-primary mt-1">1.2s</span>
+<span class="font-body-sm text-body-sm text-status-resolved flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span> -34% vs Q3
+            </span>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col">
+<span class="font-label-sm text-label-sm text-text-muted uppercase">Key Action Ratio</span>
+<span class="font-headline-lg text-headline-lg text-text-primary mt-1">68.4%</span>
+<span class="font-body-sm text-body-sm text-primary flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">bolt</span> Incident triage
+            </span>
+</div>
+</div>
+<div class="rounded-xl bg-canvas-main p-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-error-container text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-text-primary">Policy Restraints</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Acme RBAC active</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-card text-text-secondary font-label-sm text-label-sm font-semibold shadow-xs">Admin Lock</span>
+</div>
+</div>
+</div>
+<div class="xl:col-span-8 flex flex-col gap-space-lg">
+<div class="bg-surface-card rounded-2xl p-space-lg shadow-sm flex flex-col">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md gap-space-sm">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></div>
+<h2 class="font-headline-md text-headline-md text-text-primary">Action Dropdown Menu Visualizer</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm">Level 2 Elevation</span>
+</div>
+<div class="flex items-center gap-2 text-text-muted font-body-sm text-body-sm">
+<span>Anchored to:</span>
+<span class="font-mono text-text-primary bg-canvas-main px-2 py-0.5 rounded font-label-sm text-label-sm">#create-action-btn</span>
+</div>
+</div>
+<div class="p-space-lg rounded-2xl bg-canvas-main flex justify-center items-start overflow-visible relative">
+<div class="w-full max-w-xl bg-surface-card rounded-2xl shadow-xl overflow-hidden relative z-20">
+<div class="px-space-lg py-space-md bg-canvas-lavender/60 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded-lg bg-btn-primary text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-text-primary leading-tight">Quick Create</h3>
+<p class="font-body-sm text-body-sm text-text-secondary leading-tight">Create assets and assign operational tasks</p>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-card px-2 py-1 rounded-md shadow-xs">
+<span class="font-label-sm text-label-sm text-text-muted uppercase">Shortcuts</span>
+<kbd class="px-1.5 py-0.5 text-[10px] rounded bg-canvas-main font-mono text-text-primary">C + *</kbd>
+</div>
+</div>
+<div class="p-space-md flex flex-col gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="px-space-sm py-1 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Group 1: Core Work Items</span>
+<span class="font-label-sm text-label-sm text-primary">Direct Flow</span>
+</div>
+<div class="space-y-1">
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-primary-fixed/60 text-primary flex items-center justify-center group-hover:bg-btn-primary group-hover:text-on-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Create Task</span>
+<span class="px-1.5 py-0.2 rounded bg-status-wip/10 text-status-wip font-label-sm text-[10px] font-bold">Sprint Active</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Assign tasks, set due dates &amp; story points</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<span class="font-body-sm text-body-sm text-primary-light opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">Opens Modal</span>
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + T</kbd>
+</div>
+</div>
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all bg-canvas-lavender/40">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-severity-blocker/15 text-severity-blocker flex items-center justify-center group-hover:bg-severity-blocker group-hover:text-on-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">assignment_late</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Create Ticket</span>
+<span class="px-1.5 py-0.2 rounded bg-severity-blocker/10 text-severity-blocker font-label-sm text-[10px] font-bold">Dual SLA</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Log bugs, incidents &amp; customer escalations with SLA timers</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<span class="font-body-sm text-body-sm text-primary-light opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">Opens Modal</span>
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + I</kbd>
+</div>
+</div>
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-status-open/15 text-status-open flex items-center justify-center group-hover:bg-status-open group-hover:text-on-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Create Project</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Initiate sprints, milestones &amp; multi-tenant roadmaps</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<span class="font-body-sm text-body-sm text-primary-light opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">Opens Modal</span>
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + P</kbd>
+</div>
+</div>
+</div>
+</div>
+<div class="h-px w-full bg-canvas-lavender"></div>
+<div class="flex flex-col gap-1">
+<div class="px-space-sm py-1 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Group 2: Team &amp; Comms</span>
+<span class="font-label-sm text-label-sm text-text-muted">Squad Operations</span>
+</div>
+<div class="space-y-1">
+<div class="relative group/restricted flex items-center justify-between p-space-sm rounded-xl opacity-60 bg-canvas-main/70 cursor-not-allowed">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-canvas-lavender text-text-muted flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">group_add</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-muted">Create Team / Squad</span>
+<span class="flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-error-container text-error font-label-sm text-[10px] font-bold">
+<span class="material-symbols-outlined text-[11px]">lock</span> Restricted
+                          </span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted truncate">Form cross-functional squads and assign domain ownership</span>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-shrink-0">
+<span class="material-symbols-outlined text-text-muted text-[18px]">lock</span>
+</div>
+<div class="absolute -top-9 right-4 hidden group-hover/restricted:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-inverse-surface text-inverse-on-surface shadow-xl z-30 font-body-sm text-body-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[14px] text-severity-critical">admin_panel_settings</span>
+<span>Requires Admin Privileges - Acme Technologies</span>
+</div>
+</div>
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-primary-fixed/60 text-primary flex items-center justify-center group-hover:bg-btn-primary group-hover:text-on-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Invite Member</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Send email magic link with role assignment</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + M</kbd>
+</div>
+</div>
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-status-on-hold/15 text-status-on-hold flex items-center justify-center group-hover:bg-status-on-hold group-hover:text-on-primary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Post Announcement</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Broadcast priority updates across workspace</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + A</kbd>
+</div>
+</div>
+</div>
+</div>
+<div class="h-px w-full bg-canvas-lavender"></div>
+<div class="flex flex-col gap-1">
+<div class="px-space-sm py-1 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Group 3: Assets &amp; Docs</span>
+<span class="font-label-sm text-label-sm text-text-muted">Repository</span>
+</div>
+<div class="space-y-1">
+<div class="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-9 h-9 rounded-lg bg-secondary-container/70 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-on-secondary transition-colors flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">Upload Document / RCA</span>
+<span class="px-1.5 py-0.2 rounded bg-status-resolved/15 text-status-resolved font-label-sm text-[10px] font-bold">Auto-Parse</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Attach runbooks, logs, or post-mortem templates</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pl-2 flex-shrink-0">
+<kbd class="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors">C + U</kbd>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="px-space-lg py-2.5 bg-canvas-main/80 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-text-muted flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">info</span>
+<span>Press <kbd class="px-1 bg-surface-card text-text-primary rounded font-mono">Esc</kbd> to dismiss this menu</span>
+</span>
+<a class="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1" href="#">
+<span>Customize Shortcuts</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="bg-surface-card rounded-2xl p-space-md shadow-sm flex flex-col gap-2">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">mouse</span>
+<span class="font-label-lg text-label-lg">State: Item Hover</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+            Transitions to <code class="text-primary font-mono">#F5F4FC</code> tint with icon background morphing to full solid accent for tactile feedback.
+          </p>
+<div class="mt-2 p-2 rounded-lg bg-canvas-lavender flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-btn-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-semibold">Hovered Action</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary">Active</span>
+</div>
+</div>
+<div class="bg-surface-card rounded-2xl p-space-md shadow-sm flex flex-col gap-2">
+<div class="flex items-center gap-2 text-primary-light">
+<span class="material-symbols-outlined text-[20px]">keyboard_alt</span>
+<span class="font-label-lg text-label-lg">State: Keyboard Focus</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+            Supports seamless sequential arrow navigation (<kbd class="font-mono text-xs">Up</kbd>/<kbd class="font-mono text-xs">Down</kbd>) with high-visibility purple border focus.
+          </p>
+<div class="mt-2 p-2 rounded-lg bg-canvas-lavender flex items-center justify-between outline outline-2 outline-primary">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-primary-fixed text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">terminal</span>
+</div>
+<span class="font-label-md text-label-md text-text-primary">Focused Item</span>
+</div>
+<kbd class="font-mono text-[10px] bg-surface-card px-1.5 py-0.5 rounded text-text-primary">Return</kbd>
+</div>
+</div>
+<div class="bg-surface-card rounded-2xl p-space-md shadow-sm flex flex-col gap-2">
+<div class="flex items-center gap-2 text-error">
+<span class="material-symbols-outlined text-[20px]">gpp_maybe</span>
+<span class="font-label-lg text-label-lg">State: Locked / RBAC</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary">
+            Dimmed at 60% opacity with cursor prohibition. Hover reveals high-contrast contextual policy tooltip.
+          </p>
+<div class="mt-2 p-2 rounded-lg bg-canvas-main opacity-60 flex items-center justify-between cursor-not-allowed">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">lock</span>
+<span class="font-label-md text-label-md text-text-muted">Locked Action</span>
+</div>
+<span class="font-label-sm text-label-sm text-error">Org Block</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-space-lg bg-surface-card rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">developer_mode</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Simulated Workspace Creation Workflow Preview</h2>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-text-secondary">Auto-sync with active project:</span>
+<span class="px-2.5 py-1 rounded-lg bg-primary-fixed text-primary font-label-md text-label-md font-semibold">Platform Revamp</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Target SLA</span>
+<span class="px-1.5 py-0.5 rounded bg-severity-blocker/10 text-severity-blocker font-label-sm text-[10px] font-bold">Priority P0</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary">15m First Response</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Automatically attached upon incident creation</span>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Default Squad</span>
+<span class="px-1.5 py-0.5 rounded bg-status-resolved/15 text-status-resolved font-label-sm text-[10px] font-bold">Online</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary">Core Infra &amp; Cloud</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Assigned triage lead: Aarav Mehta</span>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Documentation</span>
+<span class="px-1.5 py-0.5 rounded bg-canvas-main text-text-secondary font-label-sm text-[10px] font-bold">Template</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary">Post-Mortem v4</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Pre-populated runbook and RCA schema</span>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted">Notification Ring</span>
+<span class="px-1.5 py-0.5 rounded bg-primary-fixed text-primary font-label-sm text-[10px] font-bold">Broadcast</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-text-primary">#ops-alert-live</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Webhooks primed for automated dispatch</span>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4" id="interactiveCreationModal">
+<div class="w-full max-w-lg bg-surface-card rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<div class="px-space-lg py-space-md bg-canvas-lavender flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">assignment_add</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary" id="modalTitle">Create New Incident Ticket</h3>
+</div>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-card text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" id="closeModalBtn">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="p-space-lg flex flex-col gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-text-primary">Summary / Issue Title</label>
+<input class="w-full h-10 px-3 rounded-lg bg-canvas-main font-body-md text-body-md text-text-primary focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="e.g. Gateway latency spike across EU-Central cluster" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-text-primary">Severity Rating</label>
+<select class="w-full h-10 px-3 rounded-lg bg-canvas-main font-body-md text-body-md text-text-primary focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+<option>P0 - Blocker (15m SLA)</option>
+<option>P1 - Critical (1h SLA)</option>
+<option>P2 - Major (4h SLA)</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-text-primary">Assigned Squad</label>
+<select class="w-full h-10 px-3 rounded-lg bg-canvas-main font-body-md text-body-md text-text-primary focus:bg-surface-card focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+<option>Core Cloud Infrastructure</option>
+<option>Platform Experience</option>
+<option>Database Reliability</option>
+</select>
+</div>
+</div>
+<div class="p-space-sm rounded-xl bg-canvas-lavender flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-wip text-[18px]">timer</span>
+<span class="font-label-sm text-label-sm text-text-primary">SLA Timers will engage immediately on dispatch</span>
+</div>
+<span class="font-label-sm text-label-sm text-status-wip font-mono font-bold">Auto-Triage</span>
+</div>
+</div>
+<div class="px-space-lg py-space-md bg-canvas-main/80 flex items-center justify-end gap-space-sm">
+<button class="px-4 h-10 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-md text-label-md transition-colors" id="cancelModalBtn">
+          Cancel
+        </button>
+<button class="px-4 h-10 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-md transition-colors" id="confirmModalBtn">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Deploy Action</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+    (function () {
+      const toggleDemoBtn = document.getElementById('toggleDemoMenuBtn');
+      const modal = document.getElementById('interactiveCreationModal');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelModalBtn = document.getElementById('cancelModalBtn');
+      const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+      function openModal(title) {
+        if (title) {
+          const titleElem = document.getElementById('modalTitle');
+          if (titleElem) titleElem.textContent = title;
+        }
+        modal.classList.remove('hidden');
+      }
+
+      function closeModal() {
+        modal.classList.add('hidden');
+      }
+
+      if (toggleDemoBtn) {
+        toggleDemoBtn.addEventListener('click', function () {
+          openModal('Global Creation Action Triggered');
+        });
+      }
+
+      if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+      if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+      if (confirmModalBtn) {
+        confirmModalBtn.addEventListener('click', function () {
+          closeModal();
+        });
+      }
+
+      document.querySelectorAll('.group.cursor-pointer').forEach(function (el) {
+        el.addEventListener('click', function () {
+          const actionName = this.querySelector('.font-label-lg');
+          const title = actionName ? actionName.textContent : 'Create Item';
+          openModal(title + ' - Dedicated Creation Modal');
+        });
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          closeModal();
+        }
+        if (e.key.toLowerCase() === 'c' && (e.metaKey || e.ctrlKey)) {
+          openModal('Global Creation Trigger - Keyboard Invoked');
+        }
+      });
+    })();
+  </script>
+</div></main></div></body></html>

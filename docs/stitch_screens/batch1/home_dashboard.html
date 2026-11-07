@@ -1,0 +1,765 @@
+﻿<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Live Workspace — Home Dashboard</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "severity-critical": "#F8A040",
+            "primary-hover": "#5639D8",
+            "surface-container-lowest": "#ffffff",
+            "background": "#fcf8ff",
+            "primary-light": "#8870F0",
+            "on-tertiary-fixed-variant": "#743500",
+            "status-closed": "#9C9CA9",
+            "primary-fixed": "#e6deff",
+            "primary-fixed-dim": "#cabeff",
+            "on-tertiary-fixed": "#311300",
+            "inverse-primary": "#cabeff",
+            "severity-major": "#F8C048",
+            "status-on-hold": "#F8A040",
+            "on-error-container": "#93000a",
+            "on-tertiary-container": "#ffdfcd",
+            "on-primary-fixed-variant": "#471ac8",
+            "canvas-main": "#F9F9FB",
+            "text-primary": "#141529",
+            "secondary-container": "#d1c8fe",
+            "outline-variant": "#c9c4d8",
+            "on-secondary-container": "#595280",
+            "surface-container-low": "#f5f2ff",
+            "status-resolved": "#28C078",
+            "on-secondary-fixed-variant": "#47416e",
+            "tertiary-container": "#a44e00",
+            "surface": "#fcf8ff",
+            "text-muted": "#9C9CA9",
+            "primary": "#4f28cf",
+            "on-surface": "#191a2b",
+            "status-wip": "#6848E8",
+            "surface-sidebar": "#F8F8FC",
+            "on-surface-variant": "#484555",
+            "on-background": "#191a2b",
+            "tertiary": "#7f3b00",
+            "on-primary-fixed": "#1c0062",
+            "border-subtle": "#E5E5EF",
+            "on-error": "#ffffff",
+            "error-container": "#ffdad6",
+            "on-secondary": "#ffffff",
+            "status-open": "#3888F8",
+            "tertiary-fixed": "#ffdbc8",
+            "tertiary-fixed-dim": "#ffb689",
+            "on-primary-container": "#e9e2ff",
+            "canvas-lavender": "#F5F4FC",
+            "surface-container-high": "#e8e6fe",
+            "secondary-fixed-dim": "#c9c0f6",
+            "on-primary": "#ffffff",
+            "surface-container": "#eeecff",
+            "surface-variant": "#e2e0f8",
+            "btn-primary": "#6040F0",
+            "error": "#ba1a1a",
+            "surface-bright": "#fcf8ff",
+            "outline": "#797586",
+            "surface-dim": "#d9d8f0",
+            "on-secondary-fixed": "#1b1540",
+            "inverse-surface": "#2e2f41",
+            "surface-card": "#FFFFFF",
+            "inverse-on-surface": "#f1efff",
+            "surface-tint": "#603edf",
+            "secondary": "#5f5887",
+            "secondary-fixed": "#e5deff",
+            "severity-blocker": "#F55354",
+            "surface-container-highest": "#e2e0f8",
+            "primary-container": "#6848e8",
+            "on-tertiary": "#ffffff",
+            "text-secondary": "#5C5C70"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "fontFamily": {
+            "body-sm": ["Inter"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["Inter"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "label-lg": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-canvas-lavender text-text-primary antialiased min-h-screen font-['Inter']">
+<!-- Authenticated Dashboard Shell using the Shared TopNavBar Anchor -->
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-[#f9f8fb] group/design-root overflow-x-hidden" style='font-family: "Plus Jakarta Sans", "Noto Sans", sans-serif;'>
+<div class="layout-container flex h-full grow flex-col">
+<div class="px-40 flex flex-1 justify-center py-5">
+<div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#eae8f3] px-10 py-3">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-[#110e1b]">
+<div class="size-4">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+</div>
+<h2 class="text-[#110e1b] text-lg font-bold leading-tight tracking-[-0.015em]">Live Workspace</h2>
+</div>
+<label class="flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-[#5d4f96] flex border-none bg-[#eae8f3] items-center justify-center pl-4 rounded-l-lg border-r-0" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewbox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#110e1b] focus:outline-0 focus:ring-0 border-none bg-[#eae8f3] focus:border-none h-full placeholder:text-[#5d4f96] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search" value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9">
+<a class="text-[#110e1b] text-sm font-medium leading-normal" href="#">Dashboard</a>
+<a class="text-[#110e1b] text-sm font-medium leading-normal" href="#">Projects</a>
+<a class="text-[#110e1b] text-sm font-medium leading-normal" href="#">Tickets</a>
+<a class="text-[#110e1b] text-sm font-medium leading-normal" href="#">Sprints</a>
+<a class="text-[#110e1b] text-sm font-medium leading-normal" href="#">Analytics</a>
+</div>
+<div class="flex gap-2">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#eae8f3] text-[#110e1b] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-[#110e1b]" data-icon="Bell" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-[#eae8f3] text-[#110e1b] gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5">
+<div class="text-[#110e1b]" data-icon="Gear" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path>
+</svg>
+</div>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Close up photographic portrait of Maya, an enterprise engineering director with warm lighting and minimalist office background setting." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCIKo15b-62PsJUAsR-SW0ZQ3la7PkHbbUaRe3u5RRj5ZszDFOL8oyHwDvLJ571EIi8AuCo5veQMfridsRV-kRjIU2VNSSrDdD5v07BQRLizR3fTV1FSYNiCX488fiNy2vpPY265Lmh81dH9DCeDwIQw9XLChO6nODqdLEl0GSh32Jh7ogwfxSgtZD3RvzT7jFXODcx2xQDu4btvjRY9dadwwr_i5TlHYI9nF2A0TtE");'></div>
+</div>
+</header>
+<!-- Top Header Content (From Shared Component Anchor) -->
+<div class="flex flex-wrap justify-between gap-3 p-4">
+<div class="flex min-w-72 flex-col gap-3">
+<p class="text-[#110e1b] text-4xl font-black leading-tight tracking-[-0.033em]">Good Morning, Maya</p>
+<p class="text-[#5d4f96] text-base font-normal leading-normal">Wednesday, Nov 26, 2025 • Live sync active • Here's what's happening across your workspace.</p>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#eae8f3] text-[#110e1b] text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Export Summary</span>
+</button>
+</div>
+<div class="flex gap-3 p-3 overflow-x-hidden">
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">All Teams</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">Platform Engineering</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">SRE Incident Response</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">Today</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">This Sprint</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#eae8f3] pl-4 pr-2">
+<p class="text-[#110e1b] text-sm font-medium leading-normal">Q4 2025</p>
+<div class="text-[#110e1b]" data-icon="CaretDown" data-size="20px" data-weight="regular">
+<svg fill="currentColor" height="20px" viewbox="0 0 256 256" width="20px" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"></path>
+</svg>
+</div>
+</button>
+</div>
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">Total Projects</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">14</p>
+<p class="text-[#078843] text-base font-medium leading-normal">+2 this month</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">Total Tasks</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">248</p>
+<p class="text-[#5d4f96] text-base font-medium leading-normal">84% completion</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">My Tasks</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">12</p>
+<p class="text-[#5d4f96] text-base font-medium leading-normal">4 due today</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">Open Tickets</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">37</p>
+<p class="text-[#5d4f96] text-base font-medium leading-normal">8 triage</p>
+</div>
+</div>
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">Work in Progress</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">19</p>
+<p class="text-[#5d4f96] text-base font-medium leading-normal">4 squads active</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">On Hold</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">5</p>
+<p class="text-[#5d4f96] text-base font-medium leading-normal">Vendor pending</p>
+</div>
+<div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-lg p-6 border border-[#d5d0e6]">
+<p class="text-[#110e1b] text-base font-medium leading-normal">SLA Breached</p>
+<p class="text-[#110e1b] tracking-light text-2xl font-bold leading-tight">2</p>
+<p class="text-[#e74008] text-base font-medium leading-normal">-100% SLA</p>
+</div>
+</div>
+<!-- EXTENDED SECTIONS: Analytics & Performance Grid -->
+<div class="flex flex-col gap-6 p-4">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="text-text-primary text-xl font-bold font-['Plus_Jakarta_Sans'] tracking-[-0.015em]">Analytics &amp; Squad Operations</h3>
+<p class="text-text-secondary text-sm">Real-time throughput, reliability health, and capacity allocation</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-status-resolved border border-emerald-200">
+<span class="w-2 h-2 rounded-full bg-status-resolved animate-pulse"></span>
+                  99.98% System Uptime
+                </span>
+</div>
+</div>
+<!-- 3 Column Performance Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- Card 1: Tasks by Status -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">check_circle</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Tasks by Status</h4>
+</div>
+<span class="text-xs text-text-secondary font-medium">248 Total</span>
+</div>
+<!-- Donut Chart representation -->
+<div class="flex items-center justify-center my-3">
+<div class="relative w-36 h-36 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<!-- Done 57% (142/248) -->
+<circle cx="18" cy="18" fill="transparent" r="14" stroke="#28C078" stroke-dasharray="57 43" stroke-dashoffset="0" stroke-width="4.5"></circle>
+<!-- In Progress 27% (68/248) -->
+<circle cx="18" cy="18" fill="transparent" r="14" stroke="#6848E8" stroke-dasharray="27 73" stroke-dashoffset="-57" stroke-width="4.5"></circle>
+<!-- In Review 10% (26/248) -->
+<circle cx="18" cy="18" fill="transparent" r="14" stroke="#3888F8" stroke-dasharray="10 90" stroke-dashoffset="-84" stroke-width="4.5"></circle>
+<!-- To Do 6% (12/248) -->
+<circle cx="18" cy="18" fill="transparent" r="14" stroke="#c9c4d8" stroke-dasharray="6 94" stroke-dashoffset="-94" stroke-width="4.5"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-xs text-text-muted">Completed</span>
+<span class="text-lg font-bold text-text-primary font-['Plus_Jakarta_Sans']">57.2%</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-3 border-t border-border-subtle text-xs">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-status-resolved"></span>
+<span class="text-text-secondary">Done (142)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-status-wip"></span>
+<span class="text-text-secondary">In Prog (68)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-status-open"></span>
+<span class="text-text-secondary">Review (26)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-outline-variant"></span>
+<span class="text-text-secondary">To Do (12)</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Tickets by Severity -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-orange-50 text-severity-critical material-symbols-outlined text-[18px]">warning</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Tickets by Severity</h4>
+</div>
+<span class="text-xs font-semibold px-2 py-0.5 rounded bg-red-50 text-severity-blocker">37 Active</span>
+</div>
+<!-- Horizontal Segmented Stacked Bar -->
+<div class="space-y-3 my-auto">
+<div class="w-full bg-surface-container rounded-full h-3 overflow-hidden flex">
+<div class="bg-severity-blocker h-full" style="width: 8.1%"></div>
+<div class="bg-severity-critical h-full" style="width: 18.9%"></div>
+<div class="bg-severity-major h-full" style="width: 32.4%"></div>
+<div class="bg-status-open h-full" style="width: 40.6%"></div>
+</div>
+<div class="space-y-2 pt-2">
+<div class="flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-severity-blocker"></span>
+<span class="font-medium text-text-primary">Blocker</span>
+</div>
+<span class="font-bold text-text-primary">3 tickets <span class="text-text-muted font-normal">(8.1%)</span></span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-severity-critical"></span>
+<span class="font-medium text-text-primary">Critical</span>
+</div>
+<span class="font-bold text-text-primary">7 tickets <span class="text-text-muted font-normal">(18.9%)</span></span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-severity-major"></span>
+<span class="font-medium text-text-primary">Major</span>
+</div>
+<span class="font-bold text-text-primary">12 tickets <span class="text-text-muted font-normal">(32.4%)</span></span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-status-open"></span>
+<span class="font-medium text-text-primary">Minor</span>
+</div>
+<span class="font-bold text-text-primary">15 tickets <span class="text-text-muted font-normal">(40.6%)</span></span>
+</div>
+</div>
+</div>
+<div class="text-[11px] text-text-secondary bg-surface-container-low p-2 rounded mt-3 text-center">
+                  2 SLA violations logged in last 24h
+                </div>
+</div>
+<!-- Card 3: Ticket Resolution & SLA Performance -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-green-50 text-status-resolved material-symbols-outlined text-[18px]">verified</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Resolution &amp; SLA Velocity</h4>
+</div>
+<span class="text-xs text-text-secondary">7-day avg</span>
+</div>
+<div class="grid grid-cols-2 gap-3 my-2">
+<div class="p-3 bg-surface-container-low rounded-lg border border-border-subtle">
+<div class="text-[11px] text-text-secondary uppercase tracking-wider font-semibold">SLA Adherence</div>
+<div class="text-xl font-extrabold text-status-resolved font-['Plus_Jakarta_Sans'] mt-0.5">96.4%</div>
+<div class="text-[11px] text-status-resolved flex items-center gap-0.5 mt-1 font-medium">
+<span class="material-symbols-outlined text-[13px]">trending_up</span> +1.8% vs last week
+                    </div>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border border-border-subtle">
+<div class="text-[11px] text-text-secondary uppercase tracking-wider font-semibold">Average MTTR</div>
+<div class="text-xl font-extrabold text-text-primary font-['Plus_Jakarta_Sans'] mt-0.5">14m</div>
+<div class="text-[11px] text-status-resolved flex items-center gap-0.5 mt-1 font-medium">
+<span class="material-symbols-outlined text-[13px]">timer</span> -3m faster
+                    </div>
+</div>
+</div>
+<!-- Mini Bar Sparkline -->
+<div class="pt-2">
+<div class="text-xs text-text-secondary font-medium mb-1.5 flex justify-between">
+<span>Rolling Velocity (Resolved Tickets)</span>
+<span class="font-bold text-text-primary">34 total</span>
+</div>
+<div class="flex items-end gap-1.5 h-10 w-full pt-1">
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 45%" title="Thu: 4"></div>
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 60%" title="Fri: 6"></div>
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 35%" title="Sat: 3"></div>
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 20%" title="Sun: 2"></div>
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 85%" title="Mon: 9"></div>
+<div class="flex-1 bg-primary rounded-t" style="height: 100%" title="Tue: 10"></div>
+<div class="flex-1 bg-secondary-container hover:bg-primary rounded-t transition-all" style="height: 70%" title="Today: 7"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- 2 Column Section: Project Progress & Team Workload -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Project Progress & Sprint Velocity -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">rocket_launch</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Project Progress &amp; Sprint Velocity</h4>
+</div>
+<span class="text-xs text-text-secondary">Sprint 42 • Active</span>
+</div>
+<div class="space-y-4">
+<div>
+<div class="flex justify-between items-center text-xs mb-1">
+<span class="font-semibold text-text-primary">Platform Revamp 2.0</span>
+<span class="font-bold text-primary">78%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-btn-primary h-2 rounded-full" style="width: 78%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-text-secondary mt-1">
+<span>4 squads assigned</span>
+<span>Target: Dec 15</span>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center text-xs mb-1">
+<span class="font-semibold text-text-primary">Auth Proxy Gateway Migration</span>
+<span class="font-bold text-status-resolved">92%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-status-resolved h-2 rounded-full" style="width: 92%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-text-secondary mt-1">
+<span>SRE Canary Rollout</span>
+<span>Target: Nov 30</span>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center text-xs mb-1">
+<span class="font-semibold text-text-primary">Data Pipeline v3</span>
+<span class="font-bold text-severity-critical">45%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-severity-critical h-2 rounded-full" style="width: 45%"></div>
+</div>
+<div class="flex justify-between text-[11px] text-text-secondary mt-1">
+<span>Blocked on Kafka sync</span>
+<span>Target: Jan 10</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Team Workload & Capacity -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">groups</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Team Workload &amp; Capacity</h4>
+</div>
+<span class="text-xs text-text-secondary">3 Squads Tracked</span>
+</div>
+<div class="space-y-4">
+<!-- Squad 1 -->
+<div class="p-3 rounded-lg bg-surface-container-low border border-border-subtle">
+<div class="flex items-center justify-between text-xs mb-1.5">
+<span class="font-semibold text-text-primary">Platform Squad</span>
+<span class="font-bold text-primary">88% Capacity</span>
+</div>
+<div class="w-full bg-white rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 88%"></div>
+</div>
+<p class="text-[11px] text-text-secondary mt-1.5">6 Engineers • 18 active tasks • Optimal burn-rate</p>
+</div>
+<!-- Squad 2 -->
+<div class="p-3 rounded-lg bg-orange-50/50 border border-orange-200">
+<div class="flex items-center justify-between text-xs mb-1.5">
+<span class="font-semibold text-text-primary">SRE Incident Response</span>
+<span class="font-bold text-severity-critical">94% Overload Warning</span>
+</div>
+<div class="w-full bg-white rounded-full h-2">
+<div class="bg-severity-critical h-2 rounded-full" style="width: 94%"></div>
+</div>
+<p class="text-[11px] text-text-secondary mt-1.5">4 On-call SREs • 2 Blocker alerts active • High paging rate</p>
+</div>
+<!-- Squad 3 -->
+<div class="p-3 rounded-lg bg-surface-container-low border border-border-subtle">
+<div class="flex items-center justify-between text-xs mb-1.5">
+<span class="font-semibold text-text-primary">Core API Squad</span>
+<span class="font-bold text-status-resolved">62% Available</span>
+</div>
+<div class="w-full bg-white rounded-full h-2">
+<div class="bg-status-resolved h-2 rounded-full" style="width: 62%"></div>
+</div>
+<p class="text-[11px] text-text-secondary mt-1.5">5 Engineers • Ready for failover sprint allocation</p>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION: Priority Issues Requiring Attention -->
+<div class="bg-surface-card rounded-xl border border-border-subtle shadow-sm overflow-hidden mt-2">
+<div class="p-5 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<h3 class="text-text-primary text-base font-bold font-['Plus_Jakarta_Sans']">Priority Issues Requiring Attention</h3>
+<p class="text-text-secondary text-xs">Sorted by Severity, SLA Breach Risk, and Approaching Deadlines</p>
+</div>
+<!-- Filter Pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+<button class="px-3 py-1 rounded-full text-xs font-semibold bg-btn-primary text-white shadow-sm hover:bg-primary-hover transition-colors">
+                    All Priorities (12)
+                  </button>
+<button class="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-severity-blocker hover:bg-red-100 transition-colors border border-red-200">
+                    Blocker (3)
+                  </button>
+<button class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-severity-critical hover:bg-amber-100 transition-colors border border-amber-200">
+                    Critical (7)
+                  </button>
+<button class="px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-error hover:bg-rose-200 transition-colors border border-rose-300">
+                    Breached SLA (2)
+                  </button>
+</div>
+</div>
+<!-- Interactive Tickets Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs">
+<thead class="bg-surface-container-low text-text-secondary uppercase tracking-wider font-semibold border-b border-border-subtle">
+<tr>
+<th class="py-3 px-4">Ticket ID &amp; Summary</th>
+<th class="py-3 px-4">Severity</th>
+<th class="py-3 px-4">Status</th>
+<th class="py-3 px-4">Assignee</th>
+<th class="py-3 px-4">SLA Countdown</th>
+<th class="py-3 px-4 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<!-- Row 1: Blocker & Breached -->
+<tr class="hover:bg-red-50/30 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<span class="font-bold text-text-primary tracking-tight">TKT-1025</span>
+<span class="text-text-primary font-medium truncate max-w-xs md:max-w-md">Auth proxy latency spike on us-east cluster</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-severity-blocker border border-red-200">
+                          Blocker
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1.5 text-status-wip font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-wip"></span>
+                          Work in Progress
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover bg-center ring-1 ring-border-subtle" data-alt="Close up photograph of Aarav Mehta, platform reliability engineer focusing on high-load distributed systems." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDqo8GgKfFsr5cHkqp1lCuMgd1yOtshoM_YSGgJFFDK0Qgzdq0EUdwPnnMhWjR-vLKk-ohcrmXdD__DMIkM0sihddxtnQilLqE9PAGu-e-IxSgqZa2oyFX_FUbcgOdaYbxR0hdK5dugjU4JeIkGzzlFNdKCR8haQg1EvM3Xzb0YLd2kUzSzoev5QLC1O4W2A7GXgHhIPq6RPxCszdG_snfOg4RAAUrndtuYU-ioTyhB')"></div>
+<span class="text-text-primary font-medium">Aarav Mehta</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-error text-white animate-pulse">
+                          BREACHED (-14m)
+                        </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="inline-flex items-center text-primary font-bold hover:underline" href="#">
+                          View Ticket →
+                        </a>
+</td>
+</tr>
+<!-- Row 2: Critical & 18m remaining -->
+<tr class="hover:bg-amber-50/30 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<span class="font-bold text-text-primary tracking-tight">TKT-1031</span>
+<span class="text-text-primary font-medium truncate max-w-xs md:max-w-md">Payment Webhook retry queue exhaustion</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-severity-critical border border-amber-200">
+                          Critical
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1.5 text-status-open font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-open"></span>
+                          Open
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover bg-center ring-1 ring-border-subtle" data-alt="Portrait photo of Maya Shah, director of platform engineering and architectural lead." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHjELWytJwzAGP7e9QWUNSnKTW-MnICfKIA4yhY0ydh6QRNwk51QKDJmSqZNYC5W3eoKGinUDbbAQmRvX35RpXmFV6yS8x2cAOfq40RxPjGqD3zCWtI1AJFUNvHUEUugdu-zKQHOwWJdzCSo5V8qCwd6DmaI5Yi59nV-giaE3goUTr8b3RUsVWJ7BO_G0fbI6HE11ROdx7RW1hQuT1ZguQQI4UVC1w3V8obEWEYWJJ')"></div>
+<span class="text-text-primary font-medium">Maya Shah</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-severity-critical border border-amber-300">
+                          18m remaining
+                        </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="inline-flex items-center text-primary font-bold hover:underline" href="#">
+                          View Ticket →
+                        </a>
+</td>
+</tr>
+<!-- Row 3: Critical & 42m remaining -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<span class="font-bold text-text-primary tracking-tight">TKT-1028</span>
+<span class="text-text-primary font-medium truncate max-w-xs md:max-w-md">Kafka consumer lag exceeding 50k messages</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-severity-critical border border-amber-200">
+                          Critical
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1.5 text-status-wip font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-wip"></span>
+                          Work in Progress
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover bg-center ring-1 ring-border-subtle" data-alt="Portrait photo of David K, senior backend data streaming infrastructure specialist." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCgpxBabcNP-VflfUu9YxPtRNgBmTPculGmwVPxmA67FPyIuIwm4qwUa1SZB6Ob31t9xz2dfM-HZGM2mWeTTF8ELwGn7hk3zWhLyvo_abqg4as9rbKLAfWH1NfG9EvhTsIbj1jFGmgXElKtRxt-hPjG_KnFLOimtvCmZlBcEHsiM3uP1jk1DMXrsJH360536mg0WTLxlUGj0OVUbNjOySGUYJkfs01YGDuLe34eZ1DO')"></div>
+<span class="text-text-primary font-medium">David K.</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="text-text-secondary font-medium">42m remaining</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="inline-flex items-center text-primary font-bold hover:underline" href="#">
+                          View Ticket →
+                        </a>
+</td>
+</tr>
+<!-- Row 4: Major & 2h 15m remaining -->
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<span class="font-bold text-text-primary tracking-tight">TKT-1019</span>
+<span class="text-text-primary font-medium truncate max-w-xs md:max-w-md">Cross-region telemetry replication failover</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-yellow-100 text-[#b58300] border border-yellow-200">
+                          Major
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<span class="inline-flex items-center gap-1.5 text-text-secondary font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-status-on-hold"></span>
+                          On Hold
+                        </span>
+</td>
+<td class="py-3.5 px-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover bg-center ring-1 ring-border-subtle" data-alt="Studio portrait photograph of Sarah T, staff distributed systems engineer in cloud observability." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD1igbZGJ7L1Ky6xJ0okSYPBlzX8JW7EnkSjN-LZ6EDW7hdB6IOcBjmoNieDP1pECCl5dYOzlzTfE_TMS-l2sNeANsUCp0vMRe-s3fgpUk8D_5MM8MOFF2c3HNeIN8RDawNhYFdJ38e-UiBbJbHvuFXMUUrvJdrLjYINKXjeUd5kDeC_BFI-k4XmOGA3xyZNMnY81gO8Bj6PXEAUlXsKqHIFLhSe8VEmQWgUye8JmIG')"></div>
+<span class="text-text-primary font-medium">Sarah T.</span>
+</div>
+</td>
+<td class="py-3.5 px-4">
+<span class="text-text-secondary font-medium">2h 15m remaining</span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<a class="inline-flex items-center text-primary font-bold hover:underline" href="#">
+                          View Ticket →
+                        </a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- SECTION: Recent Activity Timeline -->
+<div class="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm mb-8">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="p-2 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">history</span>
+<h4 class="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Recent Activity Timeline</h4>
+</div>
+<button class="text-xs text-primary font-semibold hover:underline">View All Logs</button>
+</div>
+<div class="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border-subtle">
+<!-- Activity 1 -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 mt-1 w-3 h-3 rounded-full bg-severity-blocker ring-4 ring-white"></div>
+<div class="w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-border-subtle" data-alt="A portrait of Aarav Mehta interacting in collaborative engineering workspace." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCbSDx---2N7YIzdzZoQ8HAru3n3DNE-tkCnVWcCPzTznNa_RBQOPWMov2WCi5YUvRYAvfccNsDasvnWl63I735VtTdfTZqM55gCmlu3LthPMNIFIORrDgjXJ8XE6mggi_Gq_oOt2iMZHUF_zC9msl1oXX_2_juzfEdlXYmHuvA6sWB3f2Ep2LJ6gph_Q8xHVEDOaiRv4Ie_Zz9y2YhwvJZccr6CIIJHsC7ContR2EV')"></div>
+<div class="flex-1 text-xs">
+<p class="text-text-primary">
+<span class="font-bold">Aarav Mehta</span> escalated <span class="font-semibold text-primary">TKT-1025</span> to <span class="font-semibold text-severity-blocker">Blocker</span>
+</p>
+<p class="text-[11px] text-text-muted mt-0.5">4 mins ago • us-east SRE Incident Channel</p>
+</div>
+</div>
+<!-- Activity 2 -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 mt-1 w-3 h-3 rounded-full bg-status-resolved ring-4 ring-white"></div>
+<div class="w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-border-subtle" data-alt="Portrait of Maya Shah reviewing git pull request commits." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCy6qL9ZlcLH4Vu-iRCkxSXaW5P4LBRnvqfxp6kgLTNP06HXluT9liexSMcTufAAd3NWWFqSshRHyt4scKmJA_HEhxJoPZav3aX81osQsgOAp0QloVpsSK-_z2Rwxbu8wc_U0kolH9icYjq_8cNd3TZNyLMDqnxu_whgCJqw0mRcyFAdqsAee2mqwTcET-ovE-BcEESiGOpz5V4HIbT940fhfWtfdUi7eZtbeG_fjc')"></div>
+<div class="flex-1 text-xs">
+<p class="text-text-primary">
+<span class="font-bold">Maya Shah</span> committed fix to branch <code class="px-1.5 py-0.5 rounded bg-surface-container font-mono text-[11px] text-primary">fix/webhook-retry</code> on Platform Revamp
+                    </p>
+<p class="text-[11px] text-text-muted mt-0.5">18 mins ago • GitHub Commit #e8f902c</p>
+</div>
+</div>
+<!-- Activity 3 -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 mt-1 w-3 h-3 rounded-full bg-severity-critical ring-4 ring-white"></div>
+<div class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-severity-critical shrink-0 border border-border-subtle">
+<span class="material-symbols-outlined text-[15px]">smart_toy</span>
+</div>
+<div class="flex-1 text-xs">
+<p class="text-text-primary">
+<span class="font-bold">System Bot</span> triggered SLA warning alert for <span class="font-semibold text-primary">TKT-1031</span> (80% threshold reached)
+                    </p>
+<p class="text-[11px] text-text-muted mt-0.5">32 mins ago • Datadog Alert Webhook</p>
+</div>
+</div>
+<!-- Activity 4 -->
+<div class="relative flex items-start gap-3">
+<div class="absolute -left-6 mt-1 w-3 h-3 rounded-full bg-status-resolved ring-4 ring-white"></div>
+<div class="w-7 h-7 rounded-full bg-cover bg-center shrink-0 border border-border-subtle" data-alt="Portrait photo of Priya Nair, frontend engineer in software development office." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAEr672y36GRoGPHj6QXmjQ6FVZEYKIXOkynZXObLyfier5tVYr9Bd0TdLPzVwhakG4-1yl4Eo9I_4Ptq8N0OPGgQIJ6YCz2ra55-vKMKWwEmtA_PiWfF0RNfQBh8Sw9Qu6oU7sAhzBn6-fi_1lLFe5oUINz4TvjpZ72jWQobwHD-stL4W8xlP_eYZKa8nQXvroDFyG_bJhq6SIuurny8EwByq_n1HQ86BXP7zXa53O')"></div>
+<div class="flex-1 text-xs">
+<p class="text-text-primary">
+<span class="font-bold">Priya Nair</span> marked <span class="font-semibold text-primary">TASK-198</span> as <span class="font-semibold text-status-resolved">Resolved</span>
+</p>
+<p class="text-[11px] text-text-muted mt-0.5">1 hr ago • Verified in staging cluster</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- End Extended Sections -->
+</div>
+</div>
+</div>
+</div>
+</body></html>
