@@ -1,43 +1,90 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import Sidebar from '../components/navigation/Sidebar';
+import GlobalTopBar from '../components/navigation/GlobalTopBar';
+import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
+import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
 
 /**
  * DashboardLayout
- * Primary application workspace shell featuring:
- * - Collapsible Sidebar (#F8F8FC)
- * - Global Top Bar (#FFFFFF) with Global Search, Quick Action (+), Notification Center, User Profile
- * - Fluid Canvas Area (#F9F9FB) with dynamic route outlet
+ * Application workspace shell featuring:
+ * - Collapsible Sidebar (w-72 or w-20)
+ * - Global Top Bar (breadcrumbs, search trigger, new ticket button, SLA breach counter, profile popover)
+ * - Global Plus Action Menu modal
+ * - Global Spotlight Search Overlay (Ctrl+K / Cmd+K)
+ * - Main viewport with dynamic outlet
  */
 export const DashboardLayout = () => {
-  return (
-    <div className="min-h-screen flex bg-[#F9F9FB]">
-      {/* Sidebar Placeholder */}
-      <aside className="w-64 bg-[#F8F8FC] border-r border-[#E5E5EF] flex flex-col shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-[#E5E5EF]">
-          <span className="font-heading font-bold text-lg text-[#141529]">Live Workspace</span>
-        </div>
-        <div className="p-4 flex-1">
-          {/* Navigation links injected here during module implementation */}
-        </div>
-      </aside>
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
 
-      {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar Header */}
-        <header className="h-16 bg-white border-b border-[#E5E5EF] flex items-center justify-between px-6 sticky top-0 z-20">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-[#5C5C70]">Workspace Dashboard</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            {/* Quick Actions & Profile components placeholder */}
-          </div>
-        </header>
+  // Global keyboard shortcuts (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  const handleActionSelect = (actionType) => {
+    console.log('Action selected:', actionType);
+    setIsPlusMenuOpen(false);
+  };
+
+  const handleSearchResultSelect = (result) => {
+    console.log('Search result selected:', result);
+    setIsSearchOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen flex bg-canvas-main">
+      {/* 1. Left Nav Sidebar */}
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+        onOpenCreate={() => setIsPlusMenuOpen(true)}
+      />
+
+      {/* 2. Main Workspace Viewport */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${
+          isSidebarCollapsed ? 'pl-20' : 'pl-72'
+        }`}
+      >
+        {/* Global Top Bar Component */}
+        <GlobalTopBar
+          isCollapsed={isSidebarCollapsed}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onTogglePlusMenu={() => setIsPlusMenuOpen((prev) => !prev)}
+          isPlusMenuOpen={isPlusMenuOpen}
+          activeBreadcrumbs={['Live Workspace', 'Platform Revamp', 'Overview']}
+          unreadNotifications={3}
+          slaBreachCount={2}
+        />
 
         {/* Content Viewport */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 pt-20 px-6 lg:px-8 py-6 min-h-screen overflow-y-auto">
           <Outlet />
         </main>
       </div>
+
+      {/* 3. Global Modals & Overlays */}
+      <GlobalPlusMenu
+        isOpen={isPlusMenuOpen}
+        onClose={() => setIsPlusMenuOpen(false)}
+        onActionSelect={handleActionSelect}
+      />
+
+      <GlobalSearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectResult={handleSearchResultSelect}
+      />
     </div>
   );
 };
