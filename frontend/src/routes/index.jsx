@@ -5,6 +5,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import DashboardOverviewPage from '../modules/dashboard/pages/DashboardOverviewPage';
+import ProjectsListPage from '../modules/projects/ProjectsListPage';
 
 /**
  * AppRoutes
@@ -32,7 +33,8 @@ export const AppRoutes = () => {
       <Route path="/workspace" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
-        <Route path="projects/*" element={<DashboardOverviewPage />} />
+        <Route path="projects" element={<ProjectsListPage />} />
+        <Route path="projects/*" element={<ProjectsListPage />} />
         <Route path="tasks/*" element={<DashboardOverviewPage />} />
         <Route path="tickets/*" element={<DashboardOverviewPage />} />
         <Route path="sla/*" element={<DashboardOverviewPage />} />

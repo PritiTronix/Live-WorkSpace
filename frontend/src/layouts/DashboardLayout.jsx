@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/navigation/Sidebar';
 import GlobalTopBar from '../components/navigation/GlobalTopBar';
 import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
@@ -15,9 +15,19 @@ import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
  * - Main viewport with dynamic outlet
  */
 export const DashboardLayout = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+
+  // Dynamic breadcrumbs based on active route
+  const getBreadcrumbs = () => {
+    if (location.pathname.startsWith('/workspace/projects')) {
+      return ['Live Workspace', 'Projects', 'Overview'];
+    }
+    return ['Live Workspace', 'Platform Revamp', 'Overview'];
+  };
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -32,7 +42,9 @@ export const DashboardLayout = () => {
   }, []);
 
   const handleActionSelect = (actionType) => {
-    console.log('Action selected:', actionType);
+    if (actionType === 'CREATE_PROJECT') {
+      navigate('/workspace/projects');
+    }
     setIsPlusMenuOpen(false);
   };
 
@@ -62,7 +74,7 @@ export const DashboardLayout = () => {
           onOpenSearch={() => setIsSearchOpen(true)}
           onTogglePlusMenu={() => setIsPlusMenuOpen((prev) => !prev)}
           isPlusMenuOpen={isPlusMenuOpen}
-          activeBreadcrumbs={['Live Workspace', 'Platform Revamp', 'Overview']}
+          activeBreadcrumbs={getBreadcrumbs()}
           unreadNotifications={3}
           slaBreachCount={2}
         />

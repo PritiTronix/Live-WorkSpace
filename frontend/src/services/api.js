@@ -320,3 +320,6 @@ export const connectDashboardWebSocket = (onMessage, onError) => {
     return null;
   }
 };
+
+export { projectsService } from './projectsService';
+
