@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Live Workspace - Login</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f2ff',
+              100: '#ece7ff',
+              200: '#d9d2fe',
+              300: '#b8a6fb',
+              400: '#9472f7',
+              500: '#754bf2',
+              600: '#6848e8',
+              700: '#5836d5',
+              800: '#462ba9',
+              900: '#3a2689',
+            },
+            surface: {
+              base: '#fcf8ff',
+              dim: '#d9d8f0',
+              card: '#ffffff'
+            }
+          },
+          boxShadow: {
+            'card': '0 24px 60px -12px rgba(88, 54, 213, 0.08), 0 10px 24px -8px rgba(0, 0, 0, 0.04)',
+            'laptop': '0 30px 60px -15px rgba(22, 28, 45, 0.22), 0 0 0 1px rgba(0,0,0,0.06)'
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="custom-decorations">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 10% 15%, #f6f0ff 0%, #fcf8ff 45%, #f2efff 100%);
+    }
+
+    .dot-pattern {
+      background-image: radial-gradient(#c7bcf7 1.5px, transparent 1.5px);
+      background-size: 18px 18px;
+    }
+
+    /* Donut chart segments for Mockup preview */
+    .donut-status {
+      background: conic-gradient(
+        #3b82f6 0% 45%,
+        #eab308 45% 75%,
+        #22c55e 75% 100%
+      );
+    }
+    .donut-severity {
+      background: conic-gradient(
+        #ef4444 0% 30%,
+        #f97316 30% 65%,
+        #eab308 65% 100%
+      );
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="min-h-screen text-[#141529] relative overflow-x-hidden antialiased flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+<!-- Background decorative dots -->
+<div aria-hidden="true" class="absolute top-0 left-0 w-80 h-80 dot-pattern opacity-40 pointer-events-none"></div>
+<!-- BEGIN: MainContainer -->
+<div class="w-full max-w-[1536px] mx-auto min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:px-14 lg:py-10">
+<!-- BEGIN: Header / Logo -->
+<header class="w-full mb-6 lg:mb-8" data-purpose="top-navigation">
+<div class="flex items-center gap-3">
+<!-- Folded Origami 'W' Logo -->
+<svg class="w-10 h-10 text-brand-600" fill="none" viewbox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 11L14 33L22 17L30 33L37 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"></path>
+</svg>
+<span class="text-2xl font-bold tracking-tight text-[#141529]">Live Workspace</span>
+</div>
+</header>
+<!-- END: Header / Logo -->
+<!-- BEGIN: ContentArea -->
+<main class="grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-14 items-center flex-1 my-auto">
+<!-- LEFT COLUMN: Value Proposition & Product Mockup -->
+<section class="lg:col-span-7 flex flex-col justify-center space-y-8 lg:pr-4" data-purpose="product-showcase">
+<!-- Typography Headline & Intro -->
+<div class="space-y-4 max-w-xl">
+<h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#141529] leading-[1.18]">
+            One Workspace.<br/>
+<span class="text-brand-600">Complete Project Visibility.</span>
+</h1>
+<p class="text-base sm:text-lg text-[#555a75] font-medium leading-relaxed max-w-lg">
+            Manage projects, tasks, tickets, deadlines, and team collaboration from a single place.
+          </p>
+</div>
+<!-- Realistic Mockup Scene (Laptop + Decorative Plant + Mug) -->
+<div class="relative pt-4 pb-2 w-full max-w-[620px] mx-auto lg:mx-0 select-none" data-purpose="workspace-mockup">
+<!-- Left: Ceramic Plant Mockup Element -->
+<div class="absolute -left-6 bottom-4 z-20 hidden sm:flex flex-col items-center">
+<!-- Lush Leaves (Stylized SVG representation) -->
+<svg class="w-20 h-28 drop-shadow-md text-emerald-600" fill="currentColor" viewbox="0 0 100 130">
+<path d="M50 85 C30 70 10 50 15 25 C25 22 45 42 50 85 Z" fill="#22c55e" opacity="0.95"></path>
+<path d="M50 85 C40 50 35 15 50 5 C65 15 60 50 50 85 Z" fill="#16a34a"></path>
+<path d="M50 85 C70 70 90 50 85 25 C75 22 55 42 50 85 Z" fill="#15803d"></path>
+<path d="M50 85 C30 80 15 65 25 45 C35 48 48 70 50 85 Z" fill="#16a34a" opacity="0.85"></path>
+<path d="M50 85 C70 80 85 65 75 45 C65 48 52 70 50 85 Z" fill="#15803d" opacity="0.85"></path>
+<!-- Stems -->
+<path d="M50 85 L50 100" stroke="#14532d" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<!-- White Ceramic Pot -->
+<div class="w-14 h-14 bg-gradient-to-b from-[#ffffff] to-[#e4e7ee] rounded-b-xl rounded-t-sm shadow-md border-t border-slate-100 flex items-center justify-center">
+<div class="w-12 h-1 bg-stone-300 rounded-full mt-0.5 opacity-40"></div>
+</div>
+</div>
+<!-- Central: Laptop Mockup -->
+<div class="relative mx-auto sm:ml-12 sm:mr-8 bg-slate-900 rounded-t-2xl p-2.5 pb-0 shadow-laptop border border-slate-700/60 max-w-[500px]">
+<!-- Laptop Top Bezel Camera -->
+<div class="flex items-center justify-center pb-1">
+<div class="w-1.5 h-1.5 bg-slate-700 rounded-full"></div>
+</div>
+<!-- Laptop Screen Display (Internal Dashboard) -->
+<div class="bg-[#fcf8ff] rounded-t-lg overflow-hidden flex h-[260px] text-[9px] font-sans">
+<!-- Sidebar -->
+<div class="w-[96px] bg-[#1d1f3b] text-slate-300 p-2.5 flex flex-col justify-between shrink-0">
+<div class="space-y-3">
+<div class="flex items-center gap-1.5 pl-0.5 text-white font-bold text-[10px]">
+<svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewbox="0 0 44 44">
+<path d="M7 11L14 33L22 17L30 33L37 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+</svg>
+</div>
+<nav class="space-y-1">
+<div class="bg-brand-600 text-white font-semibold px-2 py-1 rounded">Home</div>
+<div class="px-2 py-1 hover:text-white cursor-pointer text-slate-400">Projects</div>
+<div class="px-2 py-1 hover:text-white cursor-pointer text-slate-400">Tickets</div>
+<div class="px-2 py-1 hover:text-white cursor-pointer text-slate-400">Team</div>
+<div class="px-2 py-1 hover:text-white cursor-pointer text-slate-400">Reports</div>
+<div class="px-2 py-1 hover:text-white cursor-pointer text-slate-400">Settings</div>
+</nav>
+</div>
+</div>
+<!-- Main Dashboard Area -->
+<div class="flex-1 p-3 bg-[#faf7fd] flex flex-col justify-between overflow-hidden">
+<!-- Top Navbar Mock -->
+<div class="flex items-center justify-between pb-2 border-b border-purple-100">
+<div class="bg-white px-2 py-0.5 rounded border border-purple-100 text-slate-400 flex items-center gap-1 w-28">
+<svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Search...</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-slate-200"></span>
+<div class="w-4 h-4 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center font-bold text-[7px]">V</div>
+</div>
+</div>
+<!-- Greeting -->
+<div class="py-1">
+<h3 class="font-bold text-[11px] text-slate-800">Good Morning, Vishal! 👋</h3>
+</div>
+<!-- KPI Metric Cards -->
+<div class="grid grid-cols-4 gap-1.5">
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm">
+<div class="text-[12px] font-bold text-slate-800 leading-tight">12</div>
+<div class="text-[7.5px] text-slate-500">Projects</div>
+</div>
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm">
+<div class="text-[12px] font-bold text-slate-800 leading-tight">248</div>
+<div class="text-[7.5px] text-slate-500">Tasks</div>
+</div>
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm">
+<div class="text-[12px] font-bold text-slate-800 leading-tight">37</div>
+<div class="text-[7.5px] text-slate-500">Tickets</div>
+</div>
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm">
+<div class="text-[12px] font-bold text-emerald-600 leading-tight">92%</div>
+<div class="text-[7.5px] text-slate-500">SLA</div>
+</div>
+</div>
+<!-- Donut Analytics Section -->
+<div class="grid grid-cols-2 gap-2 pt-1">
+<!-- Donut 1: Tasks by Status -->
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm flex items-center gap-2">
+<div class="relative w-11 h-11 shrink-0 rounded-full donut-status flex items-center justify-center">
+<div class="w-6 h-6 bg-white rounded-full"></div>
+</div>
+<div class="space-y-0.5 text-[7px] text-slate-600">
+<div class="font-bold text-[7.5px] text-slate-800 truncate">Tasks by Status</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> To Do</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> In Progress</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Done</div>
+</div>
+</div>
+<!-- Donut 2: Tickets by Severity -->
+<div class="bg-white p-1.5 rounded border border-purple-50 shadow-sm flex items-center gap-2">
+<div class="relative w-11 h-11 shrink-0 rounded-full donut-severity flex items-center justify-center">
+<div class="w-6 h-6 bg-white rounded-full"></div>
+</div>
+<div class="space-y-0.5 text-[7px] text-slate-600">
+<div class="font-bold text-[7.5px] text-slate-800 truncate">Tickets by Severity</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Blocker</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span> Critical</div>
+<div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Major</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Laptop Base / Lip -->
+<div class="relative mx-auto sm:ml-6 sm:mr-2 max-w-[550px] h-3 bg-gradient-to-b from-[#d1d5db] to-[#9ca3af] rounded-b-lg shadow-md flex justify-center items-start">
+<div class="w-16 h-1 bg-[#6b7280] rounded-b-sm"></div>
+</div>
+<!-- Right: Branded Purple Coffee Mug Mockup -->
+<div class="absolute -right-2 bottom-1 z-20 hidden sm:flex items-center">
+<!-- Mug Body -->
+<div class="w-12 h-14 bg-gradient-to-br from-brand-600 to-brand-800 rounded-b-xl rounded-t-sm shadow-lg flex items-center justify-center text-white relative">
+<svg class="w-5 h-5 text-white/90" fill="none" viewbox="0 0 44 44">
+<path d="M7 11L14 33L22 17L30 33L37 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"></path>
+</svg>
+</div>
+<!-- Mug Handle -->
+<div class="w-3.5 h-8 border-4 border-l-0 border-brand-700 rounded-r-lg -ml-0.5"></div>
+</div>
+</div>
+<!-- BEGIN: FeaturePills -->
+<!-- Bottom feature row: 5 pillars -->
+<div class="pt-4 border-t border-purple-200/50" data-purpose="features-list">
+<div class="grid grid-cols-3 sm:grid-cols-5 gap-3 text-center">
+<!-- Feature 1: Project Management -->
+<div class="flex flex-col items-center space-y-1.5 group cursor-pointer">
+<div class="w-9 h-9 rounded-xl bg-purple-100/70 text-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-600 group-hover:text-white transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.63 8.41m5.96 5.96a14.926 14.926 0 01-5.84 2.58m-.12-8.54a2 2 0 112.83 2.83" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-xs font-semibold text-slate-700 leading-tight">Project<br/>Management</span>
+</div>
+<!-- Feature 2: Ticket Tracking -->
+<div class="flex flex-col items-center space-y-1.5 group cursor-pointer">
+<div class="w-9 h-9 rounded-xl bg-purple-100/70 text-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-600 group-hover:text-white transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-xs font-semibold text-slate-700 leading-tight">Ticket<br/>Tracking</span>
+</div>
+<!-- Feature 3: Real-Time Collaboration -->
+<div class="flex flex-col items-center space-y-1.5 group cursor-pointer">
+<div class="w-9 h-9 rounded-xl bg-purple-100/70 text-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-600 group-hover:text-white transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-xs font-semibold text-slate-700 leading-tight">Real-Time<br/>Collaboration</span>
+</div>
+<!-- Feature 4: SLA Monitoring -->
+<div class="flex flex-col items-center space-y-1.5 group cursor-pointer">
+<div class="w-9 h-9 rounded-xl bg-purple-100/70 text-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-600 group-hover:text-white transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-xs font-semibold text-slate-700 leading-tight">SLA<br/>Monitoring</span>
+</div>
+<!-- Feature 5: Analytics & Reports -->
+<div class="flex flex-col items-center space-y-1.5 group cursor-pointer col-span-3 sm:col-span-1">
+<div class="w-9 h-9 rounded-xl bg-purple-100/70 text-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-600 group-hover:text-white transition">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-xs font-semibold text-slate-700 leading-tight">Analytics &amp;<br/>Reports</span>
+</div>
+</div>
+</div>
+<!-- END: FeaturePills -->
+</section>
+<!-- RIGHT COLUMN: Floating Authentication Card -->
+<section class="lg:col-span-5 flex justify-center lg:justify-end" data-purpose="login-form-container">
+<div class="w-full max-w-[460px] bg-white rounded-[28px] p-8 sm:p-10 shadow-card border border-purple-100/70 relative">
+<!-- Top Card Logo -->
+<div class="flex justify-center mb-5" data-purpose="card-logo">
+<div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-purple-50">
+<svg class="w-10 h-10 text-brand-600" fill="none" viewbox="0 0 44 44">
+<path d="M7 11L14 33L22 17L30 33L37 11" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"></path>
+</svg>
+</div>
+</div>
+<!-- Card Header -->
+<div class="text-center space-y-2 mb-8">
+<h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#141529]">Welcome Back</h2>
+<p class="text-sm text-[#676c85]">Log in to continue managing your projects and work.</p>
+</div>
+<!-- BEGIN: LoginForm -->
+<form class="space-y-4" data-purpose="login-credentials-form" onsubmit="event.preventDefault();">
+<!-- Email Input -->
+<div class="space-y-1.5">
+<label class="sr-only" for="email">Email Address</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</div>
+<input class="block w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all" id="email" name="email" placeholder="Email Address" required="" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="space-y-1.5">
+<label class="sr-only" for="password">Password</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</div>
+<input class="block w-full pl-11 pr-11 py-3.5 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all" id="password" name="password" placeholder="Password" required="" type="password"/>
+<!-- Eye visibility toggle icon button -->
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+</button>
+</div>
+</div>
+<!-- Remember Me & Forgot Password Row -->
+<div class="flex items-center justify-between pt-1">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded text-brand-600 border-slate-300 focus:ring-brand-500 focus:ring-offset-0 cursor-pointer" type="checkbox"/>
+<span class="text-sm font-medium text-slate-700">Remember Me</span>
+</label>
+<a class="text-sm font-semibold text-brand-600 hover:text-brand-700 transition" href="#">
+                Forgot Password?
+              </a>
+</div>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-2 group text-base" type="submit">
+<span>Login</span>
+<span class="text-lg transition-transform group-hover:translate-x-1">→</span>
+</button>
+</div>
+</form>
+<!-- END: LoginForm -->
+<!-- Divider -->
+<div class="relative my-7">
+<div aria-hidden="true" class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200"></div>
+</div>
+<div class="relative flex justify-center text-xs text-slate-400">
+<span class="bg-white px-3 font-normal">or continue with</span>
+</div>
+</div>
+<!-- BEGIN: SocialAuthRow -->
+<div class="grid grid-cols-3 gap-3" data-purpose="social-login-providers">
+<!-- Google Button -->
+<button aria-label="Sign in with Google" class="flex items-center justify-center py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.14C3.27 21.36 7.35 24 12 24z" fill="#34A853"></path>
+<path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.59H1.26A11.96 11.96 0 000 12c0 1.92.45 3.74 1.26 5.41l4.02-3.14z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.27 2.64 1.26 6.59l4.02 3.14c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
+</svg>
+</button>
+<!-- Microsoft Button -->
+<button aria-label="Sign in with Microsoft" class="flex items-center justify-center py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm" type="button">
+<svg class="w-5 h-5" viewbox="0 0 23 23">
+<path d="M1 1h10v10H1z" fill="#f35325"></path>
+<path d="M12 1h10v10H12z" fill="#81bc06"></path>
+<path d="M1 12h10v10H1z" fill="#05a6f0"></path>
+<path d="M12 12h10v10H12z" fill="#ffba08"></path>
+</svg>
+</button>
+<!-- GitHub Button -->
+<button aria-label="Sign in with GitHub" class="flex items-center justify-center py-2.5 px-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm text-slate-900" type="button">
+<svg class="w-5 h-5 fill-current" viewbox="0 0 24 24">
+<path clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<!-- END: SocialAuthRow -->
+<!-- Footer Prompt -->
+<div class="mt-8 text-center text-sm text-slate-600 font-medium">
+            Don't have an account? 
+            <a class="text-brand-600 font-bold hover:underline ml-1" href="#">Sign Up</a>
+</div>
+</div>
+</section>
+</main>
+<!-- END: ContentArea -->
+</div>
+<!-- END: MainContainer -->
+</body></html>

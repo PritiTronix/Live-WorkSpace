@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Account - Live Workspace</title>
+<!-- Tailwind CSS CDN with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#6347f9',
+              primary: '#6040f0',
+              deep: '#4f35cf',
+              dark: '#1e1c2e'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 20px 45px -10px rgba(99, 71, 249, 0.08), 0 10px 25px -5px rgba(0, 0, 0, 0.04)',
+            'laptop': '0 25px 50px -12px rgba(60, 40, 140, 0.22)',
+            'mug': '0 12px 24px -6px rgba(99, 71, 249, 0.28)'
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="background-patterns">
+    .dot-pattern {
+      background-image: radial-gradient(#9387e0 1.2px, transparent 1.2px);
+      background-size: 14px 14px;
+    }
+    .chart-donut-1 {
+      background: conic-gradient(
+        #3b82f6 0% 45%,
+        #eab308 45% 75%,
+        #22c55e 75% 100%
+      );
+    }
+    .chart-donut-2 {
+      background: conic-gradient(
+        #ef4444 0% 25%,
+        #f97316 25% 65%,
+        #eab308 65% 100%
+      );
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-gradient-to-br from-[#f8f6ff] via-[#f3eeff] to-[#fbf9ff] min-h-screen text-slate-800 antialiased selection:bg-brand-primary selection:text-white">
+<!-- BEGIN: Page Wrapper -->
+<main class="w-full min-h-screen flex items-center justify-center p-4 lg:p-8 xl:p-12 relative overflow-hidden" data-purpose="main-layout-container">
+<!-- Subtle Dot Grid Accent Top Left -->
+<div aria-hidden="true" class="dot-pattern absolute top-6 left-8 w-28 h-28 opacity-40 pointer-events-none"></div>
+<!-- Main Responsive Two-Column Grid -->
+<div class="w-full max-w-[1480px] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-center">
+<!-- BEGIN: Left Showcase Column -->
+<section class="lg:col-span-7 flex flex-col justify-between h-full pt-4 pb-2" data-purpose="brand-showcase">
+<!-- Header Branding & Tagline -->
+<header class="space-y-6">
+<!-- Logo -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#6040f0] to-[#8062ff] flex items-center justify-center shadow-md shadow-brand-primary/20 text-white">
+<!-- Custom Stylized 'W' -->
+<svg class="w-6 h-6" fill="none" viewbox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 7L8 21L12.5 11L15.5 17.5L19.5 7L24 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"></path>
+</svg>
+</div>
+<span class="text-2xl font-bold tracking-tight text-slate-900">Live Workspace</span>
+</div>
+<!-- Main Headlines -->
+<div class="space-y-3 pt-2">
+<h1 class="text-4xl sm:text-5xl xl:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
+              One Workspace.<br/>
+<span class="text-[#6040f0]">Complete Project Visibility.</span>
+</h1>
+<p class="text-slate-600 text-base sm:text-lg max-w-xl font-normal leading-relaxed">
+              Manage projects, tasks, tickets, deadlines, and team collaboration from a single place.
+            </p>
+</div>
+</header>
+<!-- Mockup Scene (Laptop + Plant + Branded Mug) -->
+<div class="relative my-7 flex items-end justify-center w-full" data-purpose="dashboard-mockup-scene">
+<!-- Decorative Houseplant (Left) -->
+<div aria-hidden="true" class="hidden sm:flex flex-col items-center absolute -left-2 bottom-1 z-20 pointer-events-none drop-shadow-md">
+<svg class="w-20 h-28 text-emerald-600" fill="none" viewbox="0 0 80 120">
+<!-- Foliage leaves -->
+<path d="M40 70C35 48 18 42 12 40C12 56 26 70 38 72Z" fill="#22c55e" opacity="0.9"></path>
+<path d="M42 66C50 44 68 38 74 36C74 52 58 66 44 68Z" fill="#16a34a"></path>
+<path d="M40 55C32 30 14 22 8 20C8 38 24 54 38 56Z" fill="#15803d"></path>
+<path d="M40 45C42 22 55 10 68 8C68 24 55 42 42 46Z" fill="#22c55e"></path>
+<path d="M38 32C36 14 40 4 41 2C42 14 44 26 40 32Z" fill="#4ade80"></path>
+<!-- Ceramic White Pot -->
+<rect fill="#f8fafc" height="42" rx="6" stroke="#e2e8f0" stroke-width="1.5" width="38" x="22" y="72"></rect>
+<path d="M20 72H62" stroke="#cbd5e1" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+<!-- Realistic Laptop Frame -->
+<div class="w-full max-w-[580px] bg-slate-800 rounded-t-2xl p-2.5 pb-0 shadow-laptop border border-slate-700/60 relative z-10 mx-auto">
+<!-- Screen Header Notch / Camera -->
+<div class="w-2.5 h-2.5 bg-slate-900 rounded-full mx-auto mb-1.5 flex items-center justify-center">
+<div class="w-1 h-1 bg-blue-400/70 rounded-full"></div>
+</div>
+<!-- Laptop Inner Screen: Dashboard -->
+<div class="bg-slate-50 rounded-t-lg overflow-hidden border border-slate-200 text-xs">
+<div class="flex h-[268px]">
+<!-- Dark Dashboard Sidebar -->
+<aside class="w-28 bg-[#161726] text-slate-300 p-2.5 flex flex-col justify-between shrink-0 select-none">
+<div>
+<!-- Mini Logo -->
+<div class="flex items-center gap-1.5 pb-3 border-b border-slate-700/60">
+<div class="w-5 h-5 rounded-md bg-brand-primary text-white flex items-center justify-center font-bold text-[10px]">W</div>
+<span class="font-semibold text-white text-[11px]">Live</span>
+</div>
+<!-- Nav Links -->
+<nav class="mt-2.5 space-y-1">
+<div class="bg-brand-primary text-white px-2 py-1 rounded-md text-[10px] font-medium flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span> Home
+                      </div>
+<div class="px-2 py-1 rounded hover:bg-slate-800 text-[10px] text-slate-400">Projects</div>
+<div class="px-2 py-1 rounded hover:bg-slate-800 text-[10px] text-slate-400">Tickets</div>
+<div class="px-2 py-1 rounded hover:bg-slate-800 text-[10px] text-slate-400">Team</div>
+<div class="px-2 py-1 rounded hover:bg-slate-800 text-[10px] text-slate-400">Reports</div>
+<div class="px-2 py-1 rounded hover:bg-slate-800 text-[10px] text-slate-400">Settings</div>
+</nav>
+</div>
+<div class="text-[9px] text-slate-500 font-mono">v2.4.0 Cloud</div>
+</aside>
+<!-- Dashboard Content Area -->
+<div class="flex-1 bg-white p-3 flex flex-col justify-between overflow-hidden">
+<!-- Dashboard Top Bar -->
+<div class="flex items-center justify-between pb-2 border-b border-slate-100">
+<div class="flex items-center bg-slate-100 rounded-md px-2 py-1 text-[10px] text-slate-400 w-36 gap-1">
+<svg class="w-3 h-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<span>Search...</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-4 h-4 text-slate-400">🔔</div>
+<div class="w-5 h-5 rounded-full bg-brand-primary/20 text-brand-primary font-bold flex items-center justify-center text-[10px]">AM</div>
+</div>
+</div>
+<!-- Greeting -->
+<div class="pt-2">
+<div class="text-[12px] font-bold text-slate-900">Good Morning, Aarav! 👋</div>
+</div>
+<!-- 4 Mini Metric Cards -->
+<div class="grid grid-cols-4 gap-1.5 my-1.5">
+<div class="bg-blue-50/70 p-1.5 rounded border border-blue-100/70 text-center">
+<div class="text-[12px] font-bold text-slate-900 leading-tight">12</div>
+<div class="text-[8px] text-slate-500">Projects</div>
+</div>
+<div class="bg-purple-50/70 p-1.5 rounded border border-purple-100/70 text-center">
+<div class="text-[12px] font-bold text-slate-900 leading-tight">248</div>
+<div class="text-[8px] text-slate-500">Tasks</div>
+</div>
+<div class="bg-rose-50/70 p-1.5 rounded border border-rose-100/70 text-center">
+<div class="text-[12px] font-bold text-slate-900 leading-tight">37</div>
+<div class="text-[8px] text-slate-500">Tickets</div>
+</div>
+<div class="bg-emerald-50/70 p-1.5 rounded border border-emerald-100/70 text-center">
+<div class="text-[12px] font-bold text-emerald-700 leading-tight">92%</div>
+<div class="text-[8px] text-slate-500">SLA</div>
+</div>
+</div>
+<!-- Charts Row -->
+<div class="grid grid-cols-2 gap-2 mt-0.5">
+<!-- Donut Chart 1 -->
+<div class="bg-slate-50 p-2 rounded border border-slate-100 flex items-center justify-between">
+<div>
+<div class="text-[9px] font-semibold text-slate-700">Tasks Status</div>
+<div class="text-[7px] text-slate-400 mt-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span> Done (65%)</div>
+<div class="text-[7px] text-slate-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block"></span> Progress</div>
+</div>
+<div class="w-11 h-11 rounded-full chart-donut-1 flex items-center justify-center p-1.5 shadow-inner">
+<div class="w-full h-full bg-white rounded-full"></div>
+</div>
+</div>
+<!-- Donut Chart 2 -->
+<div class="bg-slate-50 p-2 rounded border border-slate-100 flex items-center justify-between">
+<div>
+<div class="text-[9px] font-semibold text-slate-700">Ticket Severity</div>
+<div class="text-[7px] text-slate-400 mt-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Blocker</div>
+<div class="text-[7px] text-slate-400 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block"></span> Major</div>
+</div>
+<div class="w-11 h-11 rounded-full chart-donut-2 flex items-center justify-center p-1.5 shadow-inner">
+<div class="w-full h-full bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Laptop Base Stand -->
+<div class="h-2.5 bg-gradient-to-b from-slate-400 to-slate-500 -mx-4 rounded-b-xl shadow-md flex justify-center items-center">
+<div class="w-16 h-1 bg-slate-600 rounded-full"></div>
+</div>
+</div>
+<!-- Branded Purple Coffee Mug (Right) -->
+<div aria-hidden="true" class="absolute -right-2 sm:right-2 bottom-0 z-20 flex items-end pointer-events-none">
+<div class="relative w-12 h-14 bg-gradient-to-br from-brand-primary to-purple-800 rounded-b-2xl rounded-t-sm shadow-mug flex items-center justify-center text-white">
+<!-- Mug W logo -->
+<span class="font-extrabold text-[12px] opacity-90 tracking-tighter">W</span>
+<!-- Mug handle -->
+<div class="absolute -right-2.5 top-2.5 w-3.5 h-7 border-[3px] border-brand-primary rounded-r-xl"></div>
+</div>
+</div>
+</div>
+<!-- Bottom Feature Highlights -->
+<footer class="pt-2 border-t border-purple-200/50" data-purpose="features-summary-bar">
+<div class="grid grid-cols-5 gap-2 text-center">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-lg bg-white shadow-sm border border-purple-100 text-brand-primary flex items-center justify-center mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700 leading-tight">Project<br/>Management</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-lg bg-white shadow-sm border border-purple-100 text-brand-primary flex items-center justify-center mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700 leading-tight">Ticket<br/>Tracking</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-lg bg-white shadow-sm border border-purple-100 text-brand-primary flex items-center justify-center mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700 leading-tight">Real-Time<br/>Collaboration</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-lg bg-white shadow-sm border border-purple-100 text-brand-primary flex items-center justify-center mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700 leading-tight">SLA<br/>Monitoring</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-lg bg-white shadow-sm border border-purple-100 text-brand-primary flex items-center justify-center mb-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<span class="text-[11px] font-medium text-slate-700 leading-tight">Analytics &amp;<br/>Reports</span>
+</div>
+</div>
+</footer>
+</section>
+<!-- END: Left Showcase Column -->
+<!-- BEGIN: Right Signup Card Column -->
+<section class="lg:col-span-5 flex justify-center w-full" data-purpose="registration-card-wrapper">
+<div class="w-full max-w-[490px] bg-white rounded-[32px] p-7 sm:p-9 shadow-card border border-purple-100/80 transition-all relative">
+<!-- Card Header Logo Badge -->
+<div class="flex flex-col items-center text-center">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#6040f0] to-[#8062ff] flex items-center justify-center shadow-lg shadow-brand-primary/25 text-white mb-4">
+<!-- Stylized 'W' -->
+<svg class="w-8 h-8" fill="none" viewbox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 7L8 21L12.5 11L15.5 17.5L19.5 7L24 21" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"></path>
+</svg>
+</div>
+<h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Create Account</h2>
+<p class="text-slate-500 text-xs sm:text-sm mt-1.5 font-normal max-w-xs">
+              Start managing your workspace, projects, and SLAs in seconds.
+            </p>
+</div>
+<!-- Signup Form -->
+<form action="#" class="mt-6 space-y-3.5" data-purpose="signup-form" method="POST" onsubmit="event.preventDefault();">
+<!-- Full Name Field -->
+<div>
+<label class="sr-only" for="full-name">Full Name</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7 7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<input class="block w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors bg-white hover:border-slate-300" id="full-name" name="fullName" placeholder="Full Name" required="" type="text" value="Aarav Mehta"/>
+</div>
+</div>
+<!-- Work Email Field -->
+<div>
+<label class="sr-only" for="work-email">Work Email</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<input class="block w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors bg-white hover:border-slate-300" id="work-email" name="email" placeholder="Work Email Address" required="" type="email" value="aarav@acmetech.io"/>
+</div>
+</div>
+<!-- Workspace / Org Name Field -->
+<div>
+<label class="sr-only" for="workspace-name">Workspace / Organization Name</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<input class="block w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors bg-white hover:border-slate-300" id="workspace-name" name="workspaceName" placeholder="Workspace / Organization Name" required="" type="text" value="Acme Technologies"/>
+</div>
+</div>
+<!-- Password Field with Visibility Toggle & Strength Bar -->
+<div class="space-y-1.5">
+<label class="sr-only" for="signup-password">Password</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<input class="block w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors bg-white hover:border-slate-300" id="signup-password" name="password" placeholder="Create Password" required="" type="password" value="••••••••••••"/>
+<!-- Show / Hide Password Eye Toggle -->
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" type="button">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.264 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Password Strength Indicator (Compact 4-Bar) -->
+<div aria-hidden="true" class="px-0.5 pt-0.5 flex items-center justify-between gap-1.5">
+<div class="h-1 flex-1 rounded-full bg-emerald-500"></div>
+<div class="h-1 flex-1 rounded-full bg-emerald-500"></div>
+<div class="h-1 flex-1 rounded-full bg-emerald-500"></div>
+<div class="h-1 flex-1 rounded-full bg-slate-200"></div>
+<span class="text-[10px] text-emerald-600 font-semibold pl-1">Strong</span>
+</div>
+</div>
+<!-- Confirm Password Field -->
+<div>
+<label class="sr-only" for="confirm-password">Confirm Password</label>
+<div class="relative rounded-xl shadow-sm">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<input class="block w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition-colors bg-white hover:border-slate-300" id="confirm-password" name="confirmPassword" placeholder="Confirm Password" required="" type="password" value="••••••••••••"/>
+<!-- Matched Indicator Icon -->
+<div class="absolute inset-y-0 right-0 pr-3 flex items-center text-emerald-500 pointer-events-none">
+<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+</div>
+</div>
+</div>
+<!-- Terms & Privacy Agreement Checkbox -->
+<div class="flex items-start gap-2.5 pt-1">
+<input checked="" class="h-4 w-4 mt-0.5 rounded border-slate-300 text-brand-primary focus:ring-brand-primary" id="terms" name="terms" type="checkbox"/>
+<label class="text-xs text-slate-600 leading-tight" for="terms">
+                I agree to the <a class="text-brand-primary hover:underline font-medium" href="#">Terms of Service</a> &amp; <a class="text-brand-primary hover:underline font-medium" href="#">Privacy Policy</a>
+</label>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full mt-2 py-3 px-4 rounded-xl bg-brand-primary hover:bg-brand-deep text-white font-semibold text-sm sm:text-base shadow-lg shadow-brand-primary/25 transition-all duration-150 flex items-center justify-center gap-2 group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary active:scale-[0.99]" type="submit">
+<span>Get Started Free</span>
+<span class="transition-transform group-hover:translate-x-1 font-bold">→</span>
+</button>
+</form>
+<!-- Divider: Or Continue With -->
+<div aria-hidden="true" class="relative my-4">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200"></div>
+</div>
+<div class="relative flex justify-center text-xs">
+<span class="bg-white px-3 text-slate-400">or sign up with</span>
+</div>
+</div>
+<!-- Social Authentication Buttons -->
+<div class="grid grid-cols-3 gap-2.5" data-purpose="social-auth-providers">
+<!-- Google -->
+<button aria-label="Sign up with Google" class="flex items-center justify-center py-2 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-brand-primary" type="button">
+<svg class="w-4 h-4" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"></path>
+</svg>
+</button>
+<!-- Microsoft -->
+<button aria-label="Sign up with Microsoft" class="flex items-center justify-center py-2 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-brand-primary" type="button">
+<svg class="w-4 h-4" viewbox="0 0 21 21">
+<rect fill="#f25022" height="9" width="9" x="1" y="1"></rect>
+<rect fill="#7fba00" height="9" width="9" x="11" y="1"></rect>
+<rect fill="#00a4ef" height="9" width="9" x="1" y="11"></rect>
+<rect fill="#ffb900" height="9" width="9" x="11" y="11"></rect>
+</svg>
+</button>
+<!-- GitHub -->
+<button aria-label="Sign up with GitHub" class="flex items-center justify-center py-2 px-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-1 focus:ring-brand-primary text-slate-800" type="button">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" fill-rule="evenodd"></path>
+</svg>
+</button>
+</div>
+<!-- Bottom Prompt: Switch to Login -->
+<div class="mt-5 text-center text-xs text-slate-500">
+<span>Already have an account? </span>
+<a class="font-bold text-brand-primary hover:text-brand-deep hover:underline" href="#">Log In</a>
+</div>
+</div>
+</section>
+<!-- END: Right Signup Card Column -->
+</div>
+</main>
+<!-- END: Page Wrapper -->
+</body></html>

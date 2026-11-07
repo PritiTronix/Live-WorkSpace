@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-sidebar":"#F8F8FC","secondary-fixed":"#e5deff","surface-bright":"#fcf8ff","surface-card":"#FFFFFF","on-tertiary-fixed":"#311300","on-secondary-container":"#595280","inverse-primary":"#cabeff","surface-variant":"#e2e0f8","status-resolved":"#28C078","surface-container":"#eeecff","outline":"#797586","inverse-on-surface":"#f1efff","on-tertiary-fixed-variant":"#743500","on-secondary-fixed":"#1b1540","on-primary-fixed-variant":"#471ac8","on-tertiary":"#ffffff","status-wip":"#6848E8","severity-blocker":"#F55354","canvas-main":"#F9F9FB","on-tertiary-container":"#ffdfcd","on-surface":"#191a2b","text-secondary":"#5C5C70","background":"#fcf8ff","primary-container":"#6848e8","severity-major":"#F8C048","text-primary":"#141529","surface-container-highest":"#e2e0f8","on-secondary-fixed-variant":"#47416e","surface":"#fcf8ff","on-surface-variant":"#484555","status-closed":"#9C9CA9","text-muted":"#9C9CA9","tertiary-fixed":"#ffdbc8","canvas-lavender":"#F5F4FC","surface-tint":"#603edf","surface-container-lowest":"#ffffff","primary-fixed-dim":"#cabeff","on-error":"#ffffff","on-error-container":"#93000a","on-primary":"#ffffff","btn-primary":"#6040F0","error-container":"#ffdad6","on-background":"#191a2b","tertiary-container":"#a44e00","surface-container-low":"#f5f2ff","tertiary":"#7f3b00","on-primary-fixed":"#1c0062","primary-light":"#8870F0","tertiary-fixed-dim":"#ffb689","status-on-hold":"#F8A040","border-subtle":"#E5E5EF","status-open":"#3888F8","primary-hover":"#5639D8","on-primary-container":"#e9e2ff","outline-variant":"#c9c4d8","secondary":"#5f5887","error":"#ba1a1a","severity-critical":"#F8A040","primary":"#4f28cf","surface-dim":"#d9d8f0","secondary-fixed-dim":"#c9c0f6","on-secondary":"#ffffff","secondary-container":"#d1c8fe","surface-container-high":"#e8e6fe","inverse-surface":"#2e2f41","primary-fixed":"#e6deff"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"margin":"2rem","space-xs":"0.25rem","space-sm":"0.5rem","space-lg":"1.5rem","space-md":"1rem","gutter-sm":"1rem","gutter":"1.5rem","space-2xl":"3rem","space-xl":"2rem","margin-mobile":"1rem"},fontFamily:{"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"body-sm":["Inter"],"body-lg":["Inter"],"headline-xl":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"headline-xl-mobile":["Plus Jakarta Sans"],"body-md":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"label-lg":["Inter"]},fontSize:{"headline-lg":["24px",{lineHeight:"32px",letterSpacing:"-0.015em",fontWeight:"700"}],"headline-md":["20px",{lineHeight:"28px",letterSpacing:"-0.01em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"headline-xl":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"700"}],"headline-sm":["16px",{lineHeight:"24px",fontWeight:"600"}],"headline-xl-mobile":["26px",{lineHeight:"34px",letterSpacing:"-0.02em",fontWeight:"700"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.02em",fontWeight:"600"}],"label-lg":["14px",{lineHeight:"20px",fontWeight:"600"}]}}}};</script></head><body class="bg-canvas-main font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-sidebar shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col h-full"><div class="px-space-md py-space-md flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-lg">workspaces</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">Tronix365</span><span class="font-label-sm text-label-sm text-text-secondary leading-tight mt-0.5">Live Workspace</span></div></div><button class="p-1 text-outline hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-sm">unfold_more</span></button></div><div class="px-space-md pb-space-sm"><div class="w-full p-space-sm bg-surface-card rounded-lg shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between cursor-pointer hover:bg-canvas-lavender transition-colors"><div class="flex items-center gap-space-sm min-w-0"><div class="w-2.5 h-2.5 rounded-full bg-status-resolved shrink-0"></div><div class="truncate"><p class="font-label-md text-label-md text-text-primary truncate">Acme Tech</p><p class="font-body-sm text-body-sm text-text-secondary truncate">Enterprise Pro</p></div></div><span class="material-symbols-outlined text-outline text-sm">expand_more</span></div></div><div class="flex-1 overflow-y-auto px-space-md py-space-xs space-y-space-md"><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm py-1 font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Main</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="home" href="#"><span class="material-symbols-outlined text-lg">dashboard</span><span class="font-body-md text-body-md">Home</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="my-tasks" href="#"><span class="material-symbols-outlined text-lg">task_alt</span><span class="font-body-md text-body-md">My Tasks</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="my-tickets" href="#"><span class="material-symbols-outlined text-lg">confirmation_number</span><span class="font-body-md text-body-md">My Tickets</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-lg">inbox</span><span class="font-body-md text-body-md">Inbox</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-container text-on-primary-container">3</span></a></nav><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm py-1 font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Project Management</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="projects" href="#"><span class="material-symbols-outlined text-lg">folder_open</span><span class="font-body-md text-body-md">Projects</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="all-tasks" href="#"><span class="material-symbols-outlined text-lg">check_box</span><span class="font-body-md text-body-md">All Tasks</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="all-tickets" href="#"><span class="material-symbols-outlined text-lg">label_important</span><span class="font-body-md text-body-md">All Tickets</span></a></nav><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm py-1 font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Collaboration</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="team-members" href="#"><span class="material-symbols-outlined text-lg">groups</span><span class="font-body-md text-body-md">Team Members</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="discussions" href="#"><span class="material-symbols-outlined text-lg">forum</span><span class="font-body-md text-body-md">Discussions</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="files" href="#"><span class="material-symbols-outlined text-lg">attach_file</span><span class="font-body-md text-body-md">Files</span></a></nav><nav class="space-y-0.5" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm py-1 font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Monitoring</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="priority-issues" href="#"><span class="material-symbols-outlined text-lg text-severity-blocker">crisis_alert</span><span class="font-body-md text-body-md">Priority Issues</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="sla-overview" href="#"><span class="material-symbols-outlined text-lg">timer</span><span class="font-body-md text-body-md">SLA Overview</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="activity-logs" href="#"><span class="material-symbols-outlined text-lg">list_alt</span><span class="font-body-md text-body-md">Activity Logs</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" data-path="reports" href="#"><span class="material-symbols-outlined text-lg">analytics</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-md mt-auto"><div class="p-space-sm bg-surface-card rounded-lg shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><div class="w-9 h-9 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md font-semibold shrink-0">AM</div><div class="truncate"><p class="font-label-md text-label-md text-text-primary truncate">Aarav Mehta</p><p class="font-body-sm text-body-sm text-text-secondary truncate">Project Manager</p></div></div><button class="p-1 text-outline hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-sm">more_vert</span></button></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-sm text-text-secondary font-body-md text-body-md"><span class="font-label-md text-label-md text-text-muted hover:text-on-surface cursor-pointer">Acme Tech</span><span class="material-symbols-outlined text-sm text-outline">chevron_right</span><span class="font-label-md text-label-md text-text-muted hover:text-on-surface cursor-pointer">Operations</span><span class="material-symbols-outlined text-sm text-outline">chevron_right</span><span class="font-label-md text-label-md text-text-primary font-semibold">Overview</span></div><div class="flex items-center gap-space-md"><div class="relative flex items-center w-80"><span class="material-symbols-outlined absolute left-3 text-outline text-lg pointer-events-none">search</span><input class="w-full h-10 pl-9 pr-14 bg-surface-card rounded-lg font-body-md text-body-md text-text-primary placeholder:text-text-muted outline-none focus:ring-2 focus:ring-primary-light transition-all shadow-[0_1px_2px_rgba(20,21,41,0.02)]" placeholder="Search workspace, issues, tasks..." type="text"/><div class="absolute right-2 px-1.5 py-0.5 bg-canvas-lavender rounded font-mono text-label-sm text-label-sm text-text-secondary pointer-events-none">Ctrl+K</div></div><button class="h-10 px-space-md bg-btn-primary hover:bg-primary-hover active:bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center gap-space-xs shadow-[0_1px_3px_rgba(20,21,41,0.04)] transition-colors" type="button"><span class="material-symbols-outlined text-lg">add</span><span>New Ticket</span></button><div class="flex items-center gap-space-xs"><button class="w-10 h-10 rounded-lg flex items-center justify-center text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors relative" type="button"><span class="material-symbols-outlined text-xl">notifications</span><span class="w-2 h-2 rounded-full bg-severity-blocker absolute top-2 right-2"></span></button><button class="w-10 h-10 rounded-lg flex items-center justify-center text-text-secondary hover:bg-canvas-lavender hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-xl">description</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/></div></div></header><main class="w-full pt-16 bg-canvas-main min-h-screen"><div class="flex flex-col w-full">
+<!-- Dynamic SLA Breach Ambient Warning Banner -->
+<div class="relative overflow-hidden bg-gradient-to-r from-error/15 via-error/10 to-surface-container-high px-space-lg py-space-sm flex flex-wrap items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-8 h-8 rounded-lg bg-severity-blocker text-on-error flex items-center justify-center shrink-0 animate-pulse">
+<span class="material-symbols-outlined text-lg">crisis_alert</span>
+</div>
+<div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md text-severity-blocker uppercase tracking-wider">SLA Target Breached</span>
+<span class="font-mono font-label-md text-label-md px-2 py-0.5 rounded-full bg-severity-blocker text-on-error font-bold">-14m 22s</span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary truncate">
+          Resolution limit for Tier-1 incident exceeded at 10:30 AM EST. Auto-escalated to SRE On-call (#inc-us-east-core).
+        </p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs shrink-0">
+<button class="h-8 px-3 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-sm text-label-sm shadow-sm transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-severity-blocker">notifications_active</span>
+<span>Acknowledge Escalation</span>
+</button>
+<button class="h-8 px-2.5 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-secondary transition-colors" title="View PagerDuty incident">
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- Primary Workspace Content -->
+<div class="p-space-lg max-w-[1720px] w-full mx-auto space-y-space-lg">
+<!-- Header & Action Row -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<!-- Breadcrumb + Ticket ID + Tags -->
+<div class="flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-2 text-text-secondary">
+<div class="flex items-center gap-1.5 font-label-md text-label-md text-text-muted">
+<span class="hover:text-primary cursor-pointer transition-colors">Tickets</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="text-primary font-bold">TKT-1025</span>
+</div>
+<span class="text-text-muted text-xs">•</span>
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error/10 text-severity-blocker font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-severity-blocker"></span>
+            Blocker
+          </div>
+<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-status-wip/15 text-status-wip font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-wip animate-ping"></span>
+            Work in Progress
+          </div>
+<span class="px-2 py-0.5 rounded-md bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">
+            us-east-1a
+          </span>
+<span class="px-2 py-0.5 rounded-md bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">
+            Envoy/0.38
+          </span>
+</div>
+<!-- Quick Top Actions -->
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover active:bg-primary text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-base">edit</span>
+<span>Edit Ticket</span>
+</button>
+<div class="relative inline-block">
+<button class="h-9 px-3.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base text-status-wip">sync_alt</span>
+<span>Change Status</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+</div>
+<button class="h-9 px-3.5 rounded-lg bg-canvas-lavender hover:bg-surface-container text-text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base">person_add</span>
+<span>Reassign</span>
+</button>
+<button class="h-9 w-9 rounded-lg bg-canvas-lavender hover:bg-surface-container text-text-secondary flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-lg">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Main Ticket Title & Editable Row -->
+<div class="flex items-start justify-between gap-space-md pt-space-xs">
+<div class="flex items-baseline gap-space-sm group cursor-pointer">
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">
+            Auth proxy latency spike on us-east cluster
+          </h1>
+<button class="p-1 text-text-muted group-hover:text-primary transition-colors opacity-80 group-hover:opacity-100" title="Edit title inline">
+<span class="material-symbols-outlined text-lg">edit</span>
+</button>
+</div>
+<div class="hidden xl:flex items-center gap-3 shrink-0 text-text-secondary font-body-sm text-body-sm bg-canvas-lavender/60 px-3 py-1.5 rounded-lg">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-base text-text-muted">schedule</span> Reported: 08:30 AM</span>
+<span class="text-text-muted">•</span>
+<span class="flex items-center gap-1 text-severity-blocker font-medium"><span class="material-symbols-outlined text-base">warning</span> Limit: 10:30 AM</span>
+</div>
+</div>
+</div>
+<!-- Asymmetric Bento Grid: Left (Primary Technical Context & Timeline) | Right (Artifacts, Metadata, Team, Logs) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: 8 Columns -->
+<div class="lg:col-span-8 space-y-space-lg">
+<!-- SLA Milestone Flow & KPI Section -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-lg">
+<div class="flex items-center justify-between border-b pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">acute</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Incident SLA Tracking &amp; Milestones</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Tier-1 P0 Agreement</span>
+</div>
+<!-- Horizontal Stepper Visualization -->
+<div class="py-2">
+<div class="grid grid-cols-1 sm:grid-cols-5 gap-3 relative">
+<!-- Step 1: Created -->
+<div class="flex flex-col space-y-1.5 p-3 rounded-lg bg-canvas-lavender/80">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-status-resolved text-on-error flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">check</span>
+</span>
+<span class="font-mono text-body-sm font-semibold text-text-primary">08:30 AM</span>
+</div>
+<p class="font-label-md text-label-md text-text-primary pt-1">Created</p>
+<p class="font-body-sm text-body-sm text-text-secondary">Incident ingested</p>
+</div>
+<!-- Step 2: First Resp Deadline -->
+<div class="flex flex-col space-y-1.5 p-3 rounded-lg bg-canvas-lavender/80">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-status-resolved text-on-error flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">check</span>
+</span>
+<span class="font-mono text-body-sm font-semibold text-text-primary">08:45 AM</span>
+</div>
+<p class="font-label-md text-label-md text-text-primary pt-1">Ack Window</p>
+<p class="font-body-sm text-body-sm text-text-secondary">Target: 15 mins</p>
+</div>
+<!-- Step 3: First Response Met -->
+<div class="flex flex-col space-y-1.5 p-3 rounded-lg bg-status-resolved/10">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-status-resolved text-white flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">task_alt</span>
+</span>
+<span class="font-mono text-body-sm font-semibold text-status-resolved">08:41 AM</span>
+</div>
+<p class="font-label-md text-label-md text-text-primary pt-1">Ack Met (11m)</p>
+<p class="font-body-sm text-body-sm text-status-resolved font-medium">Met 4m ahead</p>
+</div>
+<!-- Step 4: Resolution Deadline -->
+<div class="flex flex-col space-y-1.5 p-3 rounded-lg bg-canvas-lavender/80">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-severity-blocker text-on-error flex items-center justify-center font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">alarm_off</span>
+</span>
+<span class="font-mono text-body-sm font-semibold text-severity-blocker">10:30 AM</span>
+</div>
+<p class="font-label-md text-label-md text-text-primary pt-1">Target Limit</p>
+<p class="font-body-sm text-body-sm text-text-secondary">Total: 2h 00m</p>
+</div>
+<!-- Step 5: SLA Breached Duration -->
+<div class="flex flex-col space-y-1.5 p-3 rounded-lg bg-severity-blocker/15">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-severity-blocker text-on-error flex items-center justify-center font-label-sm text-label-sm animate-pulse">
+<span class="material-symbols-outlined text-sm">priority_high</span>
+</span>
+<span class="font-mono text-body-sm font-bold text-severity-blocker">+14m OVER</span>
+</div>
+<p class="font-label-md text-label-md text-severity-blocker pt-1 font-bold">Breached</p>
+<p class="font-body-sm text-body-sm text-text-secondary">Active penalty tier</p>
+</div>
+</div>
+</div>
+<!-- Metrics Matrix -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md pt-space-xs">
+<div class="p-3.5 bg-canvas-main rounded-xl">
+<span class="font-body-sm text-body-sm text-text-secondary">Response Time</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline-md text-headline-md text-text-primary font-mono">11m</span>
+<span class="font-label-sm text-label-sm text-status-resolved bg-status-resolved/10 px-1.5 py-0.5 rounded">Met</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted mt-1 block">Goal was &lt; 15 min</span>
+</div>
+<div class="p-3.5 bg-canvas-main rounded-xl">
+<span class="font-body-sm text-body-sm text-text-secondary">Resolution Target</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline-md text-headline-md text-text-primary font-mono">2h 00m</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted mt-1 block">Fixed P0 Window</span>
+</div>
+<div class="p-3.5 bg-canvas-main rounded-xl">
+<span class="font-body-sm text-body-sm text-text-secondary">Total Elapsed</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline-md text-headline-md text-severity-blocker font-mono">2h 14m</span>
+<span class="material-symbols-outlined text-base text-severity-blocker">trending_up</span>
+</div>
+<span class="font-body-sm text-body-sm text-severity-blocker mt-1 block">Ticking live</span>
+</div>
+<div class="p-3.5 bg-canvas-main rounded-xl">
+<span class="font-body-sm text-body-sm text-text-secondary">Breach Impact</span>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-headline-md text-headline-md text-severity-critical">Tier II</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-muted mt-1 block">Executive notified</span>
+</div>
+</div>
+</div>
+<!-- Issue Description & Technical Log Traces -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">description</span>
+              Detailed Specification &amp; Replication Steps
+            </h2>
+<button class="p-1 rounded text-text-muted hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">open_in_full</span>
+</button>
+</div>
+<div class="font-body-md text-body-md text-text-primary space-y-space-sm leading-relaxed">
+<p>
+              Starting at roughly <strong>08:24 AM UTC</strong>, synthetic monitors alerted to elevated tail latency (p99 spiked from 18ms to 4,820ms) across all inbound OAuth2 bearer token validations routed through <code class="font-mono text-body-sm px-1.5 py-0.5 bg-canvas-lavender rounded text-primary">auth-proxy-us-east-1</code>.
+            </p>
+<p class="text-text-secondary">
+              Client requests exhibit HTTP 504 Gateway Timeouts intermittently. Initial threadpool inspections point to connection exhaustion in the downstream Redis session cache cluster following certificate auto-renewal.
+            </p>
+</div>
+<!-- Reproduction Steps Box -->
+<div class="p-space-md bg-canvas-lavender/50 rounded-xl space-y-2">
+<span class="font-label-md text-label-md text-text-primary uppercase tracking-wide flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary">terminal</span> Steps to Reproduce
+            </span>
+<ol class="list-decimal list-inside space-y-1 font-body-sm text-body-sm text-text-secondary">
+<li>Dispatch curl payload simulating concurrent user handshake: <code class="font-mono bg-surface-card px-1 rounded">curl -X POST https://api.us-east.tronix365.internal/v2/auth/verify -H "Authorization: Bearer test_token"</code></li>
+<li>Observe response timeline stalls between TLS termination and upstream socket handoff.</li>
+<li>Envoy router metrics log downstream resets with flag <code class="font-mono bg-surface-card px-1 rounded text-severity-blocker">DC (Downstream Connection Termination)</code>.</li>
+</ol>
+</div>
+<!-- Raw Log Snippet Box -->
+<div class="space-y-2">
+<div class="flex items-center justify-between text-xs font-mono text-text-muted px-1">
+<span>envoy-proxy-access.log [Cluster: us-east-node-094]</span>
+<button class="flex items-center gap-1 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span> Copy Raw Logs
+              </button>
+</div>
+<div class="p-space-md bg-inverse-surface text-inverse-on-surface rounded-xl font-mono text-body-sm overflow-x-auto space-y-1">
+<p class="text-text-muted">[2025-11-26T08:28:44.102Z] "POST /v2/auth/verify HTTP/2" 504 - 0 148 4982 - "-" "Tronix-Edge-Client/4.1"</p>
+<p class="text-severity-blocker">[2025-11-26T08:28:45.004Z] upstream connect error or disconnect/reset before headers. reset reason: connection failure, transport failure reason: TLS_handshake_failed:certificate_verify_failed</p>
+<p class="text-severity-major">[2025-11-26T08:28:45.221Z] circuit_breakers: open connections max limit reached for redis_pool_east. pending_requests: 1420</p>
+<p class="text-text-muted">[2025-11-26T08:28:46.331Z] retry budget exhausted, dropping fallback route.</p>
+</div>
+</div>
+</div>
+<!-- Root Cause Analysis (RCA) Distinction Container -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-base">clinical_notes</span>
+</span>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Formal Root Cause Analysis (RCA) Draft</h3>
+<span class="font-body-sm text-body-sm text-text-muted">Separate from informal incident chatter</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-status-on-hold/15 text-status-on-hold font-label-sm text-label-sm">
+              Status: Draft In Review
+            </span>
+</div>
+<div class="p-space-md rounded-xl bg-canvas-lavender/60 space-y-3 font-body-sm text-body-sm text-text-primary">
+<div>
+<span class="font-label-md text-label-md text-text-primary">Trigger Event:</span>
+<p class="text-text-secondary mt-0.5">Automated Cert-Manager CronJob rotated intermediate TLS bundle across Envoy nodes at 08:20 AM without propagating fresh root cert to session-caching cluster.</p>
+</div>
+<div>
+<span class="font-label-md text-label-md text-text-primary">Mitigation in Flight:</span>
+<p class="text-text-secondary mt-0.5">Rolling rollback to prior secret revision <code class="font-mono bg-surface-card px-1 rounded">auth-tls-bundle-v419</code> across all 6 pods.</p>
+</div>
+<div>
+<span class="font-label-md text-label-md text-text-primary">Action Item Tracking:</span>
+<p class="text-text-secondary mt-0.5">Jira task created: INFRA-8891 (Automate TLS verification pre-flight hook).</p>
+</div>
+</div>
+</div>
+<!-- Comments & Discussion Feed -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">forum</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Discussion &amp; Triage Feed</h3>
+<span class="px-2 py-0.5 rounded-full bg-canvas-lavender text-text-secondary font-label-sm text-label-sm font-semibold">4 items</span>
+</div>
+<div class="flex items-center gap-1 text-text-secondary text-body-sm">
+<span class="material-symbols-outlined text-base">filter_list</span>
+<span>Newest first</span>
+</div>
+</div>
+<!-- Comments Feed -->
+<div class="space-y-space-md">
+<!-- Comment 1 -->
+<div class="flex gap-space-md">
+<img class="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm" data-alt="Corporate headshot of Maya Shah, lead engineer with smart glasses in modern high-tech workspace, warm natural light and purple office accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0UrGtooUcWL6X936O-DyXG9TWTl3tz8L7rHrnay4gEIWHBi3Cjb3okzm1q_166imrp_7YPYiWLBhcNnvxFU2OQcdtEnkX-i7zduu4voUHbayxiGA5eHDbESRoiE1WSkTfQr_bC54YVgMJvNhc0nMv7ZjPvq3ITxvuK_kehjg8EIz5uNtb7zaVr-b2alRCqvGw1aW7j-QjIL9PBsBEDAy_QzBYB5jMFcajIZngdKEY"/>
+<div class="flex-1 space-y-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-text-primary">Maya Shah</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-primary-container text-on-primary-container">Lead Frontend / Edge</span>
+<span class="text-text-muted text-xs">• 12 mins ago</span>
+</div>
+<button class="text-text-muted hover:text-text-primary"><span class="material-symbols-outlined text-sm">reply</span></button>
+</div>
+<div class="p-space-md bg-canvas-lavender/40 rounded-xl space-y-2 font-body-md text-body-md text-text-secondary">
+<p>
+                    I have cordoned <code class="font-mono bg-surface-card px-1 py-0.5 rounded text-text-primary">us-east-proxy-03</code> and <code class="font-mono bg-surface-card px-1 py-0.5 rounded text-text-primary">us-east-proxy-04</code>. Shifting 35% of incoming traffic to central cluster. Latency on remaining cluster dropped to 410ms, but still above the 100ms P95 SLO target.
+                  </p>
+<div class="p-2.5 bg-inverse-surface text-inverse-on-surface rounded-lg font-mono text-body-sm">
+                    kubectl exec -it envoy-auth-9f8bc -- envoy-ctl circuit-breaker --force-reset
+                  </div>
+<div class="flex items-center gap-2 pt-1">
+<button class="px-2 py-0.5 rounded-full bg-surface-card text-xs flex items-center gap-1 hover:bg-canvas-lavender transition-colors shadow-sm">
+                      👍 <span>4</span>
+</button>
+<button class="px-2 py-0.5 rounded-full bg-surface-card text-xs flex items-center gap-1 hover:bg-canvas-lavender transition-colors shadow-sm">
+                      👀 <span>2</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Comment 2 -->
+<div class="flex gap-space-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-md text-label-md font-semibold shrink-0 shadow-sm">
+                AM
+              </div>
+<div class="flex-1 space-y-1.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-text-primary">Aarav Mehta</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-canvas-lavender text-text-secondary">Project Manager</span>
+<span class="text-text-muted text-xs">• 38 mins ago</span>
+</div>
+<button class="text-text-muted hover:text-text-primary"><span class="material-symbols-outlined text-sm">reply</span></button>
+</div>
+<div class="p-space-md bg-canvas-lavender/40 rounded-xl space-y-1 font-body-md text-body-md text-text-secondary">
+<p>
+                    Customer support escalation reached 12 tickets from Enterprise tier clients. Upgraded severity from <span class="text-severity-critical font-medium">Critical</span> to <span class="text-severity-blocker font-bold">Blocker</span> per SLA runbook protocol.
+                  </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rich Comment Composer -->
+<div class="p-space-md bg-canvas-lavender/60 rounded-xl space-y-space-sm">
+<span class="font-label-md text-label-md text-text-primary">Post Reply or Operational Update</span>
+<div class="bg-surface-card rounded-lg shadow-sm overflow-hidden">
+<textarea class="w-full p-3 font-body-md text-body-md text-text-primary placeholder:text-text-muted outline-none resize-y" placeholder="Type your comment, update steps, or @mention an engineer..." rows="3"></textarea>
+<!-- Toolbar -->
+<div class="px-3 py-2 bg-canvas-lavender/30 flex items-center justify-between border-t">
+<div class="flex items-center gap-1 text-text-secondary">
+<button class="p-1 rounded hover:bg-canvas-lavender hover:text-primary transition-colors" title="Bold">
+<span class="material-symbols-outlined text-lg">format_bold</span>
+</button>
+<button class="p-1 rounded hover:bg-canvas-lavender hover:text-primary transition-colors" title="Code snippet">
+<span class="material-symbols-outlined text-lg">code</span>
+</button>
+<button class="p-1 rounded hover:bg-canvas-lavender hover:text-primary transition-colors" title="Mention teammate">
+<span class="material-symbols-outlined text-lg">alternate_email</span>
+</button>
+<button class="p-1 rounded hover:bg-canvas-lavender hover:text-primary transition-colors" title="Attach artifact">
+<span class="material-symbols-outlined text-lg">attach_file</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-sm text-label-sm transition-colors">
+                    Draft Save
+                  </button>
+<button class="px-4 py-1.5 rounded-lg bg-btn-primary hover:bg-primary-hover active:bg-primary text-on-primary font-label-sm text-label-sm font-semibold shadow-sm transition-colors flex items-center gap-1.5">
+<span>Post Comment</span>
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: 4 Columns (Metadata, Artifacts, Live Audit Trail) -->
+<div class="lg:col-span-4 space-y-space-lg">
+<!-- 2-Column Structured Metadata Card -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between border-b pb-space-sm">
+<h2 class="font-headline-sm text-headline-sm text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">info</span>
+              Ticket Metadata
+            </h2>
+<button class="text-text-muted hover:text-primary transition-colors text-xs font-semibold">EDIT ALL</button>
+</div>
+<div class="space-y-space-md font-body-sm text-body-sm">
+<!-- Reported By -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Reported By</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-sm text-label-sm font-semibold">AM</div>
+<span class="font-label-md text-label-md text-text-primary">Aarav Mehta</span>
+</div>
+</div>
+<!-- Assigned To -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Assigned To</span>
+<div class="flex items-center gap-2">
+<img class="w-6 h-6 rounded-full object-cover shadow-sm" data-alt="Portrait of Maya Shah, lead software engineer looking directly at the camera with confident calm expression in modern corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPXn1w6bX7XfX1pakvncu96QVZpVgTF4ecalNfomcciW1IK5mpCK5CT4XmfHReRmNtHpCpOOE0hv_55dH-1HF8GsAN4WgKQIt9_w-sgG18H33YuMbijCjbocp-fJRnWhSvqSAyzGyqwXWygDH-3Ze3vBTh1B5b5QwG6H5MIFQYzoZaVPUDti7RFDoUaBAuVeldL0z7cPh56PlVsGnq9UfxBhvWGveNqzIndzknb6ju"/>
+<div class="text-right">
+<p class="font-label-md text-label-md text-text-primary leading-none">Maya Shah</p>
+<p class="font-label-sm text-label-sm text-text-muted mt-0.5">Lead Frontend</p>
+</div>
+</div>
+</div>
+<!-- Project -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Project</span>
+<span class="font-label-md text-label-md text-primary font-semibold hover:underline cursor-pointer">Platform Revamp 2.0</span>
+</div>
+<!-- Created Time -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Created Date/Time</span>
+<span class="font-mono text-text-primary">Nov 26, 2025, 08:30 AM</span>
+</div>
+<!-- Last Updated -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Last Updated</span>
+<span class="font-mono text-status-wip font-semibold">12 mins ago</span>
+</div>
+<!-- Expected Deadline -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Expected Deadline</span>
+<span class="font-mono text-severity-blocker font-bold">Nov 26, 2025, 11:30 AM</span>
+</div>
+<!-- Severity & Impact Tier -->
+<div class="flex items-center justify-between">
+<span class="text-text-secondary">Impact Scope</span>
+<span class="px-2 py-0.5 rounded bg-error/10 text-severity-blocker font-label-sm text-label-sm font-bold">Production Down</span>
+</div>
+</div>
+</div>
+<!-- Downloadable Attachments & Artifacts -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between border-b pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">folder_zip</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Attachments &amp; Artifacts</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">2 files (12.4 MB)</span>
+</div>
+<div class="space-y-space-sm">
+<!-- File 1: PCAP Trace -->
+<div class="p-space-sm rounded-xl bg-canvas-lavender/50 hover:bg-canvas-lavender flex items-center justify-between transition-colors group cursor-pointer">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-surface-card text-primary flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-xl">file_present</span>
+</div>
+<div class="truncate">
+<p class="font-label-md text-label-md text-text-primary truncate group-hover:text-primary transition-colors">envoy-proxy-trace.pcap</p>
+<p class="font-body-sm text-body-sm text-text-secondary">4.2 MB • Packet capture dump</p>
+</div>
+</div>
+<button class="p-2 text-text-muted hover:text-text-primary transition-colors" title="Download trace file">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+</div>
+<!-- File 2: Datadog Latency Spike Screenshot -->
+<div class="p-space-sm rounded-xl bg-canvas-lavender/50 hover:bg-canvas-lavender space-y-2 transition-colors group">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-surface-card text-severity-blocker flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-xl">image</span>
+</div>
+<div class="truncate">
+<p class="font-label-md text-label-md text-text-primary truncate group-hover:text-primary transition-colors">datadog-latency-spike.png</p>
+<p class="font-body-sm text-body-sm text-text-secondary">8.2 MB • Telemetry screenshot</p>
+</div>
+</div>
+<button class="p-2 text-text-muted hover:text-text-primary transition-colors" title="Download image">
+<span class="material-symbols-outlined text-lg">download</span>
+</button>
+</div>
+<!-- High-fidelity preview thumbnail -->
+<div class="relative rounded-lg overflow-hidden h-32 bg-inverse-surface group-hover:opacity-95 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="High tech telemetry monitoring graph dashboard displaying sharp red latency spike from zero to five seconds with purple metric line gradients on dark analytics UI" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAik4aEFYksM9zcyXrtDRWdc_msj5LVgOHlWz26qMvL6OdJJUb6BJHIl7kdy87_4xpAnVZJHNxMhprPuXgg20z1HqNz95PyDmLLO7JSeTWh2DE6YvnTeediGPD4EZwj0cLqqf7qgDSO0KzF4ePKk9vWoOs1gk9sjyuYgSr1zDfITywDMQY8kL7ub8w9qy5ahHNmKU3IdtiPT9v5oqwFAFu_hT0N7jYilvgOVPAge56K"/>
+<div class="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-transparent flex items-end p-2">
+<span class="text-inverse-on-surface font-label-sm text-label-sm font-mono">P99 Spike Graph: 08:24:00 UTC</span>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-2 rounded-lg bg-surface-card hover:bg-canvas-lavender text-primary font-label-md text-label-md transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-base">cloud_upload</span>
+<span>Upload Diagnostic Bundle</span>
+</button>
+</div>
+<!-- Activity History & Audit Trail -->
+<div class="bg-surface-card rounded-xl p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between border-b pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">history</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Audit Log &amp; Event Trail</h2>
+</div>
+<span class="font-label-sm text-label-sm text-text-muted">Live Stream</span>
+</div>
+<!-- Chronological Audit Trail Items -->
+<div class="space-y-space-md relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-canvas-lavender">
+<!-- Event 1 -->
+<div class="flex items-start gap-3 relative">
+<div class="w-6 h-6 rounded-full bg-severity-blocker text-on-error flex items-center justify-center shrink-0 z-10 shadow-sm">
+<span class="material-symbols-outlined text-xs">notifications_active</span>
+</div>
+<div class="space-y-1 min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary leading-tight">
+<strong class="font-semibold text-severity-blocker">SLA breach notification</strong> dispatched to PagerDuty
+                </p>
+<p class="font-mono text-xs text-text-muted">10:30:14 AM • Automated System</p>
+</div>
+</div>
+<!-- Event 2 -->
+<div class="flex items-start gap-3 relative">
+<div class="w-6 h-6 rounded-full bg-btn-primary text-on-primary flex items-center justify-center shrink-0 z-10 shadow-sm">
+<span class="material-symbols-outlined text-xs">sync_alt</span>
+</div>
+<div class="space-y-1 min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary leading-tight">
+                  Status changed from <span class="line-through text-text-muted">Open</span> to <span class="text-status-wip font-semibold">Work in Progress</span> by Maya Shah
+                </p>
+<p class="font-mono text-xs text-text-muted">08:41:02 AM • User Action</p>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="flex items-start gap-3 relative">
+<div class="w-6 h-6 rounded-full bg-status-on-hold text-white flex items-center justify-center shrink-0 z-10 shadow-sm">
+<span class="material-symbols-outlined text-xs">arrow_upward</span>
+</div>
+<div class="space-y-1 min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary leading-tight">
+                  Severity elevated from <span class="line-through text-text-muted">Critical</span> to <span class="text-severity-blocker font-bold">Blocker</span> by Aarav Mehta
+                </p>
+<div class="p-1.5 bg-canvas-lavender rounded text-xs text-text-secondary italic">
+                  "Reason: Customer impact verified on top accounts"
+                </div>
+<p class="font-mono text-xs text-text-muted">08:35:10 AM</p>
+</div>
+</div>
+<!-- Event 4 -->
+<div class="flex items-start gap-3 relative">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 z-10 shadow-sm">
+<span class="material-symbols-outlined text-xs">person</span>
+</div>
+<div class="space-y-1 min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary leading-tight">
+                  Assignment changed from <span class="text-text-muted">Unassigned</span> to <span class="text-text-primary font-semibold">Maya Shah</span>
+</p>
+<p class="font-mono text-xs text-text-muted">08:31:05 AM</p>
+</div>
+</div>
+</div>
+<button class="w-full py-2 text-center text-text-secondary hover:text-text-primary font-label-sm text-label-sm transition-colors">
+            View Complete Ingestion Audit (18 records)
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>
