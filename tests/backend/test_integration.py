@@ -125,3 +125,35 @@ def test_notifications_endpoints(client):
 
     res_read_all = client.patch("/api/v1/notifications/read-all")
     assert res_read_all.status_code == 200
+
+
+def test_auth_and_user_endpoints(client):
+    # 1. Login with seeded credentials
+    login_res = client.post("/api/v1/auth/login", json={"email": "aarav@acmetech.io", "password": "workspace123"})
+    assert login_res.status_code == 200
+    token = login_res.json()["access_token"]
+    assert token
+
+    # 2. Get current user profile using bearer token
+    me_res = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_res.status_code == 200
+    user = me_res.json()
+    assert user["email"] == "aarav@acmetech.io"
+    assert user["role"] == "owner"
+
+
+def test_sla_and_analytics_endpoints(client):
+    # 1. SLA metrics
+    sla_res = client.get("/api/v1/sla/metrics")
+    assert sla_res.status_code == 200
+    assert "adherence_rate" in sla_res.json()
+
+    # 2. SLA policies
+    pol_res = client.get("/api/v1/sla/policies")
+    assert pol_res.status_code == 200
+    assert len(pol_res.json()) >= 1
+
+    # 3. Analytics summary
+    ana_res = client.get("/api/v1/analytics/summary")
+    assert ana_res.status_code == 200
+    assert "total_tasks" in ana_res.json()

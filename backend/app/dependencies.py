@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Optional
+from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -25,15 +25,22 @@ async def get_current_user_id(
     except Exception:
         pass
 
-    # In development or if no token provided, return default active user
-    if not token or token == "null" or token == "undefined" or token.startswith("mock_jwt_token"):
-        return "usr_01"
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate authentication credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not token or token in ("null", "undefined"):
+        if settings.ENVIRONMENT == "development" and settings.DEBUG:
+            return "usr_01"
+        raise credentials_exception
+
+    if token.startswith("mock_jwt_token"):
+        if settings.ENVIRONMENT == "development":
+            return "usr_01"
+        raise credentials_exception
+
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
@@ -41,8 +48,6 @@ async def get_current_user_id(
             raise credentials_exception
         return user_id
     except JWTError:
-        if settings.DEBUG:
-            return "usr_01"
         raise credentials_exception
 
 
@@ -53,12 +58,8 @@ async def get_current_user(
     res = await db.execute(select(User).where(User.id == current_user_id))
     user = res.scalars().first()
     if not user:
-        # Fallback to usr_01
-        res = await db.execute(select(User).where(User.id == "usr_01"))
-        user = res.scalars().first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found in workspace",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in workspace",
+        )
     return user

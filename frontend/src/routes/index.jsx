@@ -22,6 +22,8 @@ import {
 import NotificationCenterPage from '../modules/notifications/pages/NotificationCenterPage';
 import AllTasksPage from '../modules/tasks/pages/AllTasksPage';
 import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
+import ModuleComingSoonPage from '../components/ModuleComingSoonPage';
+import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
 /**
  * AppRoutes
@@ -79,13 +81,76 @@ export const AppRoutes = () => {
         <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
 
         {/* Supporting Modules */}
-        <Route path="sla/*" element={<DashboardOverviewPage />} />
-        <Route path="rca/*" element={<DashboardOverviewPage />} />
-        <Route path="discussions/*" element={<DashboardOverviewPage />} />
-        <Route path="files/*" element={<DashboardOverviewPage />} />
-        <Route path="audit-logs/*" element={<DashboardOverviewPage />} />
-        <Route path="analytics/*" element={<DashboardOverviewPage />} />
-        <Route path="settings/*" element={<DashboardOverviewPage />} />
+        <Route
+          path="sla/*"
+          element={
+            <ModuleComingSoonPage
+              title="SLA Management Engine"
+              description="SLA policy matrix, real-time response counters, and automated breach alerting engine are currently active via backend API endpoints."
+              icon={ShieldCheck}
+            />
+          }
+        />
+        <Route
+          path="rca/*"
+          element={
+            <ModuleComingSoonPage
+              title="Root Cause Analysis (RCA)"
+              description="Incident post-mortem workflows, 5-Whys methodology, and preventative mitigation tracking."
+              icon={Activity}
+            />
+          }
+        />
+        <Route
+          path="discussions/*"
+          element={
+            <ModuleComingSoonPage
+              title="Team Discussions Hub"
+              description="Workspace-wide collaborative threads outside project workspaces. Project discussions remain fully accessible within project tabs."
+              icon={MessageSquare}
+            />
+          }
+        />
+        <Route
+          path="files/*"
+          element={
+            <ModuleComingSoonPage
+              title="Central Files & Assets"
+              description="Central document browser and cloud storage manager. Project-specific files remain fully accessible inside project tabs."
+              icon={FolderGit2}
+            />
+          }
+        />
+        <Route
+          path="audit-logs/*"
+          element={
+            <ModuleComingSoonPage
+              title="Audit Logs & Compliance Trail"
+              description="Enterprise event logging, SOC-2 activity stream, and security history."
+              icon={ShieldCheck}
+            />
+          }
+        />
+        <Route
+          path="analytics/*"
+          element={
+            <ModuleComingSoonPage
+              title="Analytics & Velocity Reports"
+              description="Sprint burn-down metrics, workload distribution matrix, and automated reporting."
+              icon={BarChart3}
+            />
+          }
+        />
+        <Route
+          path="settings/*"
+          element={
+            <ModuleComingSoonPage
+              title="Workspace Settings"
+              description="Organization preferences, SSO authentication, and team access control."
+              icon={Settings}
+            />
+          }
+        />
       </Route>
 
       {/* Catch-all 404 handler redirects to workspace */}

@@ -49,3 +49,7 @@ Thumbs.db
 *.sln
 *.sw?
 .agents/mcp_config.json
+
+# Local SQLite database
+*.db
+*.sqlite3

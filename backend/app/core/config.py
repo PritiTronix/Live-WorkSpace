@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/live_workspace"
-    SYNC_DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/live_workspace"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./live_workspace.db"
+    SYNC_DATABASE_URL: str = "sqlite:///./live_workspace.db"
 
     # Storage
     STORAGE_PROVIDER: str = "local"
