@@ -91,7 +91,7 @@
 | 18 | Live Workspace - Sidebar Component States (Prompt 12) | `0d3a52789e0e42aa8b5da438d8ecea73` | `Layout Component` | ✅ |
 | 19 | Live Workspace - Sidebar Component States (Cleaned) | `88bb8f6682f649da91d79fe3a0b27d71` | `Layout Component` | ✅ |
 | 20 | Live Workspace - Foundation & Overview | `b18bf9d105f3486f8f375aec11475516` | `/design-system` | ⬜ |
-| 21 | Live Workspace - Mobile App Experience (Prompt 89) | `93ae5c9b473d458ebc82d3e7e44de682` | `Responsive Variant` | ⬜ |
+| 21 | Live Workspace - Mobile App Experience (Prompt 89) | `93ae5c9b473d458ebc82d3e7e44de682` | `Responsive Variant` | ✅ |
 
 ---
 
@@ -118,8 +118,8 @@
 
 | # | Screen Name | Stitch ID | Route | Status |
 |:---:|---|---|---|:---:|
-| 27 | Live Workspace - Notification Dropdown (Prompt 16) | `829df37d0666490cb943e3f2f03f6099` | `Header Popover` | ⬜ |
-| 28 | Live Workspace - Notification Center Page (Prompt 17) | `526fa76fee314155bb31133e846bb8bb` | `/workspace/notifications` | ⬜ |
+| 27 | Live Workspace - Notification Dropdown (Prompt 16) | `829df37d0666490cb943e3f2f03f6099` | `Header Popover` | ✅ |
+| 28 | Live Workspace - Notification Center Page (Prompt 17) | `526fa76fee314155bb31133e846bb8bb` | `/workspace/notifications` | ✅ |
 | 29 | Live Workspace - Toast Notification System (Prompt 84) | `e8611f6808af4890a920b8aa8d52ec7d` | `Component Catalog` | ⬜ |
 
 ---
@@ -243,7 +243,14 @@ Batch 1 — Implemented ✅ (7 screens)
 ├── Sidebar Component States (Prompt 12)
 └── Sidebar Component States (Cleaned)
 
-Remaining ⬜ (65 screens across 16 modules)
+Batch 2 — Implemented ✅ (5 screens)
+├── Notification Dropdown (Prompt 16)
+├── Notification Center Page (Prompt 17)
+├── Sidebar Component States (Prompt 12) — extended with sub-nav, badges, collapsed tooltip
+├── Sidebar Component States (Cleaned) — used as source of truth for Sidebar rebuild
+└── Mobile App Experience (Prompt 89) — responsive shell: drawer sidebar + mobile top bar + bottom nav
+
+Remaining ⬜ (60 screens across 16 modules)
 ```
 
 ---

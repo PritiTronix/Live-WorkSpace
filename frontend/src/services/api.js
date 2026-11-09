@@ -320,3 +320,62 @@ export const connectDashboardWebSocket = (onMessage, onError) => {
     return null;
   }
 };
+
+// ---------------------------------------------------------------------------
+// Notification Services — Batch 2
+// ---------------------------------------------------------------------------
+export const notificationService = {
+  list: async (params = {}) => {
+    try {
+      const response = await apiClient.get('/notifications', { params });
+      return response.data;
+    } catch {
+      return { items: [], total: 0, unread_count: 0, page: 1, page_size: 20 };
+    }
+  },
+  getUnreadCount: async () => {
+    try {
+      const response = await apiClient.get('/notifications/unread-count');
+      return response.data.unread_count;
+    } catch {
+      return 0;
+    }
+  },
+  markRead: async (notificationId) => {
+    try {
+      const response = await apiClient.patch(`/notifications/${notificationId}/read`);
+      return response.data;
+    } catch {
+      return { success: false };
+    }
+  },
+  markAllRead: async () => {
+    try {
+      const response = await apiClient.patch('/notifications/read-all');
+      return response.data;
+    } catch {
+      return { marked_count: 0 };
+    }
+  },
+};
+
+export const connectNotificationsWebSocket = (onMessage, onError) => {
+  const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+  const wsUrl = `${base}/api/v1/notifications/ws`;
+  try {
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (onMessage) onMessage(data);
+      } catch (err) {
+        console.error('Notifications WS parse error:', err);
+      }
+    };
+    ws.onerror = (err) => { if (onError) onError(err); };
+    return ws;
+  } catch (err) {
+    console.warn('Notifications WebSocket unavailable:', err);
+    return null;
+  }
+};

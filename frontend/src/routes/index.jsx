@@ -5,10 +5,11 @@ import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import DashboardOverviewPage from '../modules/dashboard/pages/DashboardOverviewPage';
+import NotificationCenterPage from '../modules/notifications/pages/NotificationCenterPage';
 
 /**
  * AppRoutes
- * Central route configuration orchestrating modular route endpoints
+ * Central route configuration orchestrating modular route endpoints.
  */
 export const AppRoutes = () => {
   return (
@@ -32,6 +33,7 @@ export const AppRoutes = () => {
       <Route path="/workspace" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
+        <Route path="notifications" element={<NotificationCenterPage />} />
         <Route path="projects/*" element={<DashboardOverviewPage />} />
         <Route path="tasks/*" element={<DashboardOverviewPage />} />
         <Route path="tickets/*" element={<DashboardOverviewPage />} />
@@ -43,6 +45,7 @@ export const AppRoutes = () => {
         <Route path="members/*" element={<DashboardOverviewPage />} />
         <Route path="audit-logs/*" element={<DashboardOverviewPage />} />
         <Route path="settings/*" element={<DashboardOverviewPage />} />
+        <Route path="inbox" element={<DashboardOverviewPage />} />
       </Route>
 
       {/* Fallback */}
