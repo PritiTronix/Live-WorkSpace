@@ -20,7 +20,10 @@ async def get_current_user_id(
     db: AsyncSession = Depends(get_db)
 ) -> str:
     # Ensure database has initial seeded records if running empty
-    await seed_initial_data_if_empty(db)
+    try:
+        await seed_initial_data_if_empty(db)
+    except Exception:
+        pass
 
     # In development or if no token provided, return default active user
     if not token or token == "null" or token == "undefined" or token.startswith("mock_jwt_token"):

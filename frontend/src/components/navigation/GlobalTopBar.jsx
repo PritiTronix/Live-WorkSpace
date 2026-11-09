@@ -1,20 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authService, DEFAULT_USER } from '../../services/api';
+import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
 
 export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
   activeBreadcrumbs = ['Live Workspace', 'Platform Revamp', 'Overview'],
-  unreadNotifications = 3,
+  unreadNotifications = 0,
   slaBreachCount = 2,
   isCollapsed = false,
 }) => {
   const [user, setUser] = useState(DEFAULT_USER);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [presence, setPresence] = useState('ONLINE');
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const profileRef = useRef(null);
+  const notifRef = useRef(null);
 
   useEffect(() => {
     authService.getCurrentUser().then((userData) => {
@@ -25,11 +28,14 @@ export const GlobalTopBar = ({
     });
   }, []);
 
-  // Close profile dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -101,7 +107,7 @@ export const GlobalTopBar = ({
         </div>
       </div>
 
-      {/* 3. Right Region: CTA, Notification Alarms & Profile */}
+      {/* 3. Right Region: CTA, Notification Bell & Profile */}
       <div className="flex items-center gap-space-md">
         {/* Quick Create Action Button */}
         <button
@@ -118,12 +124,13 @@ export const GlobalTopBar = ({
 
         {/* Notifications & Help Utilities */}
         <div className="flex items-center gap-space-xs">
-          {/* Notification Bell with SLA Alarm Trigger */}
-          <div className="relative group/notif">
+          {/* Notification Bell */}
+          <div ref={notifRef} className="relative">
             {slaBreachCount > 0 ? (
               <button
                 aria-label="Active Breach Notifications"
-                className="relative w-10 h-10 rounded-lg bg-error-container text-severity-blocker flex items-center justify-center shadow-sm hover:bg-error-container/80 transition-colors"
+                onClick={() => setIsNotifOpen((prev) => !prev)}
+                className={`relative w-10 h-10 rounded-lg bg-error-container text-severity-blocker flex items-center justify-center shadow-sm hover:bg-error-container/80 transition-colors ${isNotifOpen ? 'ring-2 ring-severity-blocker' : ''}`}
                 type="button"
               >
                 <span className="material-symbols-outlined text-[20px] animate-bounce">
@@ -139,7 +146,8 @@ export const GlobalTopBar = ({
             ) : (
               <button
                 aria-label="Notifications"
-                className="relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors"
+                onClick={() => setIsNotifOpen((prev) => !prev)}
+                className={`relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors ${isNotifOpen ? 'bg-canvas-lavender text-primary' : ''}`}
                 type="button"
               >
                 <span className="material-symbols-outlined text-[20px]">notifications</span>
@@ -151,14 +159,11 @@ export const GlobalTopBar = ({
               </button>
             )}
 
-            {/* SLA Breach Tooltip Toast */}
-            {slaBreachCount > 0 && (
-              <div className="absolute top-12 right-0 hidden group-hover/notif:flex z-50 whitespace-nowrap bg-inverse-surface text-inverse-on-surface px-3 py-1.5 rounded-lg shadow-xl font-label-sm text-label-sm items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-severity-blocker"></span>
-                <span>{slaBreachCount} SLA breaches require immediate mitigation</span>
-                <div className="w-2 h-2 bg-inverse-surface rotate-45 absolute -top-1 right-4"></div>
-              </div>
-            )}
+            {/* Notification Dropdown */}
+            <NotificationDropdown
+              isOpen={isNotifOpen}
+              onClose={() => setIsNotifOpen(false)}
+            />
           </div>
 
           {/* Documentation Icon */}
@@ -200,7 +205,7 @@ export const GlobalTopBar = ({
             </span>
           </div>
 
-          {/* Expanded Profile Popover Menu (State 4) */}
+          {/* Expanded Profile Popover Menu */}
           {isProfileOpen && (
             <div className="absolute right-0 top-12 w-72 rounded-xl bg-surface-card shadow-xl p-space-sm space-y-space-sm z-50 border border-border-subtle animate-in fade-in zoom-in-95 duration-150">
               <div className="p-space-sm rounded-lg bg-canvas-main flex items-center gap-space-sm">
@@ -228,65 +233,35 @@ export const GlobalTopBar = ({
                   Presence Status
                 </label>
                 <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-surface-container">
-                  <button
-                    onClick={() => handlePresenceChange('ONLINE')}
-                    className={`py-1 px-2 rounded-md font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-all ${
-                      presence === 'ONLINE'
-                        ? 'bg-surface-card shadow-sm text-text-primary font-semibold'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                    type="button"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-status-resolved"></span>
-                    <span>Online</span>
-                  </button>
-                  <button
-                    onClick={() => handlePresenceChange('AWAY')}
-                    className={`py-1 px-2 rounded-md font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-all ${
-                      presence === 'AWAY'
-                        ? 'bg-surface-card shadow-sm text-text-primary font-semibold'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                    type="button"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-status-on-hold"></span>
-                    <span>Away</span>
-                  </button>
-                  <button
-                    onClick={() => handlePresenceChange('DND')}
-                    className={`py-1 px-2 rounded-md font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-all ${
-                      presence === 'DND'
-                        ? 'bg-surface-card shadow-sm text-text-primary font-semibold'
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                    type="button"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-severity-blocker"></span>
-                    <span>DND</span>
-                  </button>
+                  {[['ONLINE', 'bg-status-resolved', 'Online'], ['AWAY', 'bg-status-on-hold', 'Away'], ['DND', 'bg-severity-blocker', 'DND']].map(([val, dotCls, label]) => (
+                    <button
+                      key={val}
+                      onClick={() => handlePresenceChange(val)}
+                      className={`py-1 px-2 rounded-md font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-all ${
+                        presence === val
+                          ? 'bg-surface-card shadow-sm text-text-primary font-semibold'
+                          : 'text-text-secondary hover:text-text-primary'
+                      }`}
+                      type="button"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${dotCls}`}></span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {/* Navigation Items */}
               <div className="pt-1 border-t border-border-subtle space-y-0.5 font-label-md text-label-md">
-                <a
-                  href="#settings"
-                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
-                >
+                <a href="#settings" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
                   <span className="material-symbols-outlined text-[18px]">settings</span>
                   <span>Personal Settings</span>
                 </a>
-                <a
-                  href="#notifications"
-                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
-                >
+                <a href="#notifications" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
                   <span className="material-symbols-outlined text-[18px]">tune</span>
                   <span>Notification Preferences</span>
                 </a>
-                <a
-                  href="#shortcuts"
-                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
-                >
+                <a href="#shortcuts" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
                   <span className="material-symbols-outlined text-[18px]">keyboard</span>
                   <span>Keyboard Shortcuts</span>
                 </a>

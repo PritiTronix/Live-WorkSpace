@@ -153,7 +153,7 @@ export const projectsService = {
    */
   getTasks: async (projectId, params = {}) => {
     const response = await apiClient.get('/tasks', { params: { project_id: projectId, ...params } });
-    return response.data;
+    return Array.isArray(response.data) ? response.data : (response.data?.items || []);
   },
 
   /**

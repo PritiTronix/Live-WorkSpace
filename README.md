@@ -59,6 +59,17 @@ Engineered using modern clean architecture, strict client-server decoupling, and
 ### 7. Centralized Audit & Activity Logs
 - System activity audit log capturing user identity, IP address, timestamp, affected entity UUID, action type, and before/after mutation diffs.
 
+### 8. Enterprise Tasks Management (Batch 3)
+- Dedicated All Tasks (`/workspace/tasks/all`) and My Tasks (`/workspace/tasks/my-tasks`) views with lowercase enum standardization.
+- Contextual Task Details slide-over drawer, creation modal, and status/priority popovers.
+- Task comment composer and object storage attachment picker.
+- Real-time WebSocket event stream (`/api/v1/tasks/ws`) broadcasting create, update, status change, and comment events.
+
+### 9. Real-Time Notification Center & Responsive Shell (Batch 2)
+- Notification Center page (`/workspace/notifications`) and Global Top Bar notification popover with live unread counter.
+- Responsive mobile layout shell featuring a slide-in drawer sidebar, mobile top bar, and bottom navigation bar.
+- WebSocket notification stream (`/api/v1/notifications/ws`) for instant alerts.
+
 ---
 
 ## Tech Stack
@@ -432,8 +443,24 @@ All endpoints are prefixed with `/api/v1` and document their OpenAPI specificati
 | `GET` | `/projects` | List projects in current workspace | **Yes** | Member+ |
 | `POST` | `/projects` | Create a new project workspace | **Yes** | Manager+ |
 | `GET` | `/projects/{id}` | Retrieve project details and tab data | **Yes** | Member+ |
-| `GET` | `/tasks` | List and filter workspace tasks | **Yes** | Member+ |
-| `POST` | `/tasks` | Create a task with assignees & deadline | **Yes** | Member+ |
+| `GET` | `/tasks` | List and filter workspace tasks (paginated) | **Yes** | Member+ |
+| `POST` | `/tasks` | Create task and broadcast real-time event | **Yes** | Member+ |
+| `GET` | `/tasks/my` | List tasks assigned to current authenticated user | **Yes** | Member+ |
+| `GET` | `/tasks/meta/enums` | Get status, priority, and task_type enum options | No | Public |
+| `GET` | `/tasks/{id}` | Retrieve single task with comments & attachments | **Yes** | Member+ |
+| `PATCH`| `/tasks/{id}` | Update task title, description, priority, assignee | **Yes** | Member+ |
+| `PATCH`| `/tasks/{id}/status` | Update task workflow status | **Yes** | Member+ |
+| `DELETE`| `/tasks/{id}` | Delete task and broadcast deletion event | **Yes** | Member+ |
+| `GET` | `/tasks/{id}/comments` | List task comments | **Yes** | Member+ |
+| `POST` | `/tasks/{id}/comments` | Add new task comment | **Yes** | Member+ |
+| `GET` | `/tasks/{id}/attachments`| List task attachment metadata | **Yes** | Member+ |
+| `POST` | `/tasks/{id}/attachments`| Register uploaded file metadata | **Yes** | Member+ |
+| `WS`  | `/tasks/ws` | Real-time WebSocket stream for task events | No | Public |
+| `GET` | `/notifications` | List and filter notifications | **Yes** | Member+ |
+| `GET` | `/notifications/unread-count` | Get live unread notification counter | **Yes** | Member+ |
+| `PATCH`| `/notifications/{id}/read` | Mark individual notification as read | **Yes** | Member+ |
+| `PATCH`| `/notifications/read-all` | Mark all notifications as read | **Yes** | Member+ |
+| `WS`  | `/notifications/ws` | Real-time WebSocket stream for notification alerts | No | Public |
 | `GET` | `/tickets` | List tickets (Table, Board, Priority views) | **Yes** | Member+ |
 | `POST` | `/tickets` | Create ticket & initialize dual SLA timers | **Yes** | Member+ |
 | `PATCH`| `/tickets/{id}/status` | Transition ticket status (Open $\rightarrow$ WIP $\rightarrow$ Resolved) | **Yes** | Member+ |

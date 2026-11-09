@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
@@ -20,36 +19,39 @@ import {
   TicketDetailsPage,
   PriorityIssuesPage,
 } from '../modules/tickets';
+import NotificationCenterPage from '../modules/notifications/pages/NotificationCenterPage';
+import AllTasksPage from '../modules/tasks/pages/AllTasksPage';
+import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
 
 /**
  * AppRoutes
- * Central route configuration orchestrating modular route endpoints
+ * Master application routing configuration
  */
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Landing & Marketing */}
-      <Route path="/" element={<MainLayout />}>
-        <Route index element={<LandingPage />} />
-      </Route>
+      {/* Public Landing Page */}
+      <Route path="/" element={<LandingPage />} />
 
-      {/* Authentication & Onboarding Routes */}
+      {/* Authentication Shell (Screens 01-08) */}
       <Route path="/auth" element={<AuthLayout />}>
-        <Route path="login" element={<div>Login</div>} />
-        <Route path="register" element={<div>Register</div>} />
-        <Route path="verify-email" element={<div>Verify Email</div>} />
-        <Route path="forgot-password" element={<div>Forgot Password</div>} />
-        <Route path="reset-password" element={<div>Reset Password</div>} />
-        <Route path="onboarding" element={<div>Onboarding</div>} />
+        <Route index element={<Navigate to="/auth/login" replace />} />
+        <Route path="login" element={<LandingPage />} />
+        <Route path="register" element={<LandingPage />} />
+        <Route path="forgot-password" element={<LandingPage />} />
+        <Route path="reset-password" element={<LandingPage />} />
+        <Route path="mfa-challenge" element={<LandingPage />} />
       </Route>
 
-      {/* Authenticated Dashboard Workspace Routes */}
+      {/* Main Authenticated Application Shell */}
       <Route path="/workspace" element={<DashboardLayout />}>
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
         <Route path="inbox" element={<DashboardOverviewPage />} />
+        <Route path="notifications" element={<NotificationCenterPage />} />
+
+        {/* Projects Listing & Workspace Routes (Screens 18, 38-45) */}
         <Route path="projects" element={<ProjectsListPage />} />
-        {/* Project Workspace Routes (Screens 38-45) */}
         <Route path="projects/:id" element={<ProjectWorkspacePage />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<ProjectOverviewTab />} />
@@ -60,7 +62,13 @@ export const AppRoutes = () => {
           <Route path="activity" element={<ProjectActivityTab />} />
           <Route path="tickets" element={<ProjectOverviewTab />} />
         </Route>
-        <Route path="tasks/*" element={<DashboardOverviewPage />} />
+
+        {/* Task Management Routes (Screens 30-35 / Batch 3) */}
+        <Route path="tasks" element={<AllTasksPage />} />
+        <Route path="tasks/all" element={<AllTasksPage />} />
+        <Route path="tasks/my-tasks" element={<MyTasksPage />} />
+        <Route path="tasks/my" element={<MyTasksPage />} />
+
         {/* Ticket Management Routes (Screens 61-65, 69) */}
         <Route path="tickets" element={<TicketsDashboardPage />} />
         <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
@@ -69,18 +77,19 @@ export const AppRoutes = () => {
         <Route path="tickets/critical" element={<PriorityIssuesPage />} />
         <Route path="tickets/:id" element={<TicketDetailsPage />} />
         <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
+
+        {/* Supporting Modules */}
         <Route path="sla/*" element={<DashboardOverviewPage />} />
         <Route path="rca/*" element={<DashboardOverviewPage />} />
         <Route path="discussions/*" element={<DashboardOverviewPage />} />
         <Route path="files/*" element={<DashboardOverviewPage />} />
-        <Route path="analytics/*" element={<DashboardOverviewPage />} />
-        <Route path="members/*" element={<DashboardOverviewPage />} />
         <Route path="audit-logs/*" element={<DashboardOverviewPage />} />
+        <Route path="analytics/*" element={<DashboardOverviewPage />} />
         <Route path="settings/*" element={<DashboardOverviewPage />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch-all 404 handler redirects to workspace */}
+      <Route path="*" element={<Navigate to="/workspace/dashboard" replace />} />
     </Routes>
   );
 };
