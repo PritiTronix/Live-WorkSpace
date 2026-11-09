@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class BaseSchema(BaseModel):
@@ -162,18 +162,156 @@ class ProjectRead(ProjectBase):
 
 
 # --- Ticket & Task Schemas ---
+class TaskBase(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    status: str = "to_do"  # to_do, in_progress, in_review, done
+    priority: str = "medium"  # low, medium, high, blocker
+
+
+class TaskCreate(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "to_do"
+    priority: Optional[str] = "medium"
+    project_id: str
+    assigned_to_id: Optional[str] = None
+
+
+class TaskUpdate(BaseSchema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    assigned_to_id: Optional[str] = None
+
+
+class TaskRead(TaskBase):
+    id: str
+    task_number: str
+    project_id: str
+    assigned_to_id: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    assignee: Optional[UserRead] = None
+
+
 class TicketBase(BaseSchema):
     title: str
     description: Optional[str] = None
     severity: str  # blocker, critical, major, minor
-    status: str    # open, wip, on-hold, resolved, closed
+    status: str    # open, wip, on_hold, resolved, closed
 
 
 class TicketRead(TicketBase):
     id: str
+    ticket_number: Optional[str] = None
     project_id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+# --- Discussions Schemas ---
+class DiscussionCommentBase(BaseSchema):
+    content: str
+
+
+class DiscussionCommentCreate(BaseSchema):
+    content: str
+
+
+class DiscussionCommentRead(DiscussionCommentBase):
+    id: str
+    discussion_id: str
+    author_id: str
+    created_at: datetime
+    author: Optional[UserRead] = None
+
+
+class DiscussionBase(BaseSchema):
+    title: str
+    content: str
+    category: str = "general"
+    is_pinned: bool = False
+    is_resolved: bool = False
+    reactions: Optional[str] = "{}"
+
+
+class DiscussionCreate(BaseSchema):
+    title: str
+    content: str
+    category: Optional[str] = "general"
+    is_pinned: Optional[bool] = False
+    reactions: Optional[str] = "{}"
+
+
+class DiscussionRead(DiscussionBase):
+    id: str
+    project_id: str
+    author_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    author: Optional[UserRead] = None
+    comments: List[DiscussionCommentRead] = Field(default_factory=list)
+
+
+# --- Project Files Schemas ---
+class ProjectFileBase(BaseSchema):
+    name: str
+    file_type: str = "document"
+    size_bytes: int = 0
+    file_url: str = ""
+    is_pinned: bool = False
+    linked_task_number: Optional[str] = None
+
+
+class ProjectFileCreate(BaseSchema):
+    name: str
+    file_type: Optional[str] = "document"
+    size_bytes: Optional[int] = 0
+    file_url: Optional[str] = ""
+    is_pinned: Optional[bool] = False
+    linked_task_number: Optional[str] = None
+
+
+class ProjectFileRead(ProjectFileBase):
+    id: str
+    project_id: str
+    uploader_id: str
+    created_at: datetime
+    uploader: Optional[UserRead] = None
+
+
+# --- Project Activity Schemas ---
+class ProjectActivityBase(BaseSchema):
+    action: str
+    category: str = "tasks"
+    target_type: str = "task"
+    target_id: Optional[str] = None
+    target_title: Optional[str] = None
+    details: Optional[str] = None
+
+
+class ProjectActivityCreate(ProjectActivityBase):
+    pass
+
+
+class ProjectActivityRead(ProjectActivityBase):
+    id: str
+    project_id: str
+    actor_id: str
+    created_at: datetime
+    actor: Optional[UserRead] = None
+
+
+# --- Project Workspace Summary (Overview Tab) ---
+class ProjectOverviewSummary(BaseSchema):
+    project: ProjectRead
+    burndown: dict
+    milestones: List[dict]
+    team_workload: List[dict]
+    urgent_tickets: List[TicketRead]
+    recent_activity: List[ProjectActivityRead]
 
 
 # --- SLA Schemas ---

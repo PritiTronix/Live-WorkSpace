@@ -8,6 +8,7 @@ from backend.app.routes.tickets import router as tickets_router
 from backend.app.routes.sla import router as sla_router
 from backend.app.routes.rca import router as rca_router
 from backend.app.routes.files import router as files_router
+from backend.app.routes.discussions import router as discussions_router
 from backend.app.routes.analytics import router as analytics_router
 from backend.app.routes.audit_logs import router as audit_logs_router
 from backend.app.routes.settings import router as settings_router
@@ -25,6 +26,7 @@ api_router.include_router(tickets_router, prefix="/tickets", tags=["Tickets"])
 api_router.include_router(sla_router, prefix="/sla", tags=["SLA Management"])
 api_router.include_router(rca_router, prefix="/rca", tags=["Root Cause Analysis"])
 api_router.include_router(files_router, prefix="/files", tags=["Files"])
+api_router.include_router(discussions_router, prefix="/discussions", tags=["Discussions"])
 api_router.include_router(analytics_router, prefix="/analytics", tags=["Analytics & Reports"])
 api_router.include_router(audit_logs_router, prefix="/audit-logs", tags=["Audit Logs"])
 api_router.include_router(settings_router, prefix="/settings", tags=["Settings"])

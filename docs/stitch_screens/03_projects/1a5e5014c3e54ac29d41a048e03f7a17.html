@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-resolved": "#28C078", "error": "#ba1a1a", "secondary-fixed-dim": "#c9c0f6", "severity-critical": "#F8A040", "surface-bright": "#fcf8ff", "primary-fixed": "#e6deff", "on-secondary": "#ffffff", "inverse-on-surface": "#f1efff", "text-secondary": "#5C5C70", "surface-card": "#FFFFFF", "on-primary-fixed-variant": "#471ac8", "inverse-surface": "#2e2f41", "on-primary-container": "#e9e2ff", "secondary": "#5f5887", "secondary-container": "#d1c8fe", "on-surface-variant": "#484555", "primary": "#4f28cf", "secondary-fixed": "#e5deff", "primary-container": "#6848e8", "severity-blocker": "#F55354", "tertiary": "#7f3b00", "primary-light": "#8870F0", "outline": "#797586", "primary-hover": "#5639D8", "surface-tint": "#603edf", "text-muted": "#9C9CA9", "on-background": "#191a2b", "btn-primary": "#6040F0", "on-error": "#ffffff", "on-secondary-fixed-variant": "#47416e", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#743500", "status-on-hold": "#F8A040", "status-wip": "#6848E8", "surface": "#fcf8ff", "background": "#fcf8ff", "error-container": "#ffdad6", "on-error-container": "#93000a", "on-primary-fixed": "#1c0062", "tertiary-fixed-dim": "#ffb689", "tertiary-fixed": "#ffdbc8", "inverse-primary": "#cabeff", "on-secondary-fixed": "#1b1540", "surface-container": "#eeecff", "surface-container-high": "#e8e6fe", "canvas-main": "#F9F9FB", "on-surface": "#191a2b", "status-open": "#3888F8", "on-secondary-container": "#595280", "surface-sidebar": "#F8F8FC", "severity-major": "#F8C048", "tertiary-container": "#a44e00", "status-closed": "#9C9CA9", "surface-variant": "#e2e0f8", "border-subtle": "#E5E5EF", "primary-fixed-dim": "#cabeff", "canvas-lavender": "#F5F4FC", "on-tertiary-fixed": "#311300", "surface-container-lowest": "#ffffff", "text-primary": "#141529", "surface-container-highest": "#e2e0f8", "surface-dim": "#d9d8f0", "on-tertiary-container": "#ffdfcd", "outline-variant": "#c9c4d8", "surface-container-low": "#f5f2ff", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xl": "2rem", "gutter-sm": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "1rem", "space-2xl": "3rem" }, "fontFamily": { "label-sm": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-lg": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "body-lg": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }] } } } };</script></head><body class="bg-canvas-main font-body-md text-text-primary min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto"><div class="p-space-md"><div class="flex items-center justify-between pb-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">LW</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">Live Workspace</span><span class="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud</span></div></div><button aria-label="Collapse sidebar" class="w-7 h-7 rounded-lg hover:bg-canvas-lavender hover:text-text-primary text-text-muted flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">dock_to_right</span></button></div><div class="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold">AT</span><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary truncate max-w-[120px]">Acme Tech</span><span class="font-label-sm text-label-sm text-primary">Enterprise Pro</span></div></div><span class="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span></div><div class="mt-space-sm mb-space-md"><button class="w-full h-10 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>Create Action</span></button></div><nav class="space-y-space-md" data-active-classes="bg-canvas-lavender text-primary font-headline-sm font-semibold"><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Workspace</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">home</span><span class="font-label-md text-label-md">Home</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">task_alt</span><span class="font-label-md text-label-md">My Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span class="font-label-md text-label-md">My Tickets</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">inbox</span><span class="font-label-md text-label-md">Inbox</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold">3</span></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Project Management</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="projects" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-label-md text-label-md">Projects</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span><span class="font-label-md text-label-md">All Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_late</span><span class="font-label-md text-label-md">All Tickets</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Collaboration</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="team-members" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-label-md text-label-md">Team Members</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="discussions" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">forum</span><span class="font-label-md text-label-md">Discussions</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="files" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">attach_file</span><span class="font-label-md text-label-md">Files</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Monitoring</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="priority-issues" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">warning</span><span class="font-label-md text-label-md">Priority Issues</span></div><span class="w-2 h-2 rounded-full bg-severity-blocker"></span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="sla-overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">timer</span><span class="font-label-md text-label-md">SLA Overview</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="activity-logs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">history</span><span class="font-label-md text-label-md">Activity Logs</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="reports" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">analytics</span><span class="font-label-md text-label-md">Reports</span></div></a></div></div></nav></div><div class="p-space-md space-y-space-sm"><nav class="space-y-0.5" data-active-classes="bg-canvas-lavender text-primary font-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="help-support" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Help &amp; Support</span></a></nav><div class="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary leading-tight">Aarav Mehta</span><span class="font-body-sm text-body-sm text-text-secondary leading-tight">Project Manager</span></div></div><span class="material-symbols-outlined text-text-muted text-[18px]">more_vert</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><nav aria-label="Breadcrumb" class="flex items-center space-x-1.5 font-label-md text-label-md"><span class="text-text-muted">Live Workspace</span><span class="text-text-muted">/</span><span class="text-text-muted">Platform Revamp</span><span class="text-text-muted">/</span><span class="font-headline-sm text-headline-sm text-text-primary">Overview</span></nav></div><div class="flex-1 max-w-lg mx-space-xl"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span><input class="w-full h-10 pl-9 pr-4 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search tickets, tasks, projects... (Ctrl + K)" type="text"/></div></div><div class="flex items-center gap-space-md"><button class="h-10 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[0_2px_8px_rgba(104,72,232,0.2)] transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>New Ticket</span></button><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-severity-blocker"></span></button><button aria-label="Help Documentation" class="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">menu_book</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-card"></span></div></div></div></header><main class="relative pt-16 min-h-screen bg-canvas-main w-full px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Project Workspace Header & Sub-Navigation -->
+<div class="bg-surface-card rounded-xl shadow-sm mb-space-md overflow-hidden">
+<!-- Project Title Bar -->
+<div class="px-space-lg pt-space-lg pb-space-md flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-12 h-12 rounded-xl bg-canvas-lavender flex items-center justify-center text-primary shadow-sm flex-shrink-0">
+<span class="material-symbols-outlined text-[28px]">rocket_launch</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Platform Revamp 2.0</h1>
+<span class="px-2.5 py-0.5 rounded-full bg-status-wip/10 text-status-wip font-label-sm text-label-sm">Active Sprint 5</span>
+<span class="px-2 py-0.5 rounded-md bg-canvas-lavender text-text-secondary font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span> Private Team
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5 truncate">
+            Core infra decoupling, JWT/OIDC authentication migration &amp; multi-tenant storage pipelines.
+          </p>
+</div>
+</div>
+<!-- Quick Action Group -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="flex -space-x-2 mr-space-xs">
+<img class="w-8 h-8 rounded-full shadow-sm ring-2 ring-surface-card object-cover" data-alt="Close up modern tech corporate avatar of Maya engineer with short dark hair and smart glasses in bright studio lighting with gentle purple ambient highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKiX4oyD4cMP1UXnT6dtdP1Q2W4m2Hkwfjk_x3im5nXg4XrDJhMpRScLbhQ00ag8utk38qfOADARLHJYYT8yYfuMIDEWh0E1JovVZH5N0BGlHPgE4rBZ3YAGXapBsHywos6EWuWKUPDHB-i35mpeb2MCkRVbj8Qo9fH6ZHLAx1sAuRxQCAVuvnfM0if4QHyMBUkpSNzsOcueZzGat7sTWKoaOkNYTjtepe1k_vUoWQ"/>
+<img class="w-8 h-8 rounded-full shadow-sm ring-2 ring-surface-card object-cover" data-alt="Portrait photo of David backend architect wearing navy sweater looking thoughtfully at camera with clean lavender blurred office backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDF87n7hq76xzoXGXP-SwXNpCRydevyT-v5t7q1OixtqZXScZyAeZbFVbK0Pztjvf4MG67CEc1fDzvaZwnNC0js_6jLl1Nsdz6fWWaLyqMaJKwowZzDC2rpH9sLzDa5YOVrAx1aGfnY32tu5-3oqAo3YkQxs1B7otcTd-9KwTUXEBBzEPvxEco7fOD3cBGeWpWunv4vygWrqqqUlEoQw7j6umQb9_SZoajwIMBJVe83"/>
+<img class="w-8 h-8 rounded-full shadow-sm ring-2 ring-surface-card object-cover" data-alt="Portrait of Sarah product designer smiling warmly in modern creative workspace with subtle purple branding accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9uLbX5CYkYGgV0LvL9FqS0Lw4D8ENAApCUqyd0Aaa9ArUzkQAjZsXzXx_0IwOrBN_eQEp5XY4a2rVpPda6CZEYGurtlfdgwBxfaTAJZsgOjn93NfpoTIT-Frwl0tqC5acsqZ3ms2lf2J4Zl73r0qTaMERVBzBJwMzC7fqTpjWqGI4monyMGyo1vZ6cmpXARTtTp5dznVzChnR6QE_WEUX_cO_thFH5Hye33wIowNo"/>
+<span class="w-8 h-8 rounded-full bg-canvas-lavender text-primary font-label-sm text-label-sm flex items-center justify-center font-bold shadow-sm ring-2 ring-surface-card">+4</span>
+</div>
+<button class="h-10 px-3.5 rounded-lg bg-canvas-lavender hover:bg-surface-variant text-text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">share</span>
+<span>Share</span>
+</button>
+<button class="h-10 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add Task</span>
+</button>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex items-center px-space-lg gap-space-lg overflow-x-auto text-text-secondary no-scrollbar">
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+        Overview
+      </a>
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">view_kanban</span>
+        Board <span class="px-1.5 py-0.2 rounded-full bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">42</span>
+</a>
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">confirmation_number</span>
+        Tickets <span class="px-1.5 py-0.2 rounded-full bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">3</span>
+</a>
+<!-- Active Tab: Timeline -->
+<a class="relative pb-3 pt-1 font-label-lg text-label-lg text-primary font-semibold flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">timeline</span>
+        Timeline
+        <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-btn-primary rounded-full"></span>
+</a>
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">chat_bubble_outline</span>
+        Discussion <span class="px-1.5 py-0.2 rounded-full bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">12</span>
+</a>
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">folder</span>
+        Files <span class="px-1.5 py-0.2 rounded-full bg-canvas-lavender text-text-secondary font-label-sm text-label-sm">28</span>
+</a>
+<a class="pb-3 pt-1 font-label-lg text-label-lg hover:text-text-primary transition-colors flex items-center gap-1.5 whitespace-nowrap" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span>
+        Activity
+      </a>
+</nav>
+</div>
+<!-- Top Timeline Controls & Filter Toolbar -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm mb-space-md flex flex-wrap items-center justify-between gap-space-md">
+<!-- Left Controls: View Switcher, Date Range, Zoom -->
+<div class="flex flex-wrap items-center gap-space-md">
+<!-- View Mode Switcher -->
+<div class="flex items-center p-1 bg-canvas-main rounded-lg shadow-inner">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-card text-primary shadow-sm font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px]">waterfall_chart</span>
+<span>Gantt View</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[16px]">view_list</span>
+<span>List View</span>
+</button>
+</div>
+<!-- Date Range Display -->
+<div class="flex items-center gap-2 px-3 py-2 bg-canvas-lavender rounded-lg">
+<span class="material-symbols-outlined text-primary text-[18px]">calendar_month</span>
+<span class="font-label-md text-label-md text-text-primary">Nov 10, 2025 - Dec 28, 2025</span>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-primary font-label-sm text-label-sm">Sprint 4-6</span>
+</div>
+<!-- Zoom Level Segment -->
+<div class="flex items-center bg-canvas-main p-1 rounded-lg">
+<button class="px-2.5 py-1 text-text-secondary hover:text-text-primary font-label-sm text-label-sm rounded transition-colors">Day</button>
+<button class="px-2.5 py-1 bg-surface-card text-primary font-label-sm text-label-sm rounded shadow-sm font-semibold">Week</button>
+<button class="px-2.5 py-1 text-text-secondary hover:text-text-primary font-label-sm text-label-sm rounded transition-colors">Month</button>
+</div>
+</div>
+<!-- Right Controls: Jump to Today, Filters, Dependencies, Add Action -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Jump to Today -->
+<button class="h-9 px-3 rounded-lg bg-canvas-main hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-status-resolved text-[18px]">today</span>
+<span>Jump to Today</span>
+</button>
+<!-- Assignee Filter Dropdown -->
+<div class="relative">
+<button class="h-9 px-3 rounded-lg bg-canvas-main hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-text-secondary text-[16px]">person</span>
+<span>All Assignees</span>
+<span class="material-symbols-outlined text-text-muted text-[16px]">expand_more</span>
+</button>
+</div>
+<!-- Status Filter Dropdown -->
+<div class="relative">
+<button class="h-9 px-3 rounded-lg bg-canvas-main hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-text-secondary text-[16px]">filter_list</span>
+<span>Status: All</span>
+<span class="material-symbols-outlined text-text-muted text-[16px]">expand_more</span>
+</button>
+</div>
+<!-- Show Dependencies Toggle -->
+<label class="flex items-center gap-2 cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-canvas-lavender transition-colors">
+<input checked="" class="w-4 h-4 rounded text-btn-primary focus:ring-0 focus:outline-none accent-btn-primary cursor-pointer" type="checkbox"/>
+<span class="font-label-sm text-label-sm text-text-secondary select-none">Show Dependencies</span>
+</label>
+<!-- Add Milestone/Task Button -->
+<button class="h-9 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1 shadow-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Milestone / Task</span>
+</button>
+</div>
+</div>
+<!-- Main Timeline / Gantt Split Viewport -->
+<div class="bg-surface-card rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Split Container with Synced Scrolling -->
+<div class="flex w-full overflow-x-auto min-h-[580px] relative">
+<!-- LEFT PANE: Task & Milestone Hierarchy (~380px) -->
+<div class="w-[380px] flex-shrink-0 bg-surface-sidebar z-20 shadow-[2px_0_8px_rgba(20,21,41,0.03)] flex flex-col">
+<!-- Table Column Headers -->
+<div class="h-12 px-space-md bg-canvas-lavender/70 flex items-center justify-between text-text-muted font-label-sm text-label-sm tracking-wider uppercase select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">account_tree</span>
+<span>Task &amp; Milestone Name</span>
+</div>
+<div class="flex items-center gap-6 pr-2">
+<span>Duration</span>
+<span>Assignee</span>
+</div>
+</div>
+<!-- Task Tree Rows -->
+<div class="flex flex-col font-body-md text-body-md">
+<!-- EPIC 1: Auth & Token Refactor -->
+<div class="h-11 px-space-md bg-surface-card flex items-center justify-between hover:bg-canvas-lavender/40 transition-colors cursor-pointer group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-primary transition-colors">keyboard_arrow_down</span>
+<span class="material-symbols-outlined text-[18px] text-primary">folder_open</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Auth &amp; Token Refactor</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-full bg-status-resolved/10 text-status-resolved font-label-sm text-label-sm">100%</span>
+</div>
+</div>
+<!-- TASK-198 -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-status-resolved">check_circle</span>
+<span class="font-label-sm text-label-sm text-text-muted">TASK-198</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate" title="Zero-downtime schema migration">Zero-downtime schema migration</span>
+</div>
+<div class="flex items-center gap-5 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-secondary">3d</span>
+<div class="w-6 h-6 rounded-full bg-canvas-lavender text-primary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Maya S.">
+                MS
+              </div>
+</div>
+</div>
+<!-- TASK-204 (Blocker) -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="w-2 h-2 rounded-full bg-severity-blocker animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-severity-blocker font-bold">TASK-204</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate font-medium" title="Refactor Auth Middleware">Refactor Auth Middleware</span>
+</div>
+<div class="flex items-center gap-4 flex-shrink-0">
+<span class="px-1.5 py-0.2 rounded bg-severity-blocker/10 text-severity-blocker font-label-sm text-label-sm font-semibold">P0 Blocker</span>
+<span class="font-label-sm text-label-sm text-text-secondary">5d</span>
+<div class="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm flex items-center justify-center font-bold" title="David K.">
+                DK
+              </div>
+</div>
+</div>
+<!-- EPIC 2: Multi-Tenant Architecture & Storage -->
+<div class="h-11 px-space-md bg-surface-card flex items-center justify-between hover:bg-canvas-lavender/40 transition-colors cursor-pointer group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-primary transition-colors">keyboard_arrow_down</span>
+<span class="material-symbols-outlined text-[18px] text-status-wip">folder_open</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Multi-Tenant Arch &amp; Storage</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm">65%</span>
+</div>
+</div>
+<!-- TASK-209 -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-status-wip">motion_photos_on</span>
+<span class="font-label-sm text-label-sm text-text-muted">TASK-209</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate" title="S3 Bucket CORS &amp; KMS encryption">S3 Bucket CORS &amp; KMS encryption</span>
+</div>
+<div class="flex items-center gap-5 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-secondary">4d</span>
+<div class="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm flex items-center justify-center font-bold" title="David K.">
+                DK
+              </div>
+</div>
+</div>
+<!-- MILESTONE: OIDC 2.0 Gateway QA Signoff -->
+<div class="h-12 pl-10 pr-space-md bg-canvas-lavender/40 hover:bg-canvas-lavender/80 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-severity-critical">diamond</span>
+<span class="font-label-sm text-label-sm font-semibold text-severity-critical">MILESTONE</span>
+<span class="font-body-sm text-body-sm text-text-primary font-semibold truncate" title="OIDC 2.0 Gateway QA Signoff">OIDC 2.0 Gateway QA Signoff</span>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-muted">Dec 01</span>
+<div class="w-6 h-6 rounded-full bg-canvas-lavender text-primary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Priya N.">
+                PN
+              </div>
+</div>
+</div>
+<!-- TASK-215 -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">radio_button_unchecked</span>
+<span class="font-label-sm text-label-sm text-text-muted">TASK-215</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate" title="Redis cluster healthcheck probes">Redis cluster healthcheck probes</span>
+</div>
+<div class="flex items-center gap-5 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-secondary">3d</span>
+<div class="w-6 h-6 rounded-full bg-surface-variant text-text-secondary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Devon K.">
+                DK
+              </div>
+</div>
+</div>
+<!-- EPIC 3: Edge Caching & Pipeline -->
+<div class="h-11 px-space-md bg-surface-card flex items-center justify-between hover:bg-canvas-lavender/40 transition-colors cursor-pointer group">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-primary transition-colors">keyboard_arrow_down</span>
+<span class="material-symbols-outlined text-[18px] text-text-secondary">folder_open</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Edge Caching &amp; Pipeline</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-full bg-surface-variant text-text-secondary font-label-sm text-label-sm">20%</span>
+</div>
+</div>
+<!-- TASK-218 -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">radio_button_unchecked</span>
+<span class="font-label-sm text-label-sm text-text-muted">TASK-218</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate" title="Cloudflare WAF rate limiting">Cloudflare WAF rate limiting</span>
+</div>
+<div class="flex items-center gap-5 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-secondary">5d</span>
+<div class="w-6 h-6 rounded-full bg-canvas-lavender text-primary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Maya S.">
+                MS
+              </div>
+</div>
+</div>
+<!-- TASK-220 -->
+<div class="h-12 pl-10 pr-space-md bg-surface-sidebar hover:bg-canvas-lavender/60 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-text-muted">radio_button_unchecked</span>
+<span class="font-label-sm text-label-sm text-text-muted">TASK-220</span>
+<span class="font-body-sm text-body-sm text-text-primary truncate" title="OpenAPI 3.1 schema definition">OpenAPI 3.1 schema definition</span>
+</div>
+<div class="flex items-center gap-5 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-secondary">4d</span>
+<div class="w-6 h-6 rounded-full bg-canvas-lavender text-secondary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Sarah T.">
+                ST
+              </div>
+</div>
+</div>
+<!-- MILESTONE: General Availability (GA) Deployment -->
+<div class="h-12 pl-10 pr-space-md bg-canvas-lavender/40 hover:bg-canvas-lavender/80 flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="material-symbols-outlined text-[16px] text-primary">diamond</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">MILESTONE</span>
+<span class="font-body-sm text-body-sm text-text-primary font-semibold truncate" title="General Availability Deployment">GA Deployment</span>
+</div>
+<div class="flex items-center gap-3 flex-shrink-0">
+<span class="font-label-sm text-label-sm text-text-muted">Dec 18</span>
+<div class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm flex items-center justify-center font-bold" title="Aarav M.">
+                AM
+              </div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANE: Timeline Canvas & Gantt Bars (~980px grid width) -->
+<div class="flex-1 min-w-[840px] relative bg-surface-card overflow-hidden">
+<!-- Weekly Date Header Columns -->
+<div class="h-12 bg-canvas-lavender/70 grid grid-cols-7 text-center font-label-sm text-label-sm text-text-secondary select-none">
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Nov 10</span>
+<span class="font-bold text-text-primary">W46</span>
+</div>
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Nov 17</span>
+<span class="font-bold text-text-primary">W47</span>
+</div>
+<!-- Today's Column -->
+<div class="flex flex-col justify-center py-1 bg-primary-fixed/20 relative">
+<span class="text-primary font-bold">Nov 24</span>
+<span class="font-bold text-primary">W48</span>
+</div>
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Dec 01</span>
+<span class="font-bold text-text-primary">W49</span>
+</div>
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Dec 08</span>
+<span class="font-bold text-text-primary">W50</span>
+</div>
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Dec 15</span>
+<span class="font-bold text-text-primary">W51</span>
+</div>
+<div class="flex flex-col justify-center py-1">
+<span class="text-text-muted">Dec 22</span>
+<span class="font-bold text-text-primary">W52</span>
+</div>
+</div>
+<!-- Vertical Background Grid Lines -->
+<div class="absolute inset-x-0 bottom-0 top-12 grid grid-cols-7 pointer-events-none">
+<div class="bg-transparent"></div>
+<div class="bg-transparent"></div>
+<div class="bg-canvas-lavender/15"></div>
+<div class="bg-transparent"></div>
+<div class="bg-transparent"></div>
+<div class="bg-transparent"></div>
+<div class="bg-transparent"></div>
+</div>
+<!-- Vertical "Today" Indicator (Nov 26: ~38% horizontal position) -->
+<div class="absolute top-0 bottom-0 left-[38.2%] w-0.5 bg-severity-blocker z-30 pointer-events-none">
+<div class="absolute -top-0 -left-12 px-2 py-0.5 rounded-full bg-severity-blocker text-on-error font-label-sm text-label-sm shadow-md whitespace-nowrap flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+            Today Nov 26
+          </div>
+</div>
+<!-- SVG Dependency Connector Lines Overlay -->
+<svg class="absolute inset-0 top-12 w-full h-[520px] pointer-events-none z-10" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrow" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="6" refy="5" viewbox="0 0 10 10">
+<path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6848E8"></path>
+</marker>
+<marker id="arrow-warn" markerheight="6" markerwidth="6" orient="auto-start-reverse" refx="6" refy="5" viewbox="0 0 10 10">
+<path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#F55354"></path>
+</marker>
+</defs>
+<!-- Dependency 1: TASK-198 (end x: 23%, y: 68px) -> TASK-204 (start x: 23%, y: 116px) -->
+<path d="M 195 68 C 215 68, 195 116, 215 116" fill="none" marker-end="url(#arrow)" stroke="#6848E8" stroke-dasharray="3,3" stroke-width="2"></path>
+<!-- Dependency 2: TASK-204 (end x: 42%, y: 116px) -> TASK-209 (start x: 42.5%, y: 208px) -->
+<path d="M 370 116 C 400 116, 360 208, 385 208" fill="none" marker-end="url(#arrow-warn)" stroke="#F55354" stroke-width="2"></path>
+<!-- Dependency 3: TASK-209 (end x: 52%, y: 208px) -> MILESTONE QA (x: 57.1%, y: 256px) -->
+<path d="M 480 208 C 505 208, 510 256, 550 256" fill="none" marker-end="url(#arrow)" stroke="#6848E8" stroke-dasharray="4,4" stroke-width="2"></path>
+<!-- Dependency 4: TASK-220 (end x: 80%, y: 440px) -> GA Milestone (x: 85.7%, y: 488px) -->
+<path d="M 680 440 C 720 440, 750 488, 835 488" fill="none" marker-end="url(#arrow)" stroke="#6848E8" stroke-dasharray="4,4" stroke-width="2"></path>
+</svg>
+<!-- Gantt Task Rows (Matching Left Pane Heights) -->
+<div class="flex flex-col relative z-20">
+<!-- Epic 1 Row Header -->
+<div class="h-11 flex items-center px-4 bg-canvas-main/40">
+<!-- Epic 1 Aggregate Timeline Span Bar -->
+<div class="ml-[4%] w-[38%] h-3.5 bg-primary/25 rounded-full relative overflow-hidden flex items-center">
+<div class="h-full bg-status-resolved w-full rounded-full"></div>
+</div>
+</div>
+<!-- TASK-198 Row Bar (Done, 3d, Maya S.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[4.5%] w-[18%] h-7 rounded-lg bg-status-resolved text-white shadow-sm flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer group" title="Zero-downtime schema migration (100% Complete)">
+<div class="flex items-center gap-1.5 overflow-hidden">
+<span class="material-symbols-outlined text-[15px]">check</span>
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-198 • Done</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white/20 text-white font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                M
+              </div>
+</div>
+</div>
+<!-- TASK-204 Row Bar (In Progress / P0 Blocker, 5d, David K.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[22.5%] w-[22%] h-7 rounded-lg bg-status-wip text-white shadow-md flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer relative group" title="TASK-204: Refactor Auth Middleware">
+<!-- Warning Striped Border Effect using utility styling -->
+<div class="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-severity-blocker text-on-error font-label-sm text-label-sm font-bold flex items-center gap-0.5 shadow-sm">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+<span>! SLA Overdue 1d</span>
+</div>
+<div class="flex items-center gap-1.5 overflow-hidden">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-204 • Auth Middleware</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white/20 text-white font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                D
+              </div>
+</div>
+</div>
+<!-- Epic 2 Row Header -->
+<div class="h-11 flex items-center px-4 bg-canvas-main/40">
+<!-- Epic 2 Aggregate Timeline Span Bar -->
+<div class="ml-[41%] w-[28%] h-3.5 bg-primary/20 rounded-full relative overflow-hidden flex items-center">
+<div class="h-full bg-primary-container w-[65%] rounded-full"></div>
+</div>
+</div>
+<!-- TASK-209 Row Bar (In Progress, 4d, David K.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[41.5%] w-[16%] h-7 rounded-lg bg-status-wip text-white shadow-sm flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer group" title="S3 Bucket CORS &amp; KMS encryption">
+<div class="flex items-center gap-1.5 overflow-hidden">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-209 • S3 &amp; KMS</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white/20 text-white font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                D
+              </div>
+</div>
+</div>
+<!-- MILESTONE: OIDC 2.0 Gateway QA Signoff (Dec 01) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[57.1%] flex items-center gap-2 group cursor-pointer">
+<!-- Diamond Shape -->
+<div class="w-6 h-6 rotate-45 bg-severity-critical rounded-sm shadow-md flex items-center justify-center text-white transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-[14px] -rotate-45">verified</span>
+</div>
+<div class="flex flex-col -mt-1 bg-surface-card/90 px-2 py-0.5 rounded shadow-sm">
+<span class="font-label-sm text-label-sm font-bold text-severity-critical">OIDC 2.0 QA Signoff</span>
+<span class="font-body-sm text-body-sm text-text-muted">Target: Dec 01</span>
+</div>
+</div>
+</div>
+<!-- TASK-215 Row Bar (To Do, 3d, Devon K.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[48%] w-[12%] h-7 rounded-lg bg-canvas-lavender text-text-primary shadow-sm flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer group" title="TASK-215: Redis cluster healthchecks">
+<div class="flex items-center gap-1 overflow-hidden">
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-215</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white text-text-secondary font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                D
+              </div>
+</div>
+</div>
+<!-- Epic 3 Row Header -->
+<div class="h-11 flex items-center px-4 bg-canvas-main/40">
+<!-- Epic 3 Aggregate Timeline Span Bar -->
+<div class="ml-[58%] w-[38%] h-3.5 bg-primary/20 rounded-full relative overflow-hidden flex items-center">
+<div class="h-full bg-status-open w-[20%] rounded-full"></div>
+</div>
+</div>
+<!-- TASK-218 Row Bar (To Do, 5d, Maya S.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[60%] w-[16%] h-7 rounded-lg bg-canvas-lavender text-text-primary shadow-sm flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer group" title="Cloudflare WAF rate limiting">
+<div class="flex items-center gap-1 overflow-hidden">
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-218 • WAF Limits</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white text-text-secondary font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                M
+              </div>
+</div>
+</div>
+<!-- TASK-220 Row Bar (To Do, 4d, Sarah T.) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[68%] w-[14%] h-7 rounded-lg bg-canvas-lavender text-text-primary shadow-sm flex items-center justify-between px-2.5 transition-transform hover:scale-[1.01] cursor-pointer group" title="OpenAPI 3.1 schema definition">
+<div class="flex items-center gap-1 overflow-hidden">
+<span class="font-label-sm text-label-sm font-semibold truncate">TASK-220 • OpenAPI</span>
+</div>
+<div class="w-5 h-5 rounded-full bg-white text-text-secondary font-label-sm text-label-sm flex items-center justify-center font-bold ml-1 flex-shrink-0">
+                S
+              </div>
+</div>
+</div>
+<!-- MILESTONE: General Availability (GA) Deployment (Dec 18) -->
+<div class="h-12 flex items-center px-4 relative">
+<div class="ml-[85.7%] flex items-center gap-2 group cursor-pointer">
+<!-- Diamond Shape -->
+<div class="w-6 h-6 rotate-45 bg-btn-primary rounded-sm shadow-md flex items-center justify-center text-white transition-transform group-hover:scale-110">
+<span class="material-symbols-outlined text-[14px] -rotate-45">flag</span>
+</div>
+<div class="flex flex-col -mt-1 bg-surface-card/90 px-2 py-0.5 rounded shadow-sm">
+<span class="font-label-sm text-label-sm font-bold text-primary">GA Deployment</span>
+<span class="font-body-sm text-body-sm text-text-muted">Target: Dec 18</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Legend & Summary Strip -->
+<div class="px-space-lg py-space-md bg-surface-sidebar flex flex-wrap items-center justify-between gap-space-md">
+<!-- Visual Legend Group -->
+<div class="flex flex-wrap items-center gap-space-md text-text-secondary">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Legend:</span>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded bg-status-resolved"></span>
+<span class="font-label-sm text-label-sm text-text-primary">Done</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded bg-status-wip"></span>
+<span class="font-label-sm text-label-sm text-text-primary">In Progress</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded bg-severity-blocker"></span>
+<span class="font-label-sm text-label-sm text-text-primary">Blocked / Overdue</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rotate-45 bg-severity-critical"></span>
+<span class="font-label-sm text-label-sm text-text-primary">Milestone</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-4 h-0.5 bg-btn-primary"></span>
+<span class="font-label-sm text-label-sm text-text-primary">Dependency Path</span>
+</div>
+</div>
+<!-- Quick Metrics Summary Badge Strip -->
+<div class="flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-1.5 bg-surface-card px-2.5 py-1 rounded-md shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">checklist</span>
+<span class="font-label-md text-label-md text-text-primary font-semibold">14</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Scheduled Tasks</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-card px-2.5 py-1 rounded-md shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-severity-critical">diamond</span>
+<span class="font-label-md text-label-md text-text-primary font-semibold">2</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Milestones</span>
+</div>
+<div class="flex items-center gap-1.5 bg-severity-blocker/10 px-2.5 py-1 rounded-md">
+<span class="material-symbols-outlined text-[16px] text-severity-blocker">error</span>
+<span class="font-label-md text-label-md text-severity-blocker font-bold">1</span>
+<span class="font-label-sm text-label-sm text-severity-blocker font-semibold">Critical Path Blocker</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-card px-2.5 py-1 rounded-md shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">event_available</span>
+<span class="font-body-sm text-body-sm text-text-secondary">Sprint Target:</span>
+<span class="font-label-md text-label-md text-text-primary font-semibold">Dec 15, 2025</span>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>
