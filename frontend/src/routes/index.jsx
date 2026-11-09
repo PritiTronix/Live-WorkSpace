@@ -6,6 +6,20 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import DashboardOverviewPage from '../modules/dashboard/pages/DashboardOverviewPage';
 import ProjectsListPage from '../modules/projects/ProjectsListPage';
+import ProjectWorkspacePage from '../modules/projects/ProjectWorkspacePage';
+import ProjectOverviewTab from '../modules/projects/ProjectOverviewTab';
+import ProjectKanbanTab from '../modules/projects/ProjectKanbanTab';
+import ProjectTimelineTab from '../modules/projects/ProjectTimelineTab';
+import ProjectDiscussionTab from '../modules/projects/ProjectDiscussionTab';
+import ProjectFilesTab from '../modules/projects/ProjectFilesTab';
+import ProjectActivityTab from '../modules/projects/ProjectActivityTab';
+import {
+  TicketsDashboardPage,
+  TicketBoardPage,
+  TicketPriorityPage,
+  TicketDetailsPage,
+  PriorityIssuesPage,
+} from '../modules/tickets';
 
 /**
  * AppRoutes
@@ -35,9 +49,26 @@ export const AppRoutes = () => {
         <Route path="dashboard" element={<DashboardOverviewPage />} />
         <Route path="inbox" element={<DashboardOverviewPage />} />
         <Route path="projects" element={<ProjectsListPage />} />
-        <Route path="projects/*" element={<ProjectsListPage />} />
+        {/* Project Workspace Routes (Screens 38-45) */}
+        <Route path="projects/:id" element={<ProjectWorkspacePage />}>
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<ProjectOverviewTab />} />
+          <Route path="board" element={<ProjectKanbanTab />} />
+          <Route path="timeline" element={<ProjectTimelineTab />} />
+          <Route path="discussions" element={<ProjectDiscussionTab />} />
+          <Route path="files" element={<ProjectFilesTab />} />
+          <Route path="activity" element={<ProjectActivityTab />} />
+          <Route path="tickets" element={<ProjectOverviewTab />} />
+        </Route>
         <Route path="tasks/*" element={<DashboardOverviewPage />} />
-        <Route path="tickets/*" element={<DashboardOverviewPage />} />
+        {/* Ticket Management Routes (Screens 61-65, 69) */}
+        <Route path="tickets" element={<TicketsDashboardPage />} />
+        <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
+        <Route path="tickets/board" element={<TicketBoardPage />} />
+        <Route path="tickets/priority" element={<TicketPriorityPage />} />
+        <Route path="tickets/critical" element={<PriorityIssuesPage />} />
+        <Route path="tickets/:id" element={<TicketDetailsPage />} />
+        <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
         <Route path="sla/*" element={<DashboardOverviewPage />} />
         <Route path="rca/*" element={<DashboardOverviewPage />} />
         <Route path="discussions/*" element={<DashboardOverviewPage />} />

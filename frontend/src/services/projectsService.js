@@ -136,6 +136,142 @@ export const projectsService = {
     const response = await apiClient.get('/users');
     return response.data;
   },
+
+  /**
+   * Screen 40: Get aggregated project overview summary (burndown, milestones, workload, alerts)
+   * @param {string} projectId
+   */
+  getProjectOverview: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview`);
+    return response.data;
+  },
+
+  /**
+   * Screen 41: Get tasks for project Kanban board
+   * @param {string} projectId
+   * @param {Object} params - { status, priority, assigned_to_id }
+   */
+  getTasks: async (projectId, params = {}) => {
+    const response = await apiClient.get('/tasks', { params: { project_id: projectId, ...params } });
+    return response.data;
+  },
+
+  /**
+   * Create a new task in project
+   * @param {Object} taskData - { title, description, status, priority, project_id, assigned_to_id }
+   */
+  createTask: async (taskData) => {
+    const response = await apiClient.post('/tasks', taskData);
+    return response.data;
+  },
+
+  /**
+   * Update task (status, priority, assignee, etc.)
+   * @param {string} taskId
+   * @param {Object} updateData - { status, priority, title, description, assigned_to_id }
+   */
+  updateTask: async (taskId, updateData) => {
+    const response = await apiClient.patch(`/tasks/${taskId}`, updateData);
+    return response.data;
+  },
+
+  /**
+   * Delete a task
+   * @param {string} taskId
+   */
+  deleteTask: async (taskId) => {
+    const response = await apiClient.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  /**
+   * Get project tickets for Overview and Kanban
+   * @param {string} projectId
+   * @param {Object} params - { severity, status }
+   */
+  getTickets: async (projectId, params = {}) => {
+    const response = await apiClient.get('/tickets', { params: { project_id: projectId, ...params } });
+    return response.data;
+  },
+
+  /**
+   * Create a new ticket linked to project
+   * @param {string} projectId
+   * @param {Object} ticketData
+   */
+  createTicket: async (projectId, ticketData) => {
+    const response = await apiClient.post('/tickets', ticketData, { params: { project_id: projectId } });
+    return response.data;
+  },
+
+  /**
+   * Screen 43: Get discussions for project
+   * @param {string} projectId
+   * @param {Object} params - { category, search }
+   */
+  getDiscussions: async (projectId, params = {}) => {
+    const response = await apiClient.get('/discussions', { params: { project_id: projectId, ...params } });
+    return response.data;
+  },
+
+  /**
+   * Screen 43: Create discussion topic
+   * @param {string} projectId
+   * @param {Object} discussionData - { title, content, category, is_pinned }
+   */
+  createDiscussion: async (projectId, discussionData) => {
+    const response = await apiClient.post('/discussions', discussionData, { params: { project_id: projectId } });
+    return response.data;
+  },
+
+  /**
+   * Screen 43: Add comment / reply to discussion thread
+   * @param {string} discussionId
+   * @param {Object} commentData - { content }
+   */
+  addDiscussionComment: async (discussionId, commentData) => {
+    const response = await apiClient.post(`/discussions/${discussionId}/comments`, commentData);
+    return response.data;
+  },
+
+  /**
+   * Screen 44: Get files for project
+   * @param {string} projectId
+   * @param {Object} params - { file_type, search }
+   */
+  getProjectFiles: async (projectId, params = {}) => {
+    const response = await apiClient.get('/files', { params: { project_id: projectId, ...params } });
+    return response.data;
+  },
+
+  /**
+   * Screen 44: Register uploaded file metadata
+   * @param {string} projectId
+   * @param {Object} fileData - { name, file_type, size_bytes, file_url, is_pinned, linked_task_number }
+   */
+  uploadProjectFile: async (projectId, fileData) => {
+    const response = await apiClient.post('/files', fileData, { params: { project_id: projectId } });
+    return response.data;
+  },
+
+  /**
+   * Screen 44: Delete project file
+   * @param {string} fileId
+   */
+  deleteProjectFile: async (fileId) => {
+    const response = await apiClient.delete(`/files/${fileId}`);
+    return response.data;
+  },
+
+  /**
+   * Screen 45: Get project activity logs
+   * @param {string} projectId
+   * @param {Object} params - { category, actor_id, search }
+   */
+  getProjectActivity: async (projectId, params = {}) => {
+    const response = await apiClient.get('/audit-logs', { params: { project_id: projectId, ...params } });
+    return response.data;
+  },
 };
 
 export default projectsService;

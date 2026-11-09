@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class BaseSchema(BaseModel):
@@ -162,18 +162,312 @@ class ProjectRead(ProjectBase):
 
 
 # --- Ticket & Task Schemas ---
+class TaskBase(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    status: str = "to_do"  # to_do, in_progress, in_review, done
+    priority: str = "medium"  # low, medium, high, blocker
+
+
+class TaskCreate(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "to_do"
+    priority: Optional[str] = "medium"
+    project_id: str
+    assigned_to_id: Optional[str] = None
+
+
+class TaskUpdate(BaseSchema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    assigned_to_id: Optional[str] = None
+
+
+class TaskRead(TaskBase):
+    id: str
+    task_number: str
+    project_id: str
+    assigned_to_id: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    assignee: Optional[UserRead] = None
+
+
 class TicketBase(BaseSchema):
     title: str
     description: Optional[str] = None
-    severity: str  # blocker, critical, major, minor
-    status: str    # open, wip, on-hold, resolved, closed
+    severity: str = "major"  # blocker, critical, major, minor
+    status: str = "open"     # open, wip, on_hold, resolved, closed
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+
+
+class TicketCreate(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    severity: Optional[str] = "major"
+    status: Optional[str] = "open"
+    project_id: str
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+    initial_comment: Optional[str] = None
+
+
+class TicketUpdate(BaseSchema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    project_id: Optional[str] = None
+    severity: Optional[str] = None
+    status: Optional[str] = None
+    assignee_id: Optional[str] = None
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+
+
+class TicketStatusChangeRequest(BaseSchema):
+    status: str
+    reason: Optional[str] = None
+    follow_up_date: Optional[str] = None
+    remarks: Optional[str] = None
+
+
+class TicketSeverityChangeRequest(BaseSchema):
+    severity: str
+    reason: str
+    operational_notes: Optional[str] = None
+
+
+class TicketReassignRequest(BaseSchema):
+    assignee_id: str
+    reason: Optional[str] = None
+    handover_note: Optional[str] = None
+
+
+class TicketDeadlineChangeRequest(BaseSchema):
+    deadline: datetime
+    reason: str
+    operational_remarks: Optional[str] = None
+
+
+class TicketReopenRequest(BaseSchema):
+    classification: str
+    telemetry_notes: Optional[str] = None
+
+
+class TicketCloseRequest(BaseSchema):
+    resolution_summary: str
+    commit_sha: Optional[str] = None
+    pr_reference: Optional[str] = None
+    verified_in_staging: bool = False
+
+
+
+class TicketCommentCreate(BaseSchema):
+    content: str
+    is_internal: bool = False
+
+
+class TicketCommentRead(BaseSchema):
+    id: str
+    ticket_id: str
+    author_id: str
+    content: str
+    is_internal: bool = False
+    created_at: datetime
+    author: Optional[UserRead] = None
+
+
+class TicketAttachmentCreate(BaseSchema):
+    name: str
+    size_bytes: int = 0
+    file_url: str = ""
+
+
+class TicketAttachmentRead(BaseSchema):
+    id: str
+    ticket_id: str
+    uploader_id: str
+    name: str
+    size_bytes: int = 0
+    file_url: str = ""
+    created_at: datetime
+    uploader: Optional[UserRead] = None
+
+
+class TicketActivityRead(BaseSchema):
+    id: str
+    ticket_id: str
+    actor_id: str
+    action: str
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    created_at: datetime
+    actor: Optional[UserRead] = None
 
 
 class TicketRead(TicketBase):
     id: str
+    ticket_number: str
     project_id: str
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+    assignee: Optional[UserRead] = None
+    reporter: Optional[UserRead] = None
+    comments: List[TicketCommentRead] = Field(default_factory=list)
+    attachments: List[TicketAttachmentRead] = Field(default_factory=list)
+    activities: List[TicketActivityRead] = Field(default_factory=list)
+
+
+class TicketStats(BaseSchema):
+    total: int = 0
+    open: int = 0
+    wip: int = 0
+    on_hold: int = 0
+    resolved: int = 0
+    closed: int = 0
+    sla_breached: int = 0
+
+
+class CriticalIssuesKPI(BaseSchema):
+    blockers_active: int = 0
+    critical_incidents: int = 0
+    major_issues: int = 0
+    sla_breached: int = 0
+    sync_interval_sec: int = 5
+
+
+class CriticalIssuesResponse(BaseSchema):
+    kpi: CriticalIssuesKPI
+    blockers: List[TicketRead] = Field(default_factory=list)
+    critical: List[TicketRead] = Field(default_factory=list)
+    major: List[TicketRead] = Field(default_factory=list)
+
+
+
+
+# --- Discussions Schemas ---
+class DiscussionCommentBase(BaseSchema):
+    content: str
+
+
+class DiscussionCommentCreate(BaseSchema):
+    content: str
+
+
+class DiscussionCommentRead(DiscussionCommentBase):
+    id: str
+    discussion_id: str
+    author_id: str
+    created_at: datetime
+    author: Optional[UserRead] = None
+
+
+class DiscussionBase(BaseSchema):
+    title: str
+    content: str
+    category: str = "general"
+    is_pinned: bool = False
+    is_resolved: bool = False
+    reactions: Optional[str] = "{}"
+
+
+class DiscussionCreate(BaseSchema):
+    title: str
+    content: str
+    category: Optional[str] = "general"
+    is_pinned: Optional[bool] = False
+    reactions: Optional[str] = "{}"
+
+
+class DiscussionRead(DiscussionBase):
+    id: str
+    project_id: str
+    author_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    author: Optional[UserRead] = None
+    comments: List[DiscussionCommentRead] = Field(default_factory=list)
+
+
+# --- Project Files Schemas ---
+class ProjectFileBase(BaseSchema):
+    name: str
+    file_type: str = "document"
+    size_bytes: int = 0
+    file_url: str = ""
+    is_pinned: bool = False
+    linked_task_number: Optional[str] = None
+
+
+class ProjectFileCreate(BaseSchema):
+    name: str
+    file_type: Optional[str] = "document"
+    size_bytes: Optional[int] = 0
+    file_url: Optional[str] = ""
+    is_pinned: Optional[bool] = False
+    linked_task_number: Optional[str] = None
+
+
+class ProjectFileRead(ProjectFileBase):
+    id: str
+    project_id: str
+    uploader_id: str
+    created_at: datetime
+    uploader: Optional[UserRead] = None
+
+
+# --- Project Activity Schemas ---
+class ProjectActivityBase(BaseSchema):
+    action: str
+    category: str = "tasks"
+    target_type: str = "task"
+    target_id: Optional[str] = None
+    target_title: Optional[str] = None
+    details: Optional[str] = None
+
+
+class ProjectActivityCreate(ProjectActivityBase):
+    pass
+
+
+class ProjectActivityRead(ProjectActivityBase):
+    id: str
+    project_id: str
+    actor_id: str
+    created_at: datetime
+    actor: Optional[UserRead] = None
+
+
+# --- Project Workspace Summary (Overview Tab) ---
+class ProjectOverviewSummary(BaseSchema):
+    project: ProjectRead
+    burndown: dict
+    milestones: List[dict]
+    team_workload: List[dict]
+    urgent_tickets: List[TicketRead]
+    recent_activity: List[ProjectActivityRead]
 
 
 # --- SLA Schemas ---

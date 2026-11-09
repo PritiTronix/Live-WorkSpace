@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-resolved": "#28C078", "error": "#ba1a1a", "secondary-fixed-dim": "#c9c0f6", "severity-critical": "#F8A040", "surface-bright": "#fcf8ff", "primary-fixed": "#e6deff", "on-secondary": "#ffffff", "inverse-on-surface": "#f1efff", "text-secondary": "#5C5C70", "surface-card": "#FFFFFF", "on-primary-fixed-variant": "#471ac8", "inverse-surface": "#2e2f41", "on-primary-container": "#e9e2ff", "secondary": "#5f5887", "secondary-container": "#d1c8fe", "on-surface-variant": "#484555", "primary": "#4f28cf", "secondary-fixed": "#e5deff", "primary-container": "#6848e8", "severity-blocker": "#F55354", "tertiary": "#7f3b00", "primary-light": "#8870F0", "outline": "#797586", "primary-hover": "#5639D8", "surface-tint": "#603edf", "text-muted": "#9C9CA9", "on-background": "#191a2b", "btn-primary": "#6040F0", "on-error": "#ffffff", "on-secondary-fixed-variant": "#47416e", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#743500", "status-on-hold": "#F8A040", "status-wip": "#6848E8", "surface": "#fcf8ff", "background": "#fcf8ff", "error-container": "#ffdad6", "on-error-container": "#93000a", "on-primary-fixed": "#1c0062", "tertiary-fixed-dim": "#ffb689", "tertiary-fixed": "#ffdbc8", "inverse-primary": "#cabeff", "on-secondary-fixed": "#1b1540", "surface-container": "#eeecff", "surface-container-high": "#e8e6fe", "canvas-main": "#F9F9FB", "on-surface": "#191a2b", "status-open": "#3888F8", "on-secondary-container": "#595280", "surface-sidebar": "#F8F8FC", "severity-major": "#F8C048", "tertiary-container": "#a44e00", "status-closed": "#9C9CA9", "surface-variant": "#e2e0f8", "border-subtle": "#E5E5EF", "primary-fixed-dim": "#cabeff", "canvas-lavender": "#F5F4FC", "on-tertiary-fixed": "#311300", "surface-container-lowest": "#ffffff", "text-primary": "#141529", "surface-container-highest": "#e2e0f8", "surface-dim": "#d9d8f0", "on-tertiary-container": "#ffdfcd", "outline-variant": "#c9c4d8", "surface-container-low": "#f5f2ff", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xl": "2rem", "gutter-sm": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "1rem", "space-2xl": "3rem" }, "fontFamily": { "label-sm": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-lg": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "body-lg": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }] } } } };</script></head><body class="bg-canvas-main font-body-md text-text-primary min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto"><div class="p-space-md"><div class="flex items-center justify-between pb-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">LW</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">Live Workspace</span><span class="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud</span></div></div><button aria-label="Collapse sidebar" class="w-7 h-7 rounded-lg hover:bg-canvas-lavender hover:text-text-primary text-text-muted flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">dock_to_right</span></button></div><div class="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold">AT</span><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary truncate max-w-[120px]">Acme Tech</span><span class="font-label-sm text-label-sm text-primary">Enterprise Pro</span></div></div><span class="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span></div><div class="mt-space-sm mb-space-md"><button class="w-full h-10 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>Create Action</span></button></div><nav class="space-y-space-md" data-active-classes="bg-canvas-lavender text-primary font-headline-sm font-semibold"><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Workspace</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">home</span><span class="font-label-md text-label-md">Home</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">task_alt</span><span class="font-label-md text-label-md">My Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span class="font-label-md text-label-md">My Tickets</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">inbox</span><span class="font-label-md text-label-md">Inbox</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold">3</span></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Project Management</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="projects" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-label-md text-label-md">Projects</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span><span class="font-label-md text-label-md">All Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_late</span><span class="font-label-md text-label-md">All Tickets</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Collaboration</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="team-members" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-label-md text-label-md">Team Members</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="discussions" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">forum</span><span class="font-label-md text-label-md">Discussions</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="files" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">attach_file</span><span class="font-label-md text-label-md">Files</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Monitoring</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="priority-issues" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">warning</span><span class="font-label-md text-label-md">Priority Issues</span></div><span class="w-2 h-2 rounded-full bg-severity-blocker"></span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="sla-overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">timer</span><span class="font-label-md text-label-md">SLA Overview</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="activity-logs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">history</span><span class="font-label-md text-label-md">Activity Logs</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="reports" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">analytics</span><span class="font-label-md text-label-md">Reports</span></div></a></div></div></nav></div><div class="p-space-md space-y-space-sm"><nav class="space-y-0.5" data-active-classes="bg-canvas-lavender text-primary font-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="help-support" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Help &amp; Support</span></a></nav><div class="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary leading-tight">Aarav Mehta</span><span class="font-body-sm text-body-sm text-text-secondary leading-tight">Project Manager</span></div></div><span class="material-symbols-outlined text-text-muted text-[18px]">more_vert</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><nav aria-label="Breadcrumb" class="flex items-center space-x-1.5 font-label-md text-label-md"><span class="text-text-muted">Live Workspace</span><span class="text-text-muted">/</span><span class="text-text-muted">Platform Revamp</span><span class="text-text-muted">/</span><span class="font-headline-sm text-headline-sm text-text-primary">Overview</span></nav></div><div class="flex-1 max-w-lg mx-space-xl"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span><input class="w-full h-10 pl-9 pr-4 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search tickets, tasks, projects... (Ctrl + K)" type="text"/></div></div><div class="flex items-center gap-space-md"><button class="h-10 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[0_2px_8px_rgba(104,72,232,0.2)] transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>New Ticket</span></button><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-severity-blocker"></span></button><button aria-label="Help Documentation" class="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">menu_book</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-card"></span></div></div></div></header><main class="relative pt-16 min-h-screen bg-canvas-main w-full px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Breadcrumb & Quick Key Indicator -->
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<nav aria-label="Breadcrumb hierarchy" class="flex items-center gap-space-xs font-label-md text-label-md">
+<a class="text-text-muted hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">folder_special</span>
+<span>Live Workspace</span>
+</a>
+<span class="text-text-muted text-[11px] font-bold">/</span>
+<a class="text-text-muted hover:text-primary transition-colors" href="#">Projects</a>
+<span class="text-text-muted text-[11px] font-bold">/</span>
+<span class="text-text-primary font-headline-sm text-headline-sm flex items-center gap-1.5 font-semibold">
+        Platform Revamp 2.0
+        <span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm">PLTFRM-2025</span>
+</span>
+</nav>
+<!-- Quick Meta Utility -->
+<div class="hidden lg:flex items-center gap-space-md text-text-secondary font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 px-space-sm py-1 rounded bg-canvas-lavender text-text-primary">
+<span class="w-2 h-2 rounded-full bg-status-resolved animate-pulse"></span>
+<span class="font-medium">Live Telemetry Active</span>
+</div>
+<span class="text-text-muted">|</span>
+<div class="flex items-center gap-1 text-text-secondary">
+<span class="material-symbols-outlined text-[15px] text-text-muted">schedule</span>
+<span>Synced 2m ago</span>
+</div>
+</div>
+</div>
+<!-- Master Project Workspace Header Banner -->
+<section class="relative bg-surface-card rounded-xl shadow-sm p-space-lg mb-space-lg overflow-hidden">
+<!-- Ambient Lavender Backdrop Subtle Bloom -->
+<div class="absolute -right-20 -top-24 w-96 h-96 bg-primary-fixed/25 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute left-1/3 -bottom-32 w-80 h-80 bg-canvas-lavender rounded-full blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col gap-space-lg">
+<!-- Upper Tier: Avatar + Title + Badges + Header Actions -->
+<div class="flex flex-col xl:flex-row xl:items-start justify-between gap-space-lg">
+<!-- Left Wing: Icon, Title, Description -->
+<div class="flex items-start gap-space-md max-w-4xl">
+<!-- Project Avatar Badge with glowing purple treatment -->
+<div class="relative flex-shrink-0 group">
+<div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-primary to-primary-light p-0.5 shadow-md shadow-primary/20 flex items-center justify-center">
+<div class="w-full h-full bg-btn-primary rounded-[10px] flex flex-col items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[28px] drop-shadow-sm" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<span class="text-[9px] font-bold tracking-widest uppercase opacity-90 mt-0.5">PLTFRM</span>
+</div>
+</div>
+<span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-text-primary text-surface-card font-label-sm text-[9px] rounded font-bold shadow-sm">
+              v2.0
+            </span>
+</div>
+<!-- Title, Pills & Narrative -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-xl text-headline-xl text-text-primary tracking-tight">
+                Platform Revamp 2.0
+              </h1>
+<!-- Status Pill -->
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-label-md font-semibold text-status-resolved bg-status-resolved/10">
+<span class="w-2 h-2 rounded-full bg-status-resolved"></span>
+                Active Sprint
+              </span>
+<!-- Mission-Critical SLA Tag -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-severity-blocker/10 text-severity-blocker">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+                Tier 1 Mission-Critical
+              </span>
+<!-- Security Tag -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-medium bg-canvas-lavender text-secondary">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+                SOC2 Isolated
+              </span>
+</div>
+<!-- Narrative Paragraph -->
+<p class="font-body-md text-text-secondary max-w-3xl leading-relaxed mt-1">
+              Core enterprise auth refactoring, multi-tenant workspace isolation, and high-velocity SLA alerting pipeline. 
+              Designed for zero-downtime database migrations with global edge routing validation.
+            </p>
+</div>
+</div>
+<!-- Right Wing: Master Action Group -->
+<div class="flex flex-wrap items-center gap-space-sm xl:self-start">
+<!-- Manage Members Button -->
+<button class="h-10 px-3.5 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-primary text-[18px]">group_add</span>
+<span>Members</span>
+<span class="px-1.5 py-0.2 rounded-full bg-primary-fixed text-primary text-[11px] font-bold">11</span>
+</button>
+<!-- Project Settings -->
+<button aria-label="Project Settings" class="h-10 px-3 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="hidden sm:inline">Settings</span>
+</button>
+<!-- Primary Dropdown Action (+ New Work Item) -->
+<div class="relative inline-flex shadow-sm rounded-lg">
+<button class="h-10 px-4 rounded-l-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+<span>New Work Item</span>
+</button>
+<button aria-label="Work item options" class="h-10 px-2 rounded-r-lg bg-primary hover:bg-primary-hover text-on-primary flex items-center justify-center transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+</button>
+</div>
+<!-- Overflow menu button -->
+<button aria-label="More Project Options" class="w-10 h-10 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Lower Tier: Operational Metadata Metrics Bar -->
+<div class="bg-canvas-main/80 rounded-xl p-space-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg items-center">
+<!-- Metric 1: Project Leadership & Architects -->
+<div class="flex items-center gap-space-md min-w-0">
+<div class="relative flex-shrink-0">
+<img class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="Professional studio portrait of an experienced software engineering lead Aarav Mehta in modern tech office, warm natural lighting, purple accent lighting, clean editorial profile style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV3_WGmwTo4mJSuMQYSz4vbZSkS4cxv4o_iTdqZ6E1wbGPXmgRaLOzqa8gMGPbsS_Uu519XFJwILsjxsRw4rCOtpR6U6gIo7vvO1fBROzPLoz736DdhZpMWXqlh9lIK15bXTrCGwX4-bjNoU-HAMUWFovg06wIRP5GOoVtcUZqbe8ynSSSwAVk4LHXNhJ7s_oGOlOGm016OsW2GqlJR2l4gDvClWlJ8I-SA3mNMEjo"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-status-resolved shadow-sm"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Project Lead</span>
+<span class="font-label-lg text-label-lg text-text-primary truncate">Aarav Mehta</span>
+<span class="font-body-sm text-body-sm text-text-secondary truncate">Principal Cloud Architect</span>
+</div>
+</div>
+<!-- Metric 2: Contributor Swarm Avatars -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Contributors</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">11 active</span>
+</div>
+<div class="flex items-center -space-x-2.5 overflow-hidden py-0.5">
+<img class="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover" data-alt="Close up avatar portrait of senior backend developer smiling in soft ambient daylight studio setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSCjgIeV4leUaBDdi2eIVwwUMrPZl1ZV9_VzHAyjBfr-OUTEydtUtQiyhdS8UlWeuzxAB7P0nbB36cMWfy_uuupH-39kj3riEivp0n94avUHQtZxFcHuXZqst-9ls2KYZSiCmqVSmHKjPRUXYNNdC1CWpu98k0dZcn7qokvid8nRI1VRqoeTb70EpVSwlcYpzGu_1CkOZhnWC7WdbA2TPFz4oUqFix9Drc_0WVOWBh"/>
+<img class="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover" data-alt="Portrait of woman UX systems designer with short dark hair in high tech creative workspace" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP9Ci5YA5kPChkmXPX6GnuFJd8GM45HlXyT51w1T8935idMmeEmhl5IqiI2Guuxdduf8msxn46FwgwSkOBoStU08x2P4dtnUjQ4I9PCwFwl3ayGI_je3GXKoZByZmqgeOPT_uaNeTC32MN0zOBURiYs7C_RQ6sL9cZHHSnl4aCVg-s96-tmkmoetfyzVB_vRaQe79TscFuu2Xc-c-Bd-jgPDMX4mME9dbzNNDhk7zn"/>
+<img class="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover" data-alt="Avatar photo of male DevOps engineer with glasses smiling against minimal lavender office wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYzTFidhEVGvk4x4zsYl04TZWNJ9SPyxN0Rh5vwKi0WtJ6ErQeUZNTkagUSjO61Ioxf6PTmihxZgQYpH1JdKHzRsoCFu-8ZO2y6zJj20ODZ2STPhwd5u-XkmrGjssF9v2ynaLVXHtbzFRxXg4ErLntAx8kpjPb2WMXwrGaayZm47E3PKeIOFCcMAj6Z9Z1qP4VqUPg6g1EKKcT2H-0A0UXxW79vkoAMMjtatzj7ico"/>
+<img class="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover" data-alt="Avatar photo of female frontend security engineer in modern tech headquarters" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGvbm9EfPcWvKC4niFd7t__19R0P-3xV6ePuMpdGq8IIhgpMFCaku5XED_Jnp3COx9t5Ee8EFboqRO1BQC9P8pJZoqi0Pc6l7V61OkTt2cdSh8LquELsiNnqewMj_PRn6RcTmvjmErphTLoDEuA7M3J5wSUVOhAgUCBWmckFlyi-IObGr3pOD_JIdj8oV2cLiMDlMcJxWCFw2-7JTMXW_MArdtBMtvWU9d9bH66ETI"/>
+<img class="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover" data-alt="Avatar photo of systems developer outdoors in diffused sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBb0p9t8tGx27ZLZuU9DkStC75E0Jd3-wwqaVS5DyjQlW3uE3vNOiIH4WAxHkrpjfoZ3_qS11l8QrgWptaNg5SpQeEcNmXEzfZObn4t579joRJrkqm1zlX_jMTefkdCAQT4JvjC_xx1ed15QhxuwPAJkVUBt1P-TRTVau098mgVzFHIE2ISRFOHsatCKtEa_ykmJ40grx9ArsHMKpDAmKaSgeiNj9Wsx_k2BQUqb6If"/>
+<span class="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-surface-card bg-primary-fixed text-primary font-label-sm text-label-sm font-bold shadow-xs">
+              +6
+            </span>
+</div>
+</div>
+<!-- Metric 3: Sprint Cadence & Progress Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Sprint 4 of 6</span>
+<span class="font-label-md text-label-md font-bold text-text-primary">78%</span>
+</div>
+<!-- Progress bar -->
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+<div class="bg-primary-container h-2 rounded-full transition-all duration-500" style="width: 78%"></div>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-text-secondary">
+<span>33 / 42 tasks done</span>
+<span class="font-medium text-text-primary">4 weeks left</span>
+</div>
+</div>
+<!-- Metric 4: Health & Dual-SLA Ticket Pulse -->
+<div class="flex flex-col gap-1 pl-0 lg:pl-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Sprint Health</span>
+<span class="font-label-sm text-label-sm text-severity-blocker font-bold">Needs Attention</span>
+</div>
+<div class="flex items-center gap-space-sm mt-0.5">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-severity-blocker/10 text-severity-blocker font-label-md text-label-md">
+<span class="w-2 h-2 rounded-full bg-severity-blocker animate-ping"></span>
+<span class="font-bold">1 Blocker</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-status-open/10 text-status-open font-label-md text-label-md">
+<span class="material-symbols-outlined text-[15px]">confirmation_number</span>
+<span class="font-medium">3 Open</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Master Sub-Navigation Tabs Bar (Unified 7-Tab Interface) -->
+<nav aria-label="Project Sub Navigation" class="bg-surface-card rounded-t-xl shadow-xs px-space-md pt-2 flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<!-- Active Scrollable 7-Tab Container -->
+<div class="flex items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth" id="projectTabRail" role="tablist">
+<!-- Tab 1: Overview (ACTIVE STATE SPEC) -->
+<button aria-controls="panel-overview" aria-selected="true" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg bg-canvas-lavender/60 text-primary font-label-lg text-label-lg font-bold transition-all whitespace-nowrap" id="tab-overview" role="tab">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Overview</span>
+<!-- Solid Purple Active Bottom Bar Indicator (3px height) -->
+<span class="absolute bottom-0 left-0 right-0 h-[3px] bg-primary-container rounded-t-full shadow-sm"></span>
+</button>
+<!-- Tab 2: Board -->
+<button aria-controls="panel-board" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-board" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">view_kanban</span>
+<span>Board</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-text-secondary font-label-sm text-label-sm font-semibold group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
+          42
+        </span>
+</button>
+<!-- Tab 3: Tickets -->
+<button aria-controls="panel-tickets" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-tickets" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">confirmation_number</span>
+<span>Tickets</span>
+<span class="px-2 py-0.5 rounded-full bg-severity-blocker/15 text-severity-blocker font-label-sm text-label-sm font-bold">
+          3
+        </span>
+</button>
+<!-- Tab 4: Timeline -->
+<button aria-controls="panel-timeline" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-timeline" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">calendar_month</span>
+<span>Timeline</span>
+</button>
+<!-- Tab 5: Discussion -->
+<button aria-controls="panel-discussion" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-discussion" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">forum</span>
+<span>Discussion</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-text-secondary font-label-sm text-label-sm font-semibold group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
+          12
+        </span>
+</button>
+<!-- Tab 6: Files -->
+<button aria-controls="panel-files" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-files" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">attach_file</span>
+<span>Files</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-text-secondary font-label-sm text-label-sm font-semibold group-hover:bg-primary-fixed group-hover:text-primary transition-colors">
+          28
+        </span>
+</button>
+<!-- Tab 7: Activity -->
+<button aria-controls="panel-activity" aria-selected="false" class="group relative flex items-center gap-2 px-4 py-3 rounded-t-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/40 font-label-lg text-label-lg transition-all whitespace-nowrap" id="tab-activity" role="tab">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-primary transition-colors">history</span>
+<span>Activity</span>
+</button>
+<!-- Responsive Overflow Tab Affordance Dropdown Trigger -->
+<div class="relative group hidden sm:block">
+<button aria-haspopup="true" class="flex items-center gap-1 px-3 py-3 rounded-t-lg text-text-muted hover:text-text-primary hover:bg-canvas-lavender/50 font-label-md text-label-md transition-colors" type="button">
+<span>More</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Right-Hand Tab Bar Utility: Search Filter & Display Controls -->
+<div class="flex items-center gap-space-sm pb-2 md:pb-0">
+<div class="relative flex items-center w-full md:w-56">
+<span class="material-symbols-outlined absolute left-2.5 text-text-muted text-[16px]">search</span>
+<input class="w-full h-8 pl-8 pr-3 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card transition-all" placeholder="Filter view items..." type="text"/>
+</div>
+<div class="flex items-center bg-canvas-main rounded-lg p-0.5">
+<button aria-label="Compact grid layout" class="w-7 h-7 rounded bg-surface-card text-primary shadow-xs flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">grid_view</span>
+</button>
+<button aria-label="Detailed list layout" class="w-7 h-7 rounded hover:bg-surface-card text-text-muted hover:text-text-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">table_rows</span>
+</button>
+</div>
+</div>
+</nav>
+<!-- Live Content Slot: Active Tab Content (Overview Preview) -->
+<section aria-labelledby="tab-overview" class="bg-surface-card rounded-b-xl shadow-sm p-space-lg mb-space-2xl" id="panel-overview" role="tabpanel">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Primary Column: Live Sprint Focus & Critical Workstream -->
+<div class="lg:col-span-8 flex flex-col gap-space-lg">
+<!-- Live Alert Banner -->
+<div class="bg-severity-blocker/10 rounded-xl p-space-md flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-severity-blocker text-[24px] mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-text-primary">1 Blocker Threatens Sprint Target: Database Migration Isolation</span>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">
+                Issue <span class="font-semibold text-text-primary">#PLT-882</span> has breached the 4-hour MTTR response threshold. Multi-region replica sync delay currently stands at 410ms.
+              </p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-severity-blocker text-on-error font-label-sm text-label-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+            Investigate SLA
+          </button>
+</div>
+<!-- Sprint Deliverables Quick Cards Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Item A -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-muted">AUTH ENGINE</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm text-status-resolved bg-status-resolved/10 font-bold">92%</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-primary mb-1">OIDC 2.0 Multi-Tenant Gateway</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Token revocation protocol updated across 14 edge clusters.</p>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-text-muted font-label-sm text-label-sm">
+<span>8 subtasks</span>
+<span class="text-status-resolved font-medium">Ready for QA</span>
+</div>
+</div>
+<!-- Item B -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-muted">STORAGE TIERS</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm text-status-wip bg-status-wip/10 font-bold">64%</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-primary mb-1">Partitioned S3 Bucketing</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Customer payload KMS envelope rotation pipeline.</p>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-text-muted font-label-sm text-label-sm">
+<span>14 subtasks</span>
+<span class="text-primary font-medium">Sprint 4 WIP</span>
+</div>
+</div>
+<!-- Item C -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-text-muted">PERFORMANCE</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm text-severity-critical bg-severity-critical/10 font-bold">35%</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-text-primary mb-1">Edge Cache Invalidation</h4>
+<p class="font-body-sm text-body-sm text-text-secondary">Global purge webhooks with retry exponent backoff.</p>
+</div>
+<div class="mt-4 pt-3 flex items-center justify-between text-text-muted font-label-sm text-label-sm">
+<span>5 subtasks</span>
+<span class="text-status-on-hold font-medium">Blocked by #882</span>
+</div>
+</div>
+</div>
+<!-- Inline Velocity SVG Trend Chart -->
+<div class="bg-canvas-main rounded-xl p-space-md">
+<div class="flex items-center justify-between mb-3">
+<div>
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Burnup Trajectory</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Sprint Velocity &amp; Burn Rate</h3>
+</div>
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 text-primary font-semibold">
+<span class="w-2.5 h-2.5 rounded-full bg-btn-primary"></span> Completed (33)
+              </span>
+<span class="inline-flex items-center gap-1 text-text-muted font-semibold">
+<span class="w-2.5 h-2.5 rounded-full bg-surface-container-high"></span> Target (42)
+              </span>
+</div>
+</div>
+<!-- Crisp Inline SVG Sparkline -->
+<div class="w-full h-32 flex items-end">
+<svg class="w-full h-full text-primary" fill="none" preserveaspectratio="none" viewbox="0 0 600 120">
+<defs>
+<lineargradient id="velocityGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#6040F0" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#6040F0" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Target Guideline -->
+<line stroke="#c9c4d8" stroke-dasharray="4 4" stroke-width="1.5" x1="0" x2="600" y1="100" y2="20"></line>
+<!-- Velocity Area Fill -->
+<path d="M 0,110 Q 75,95 150,85 T 300,55 T 450,35 T 600,28 L 600,120 L 0,120 Z" fill="url(#velocityGrad)"></path>
+<!-- Velocity Line -->
+<path d="M 0,110 Q 75,95 150,85 T 300,55 T 450,35 T 600,28" fill="none" stroke="#6040F0" stroke-linecap="round" stroke-width="3"></path>
+<!-- Data Points -->
+<circle class="ring-2 ring-white" cx="150" cy="85" fill="#6040F0" r="4"></circle>
+<circle cx="300" cy="55" fill="#6040F0" r="4"></circle>
+<circle cx="450" cy="35" fill="#6040F0" r="4"></circle>
+<circle cx="600" cy="28" fill="#28C078" r="5"></circle>
+</svg>
+</div>
+</div>
+</div>
+<!-- Secondary Column: Right-Hand Live Pulse & SLA Dual Timers -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- Dual SLA First-Response & Resolution Tracker Box -->
+<div class="bg-canvas-lavender rounded-xl p-space-md">
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">Dual-Timer SLA Status</span>
+<span class="font-label-sm text-label-sm text-severity-blocker font-bold">1 In Breach</span>
+</div>
+<!-- Timer 1: First Response -->
+<div class="bg-surface-card rounded-lg p-3 mb-2 shadow-xs flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-text-secondary">First Response Mean</span>
+<span class="font-headline-sm text-headline-sm text-text-primary">18m 42s</span>
+</div>
+<div class="flex items-center gap-1 text-status-resolved font-label-md text-label-md font-bold bg-status-resolved/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Compliant</span>
+</div>
+</div>
+<!-- Timer 2: Resolution Time Critical Window -->
+<div class="bg-surface-card rounded-lg p-3 shadow-xs flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-text-secondary">MTTR Blocker Limit</span>
+<span class="font-headline-sm text-headline-sm text-severity-blocker">04h 12m <span class="text-xs text-text-muted font-normal">(Breached)</span></span>
+</div>
+<div class="flex items-center gap-1 text-severity-blocker font-label-md text-label-md font-bold bg-severity-blocker/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[14px]">timer_off</span>
+<span>-12m</span>
+</div>
+</div>
+</div>
+<!-- Recent Audit Stream Snapshot -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col gap-3">
+<span class="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Recent Project Stream</span>
+<div class="flex items-start gap-2.5">
+<div class="w-2 h-2 rounded-full bg-status-resolved mt-1.5 flex-shrink-0"></div>
+<div class="flex flex-col min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary">
+<span class="font-semibold">Elena Rostova</span> merged PR #402 into <span class="font-mono text-xs text-primary bg-primary-fixed px-1 rounded">staging-v2</span>
+</p>
+<span class="font-label-sm text-label-sm text-text-muted">14 minutes ago</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<div class="w-2 h-2 rounded-full bg-severity-blocker mt-1.5 flex-shrink-0"></div>
+<div class="flex flex-col min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary">
+<span class="font-semibold">Aarav Mehta</span> flagged blocker on Database Partitioning
+              </p>
+<span class="font-label-sm text-label-sm text-text-muted">1 hour ago</span>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<div class="w-2 h-2 rounded-full bg-status-wip mt-1.5 flex-shrink-0"></div>
+<div class="flex flex-col min-w-0">
+<p class="font-body-sm text-body-sm text-text-primary">
+<span class="font-semibold">Marcus Vance</span> logged 4h in Sprint 4 Tasks
+              </p>
+<span class="font-label-sm text-label-sm text-text-muted">3 hours ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Component Showcase & Anatomy Canvas (Prompt 23 Specification) -->
+<section class="bg-surface-card rounded-xl p-space-lg shadow-sm">
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-space-md mb-space-md border-b-0">
+<div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-primary font-label-sm text-label-sm uppercase font-bold">Design Specification</span>
+<span class="text-text-muted font-label-sm text-label-sm">Prompt 23 System Anatomy</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-text-primary mt-1">Reusable Workspace Header &amp; Tabbed Chrome Anatomy</h2>
+</div>
+<p class="font-body-sm text-body-sm text-text-secondary max-w-md mt-2 md:mt-0">
+        Engineered for Tronix365 Live Workspace. Meets WCAG AAA contrast compliance, strict 8-point spatial discipline, and responsive tab prioritization.
+      </p>
+</div>
+<!-- Anatomy Grid: Interactive Tab States & Overflow Dropdown Specs -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Spec 1: Tab Interactive State Matrix -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">1. Tab Interactive States</h3>
+<span class="font-label-sm text-label-sm text-text-muted">7-Tab Standard</span>
+</div>
+<div class="space-y-3">
+<!-- State A: Active Tab -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-card shadow-xs">
+<div class="flex items-center gap-3">
+<span class="w-16 font-label-sm text-label-sm text-text-muted uppercase">Active</span>
+<div class="relative flex items-center gap-2 px-3 py-1.5 rounded-t bg-canvas-lavender/70 text-primary font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span>Overview</span>
+<span class="absolute bottom-0 left-0 right-0 h-[3px] bg-primary-container rounded-t-full"></span>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">bg-canvas-lavender/70 + 3px #6848E8 solid bar</span>
+</div>
+<!-- State B: Hover State -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-card shadow-xs">
+<div class="flex items-center gap-3">
+<span class="w-16 font-label-sm text-label-sm text-text-muted uppercase">Hover</span>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-t bg-canvas-lavender/40 text-text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-primary">view_kanban</span>
+<span>Board</span>
+<span class="px-1.5 py-0.2 rounded-full bg-primary-fixed text-primary text-[10px] font-bold">42</span>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">bg-canvas-lavender/40 + primary glyph shift</span>
+</div>
+<!-- State C: Default Inactive -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-card shadow-xs">
+<div class="flex items-center gap-3">
+<span class="w-16 font-label-sm text-label-sm text-text-muted uppercase">Default</span>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-t text-text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-text-muted">calendar_month</span>
+<span>Timeline</span>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">text-text-secondary + neutral icon</span>
+</div>
+<!-- State D: Alert / Critical Badge State -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-card shadow-xs">
+<div class="flex items-center gap-3">
+<span class="w-16 font-label-sm text-label-sm text-text-muted uppercase">Alert</span>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-t text-text-secondary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-severity-blocker">confirmation_number</span>
+<span>Tickets</span>
+<span class="px-1.5 py-0.2 rounded-full bg-severity-blocker/15 text-severity-blocker text-[10px] font-bold">3</span>
+</div>
+</div>
+<span class="font-body-sm text-body-sm text-text-secondary">severity-blocker pill indicator</span>
+</div>
+</div>
+</div>
+<!-- Spec 2: Responsive Overflow Dropdown Anatomy -->
+<div class="bg-canvas-main rounded-xl p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-text-primary">2. Responsive Truncation &amp; Overflow Menu</h3>
+<span class="font-label-sm text-label-sm text-text-muted">Breakpoint &lt; 1024px</span>
+</div>
+<div class="relative bg-surface-card rounded-lg p-space-md shadow-xs flex flex-col gap-3">
+<p class="font-body-sm text-body-sm text-text-secondary">
+            When viewport space restricts displaying all 7 tabs simultaneously, secondary items (Files, Activity) collapse seamlessly into the <strong class="text-text-primary">"More (2 tabs) ▾"</strong> dropdown popover:
+          </p>
+<!-- Rendered Dropdown Popover Mockup -->
+<div class="relative w-64 self-start bg-surface-container-lowest rounded-xl shadow-lg p-2 mt-2">
+<div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-text-muted">
+              Hidden Workstreams
+            </div>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-canvas-lavender text-text-primary font-label-md text-label-md transition-colors" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-text-muted">attach_file</span>
+<span>Files</span>
+</div>
+<span class="px-1.5 py-0.5 rounded-full bg-surface-container text-text-secondary text-[11px] font-semibold">28</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-canvas-lavender text-text-primary font-label-md text-label-md transition-colors" href="#">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-text-muted">history</span>
+<span>Activity Log</span>
+</div>
+<span class="w-2 h-2 rounded-full bg-status-resolved"></span>
+</a>
+<div class="h-px bg-canvas-main my-1"></div>
+<a class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-canvas-lavender text-primary font-label-md text-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">add_box</span>
+<span>Customize Tabs...</span>
+</a>
+</div>
+<div class="mt-2 flex items-center gap-2 font-label-sm text-label-sm text-text-muted">
+<span class="material-symbols-outlined text-[16px] text-primary">verified</span>
+<span>Includes keyboard tab indexing &amp; ARIA <code>aria-haspopup="menu"</code></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  // Micro-interaction: Client-side tab switching demonstration for the 7 master tabs
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('#projectTabRail button[role="tab"]');
+    
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Clear all active indicators
+        tabButtons.forEach(b => {
+          b.setAttribute('aria-selected', 'false');
+          b.classList.remove('bg-canvas-lavender/60', 'text-primary', 'font-bold');
+          b.classList.add('text-text-secondary');
+          const indicator = b.querySelector('span.bg-primary-container');
+          if (indicator) indicator.remove();
+        });
+
+        // Set clicked as active
+        btn.setAttribute('aria-selected', 'true');
+        btn.classList.add('bg-canvas-lavender/60', 'text-primary', 'font-bold');
+        btn.classList.remove('text-text-secondary');
+
+        // Append purple bottom indicator
+        const bar = document.createElement('span');
+        bar.className = 'absolute bottom-0 left-0 right-0 h-[3px] bg-primary-container rounded-t-full shadow-sm';
+        btn.appendChild(bar);
+      });
+    });
+  });
+</script></main></div></body></html>

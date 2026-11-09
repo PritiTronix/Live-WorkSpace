@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-resolved": "#28C078", "error": "#ba1a1a", "secondary-fixed-dim": "#c9c0f6", "severity-critical": "#F8A040", "surface-bright": "#fcf8ff", "primary-fixed": "#e6deff", "on-secondary": "#ffffff", "inverse-on-surface": "#f1efff", "text-secondary": "#5C5C70", "surface-card": "#FFFFFF", "on-primary-fixed-variant": "#471ac8", "inverse-surface": "#2e2f41", "on-primary-container": "#e9e2ff", "secondary": "#5f5887", "secondary-container": "#d1c8fe", "on-surface-variant": "#484555", "primary": "#4f28cf", "secondary-fixed": "#e5deff", "primary-container": "#6848e8", "severity-blocker": "#F55354", "tertiary": "#7f3b00", "primary-light": "#8870F0", "outline": "#797586", "primary-hover": "#5639D8", "surface-tint": "#603edf", "text-muted": "#9C9CA9", "on-background": "#191a2b", "btn-primary": "#6040F0", "on-error": "#ffffff", "on-secondary-fixed-variant": "#47416e", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#743500", "status-on-hold": "#F8A040", "status-wip": "#6848E8", "surface": "#fcf8ff", "background": "#fcf8ff", "error-container": "#ffdad6", "on-error-container": "#93000a", "on-primary-fixed": "#1c0062", "tertiary-fixed-dim": "#ffb689", "tertiary-fixed": "#ffdbc8", "inverse-primary": "#cabeff", "on-secondary-fixed": "#1b1540", "surface-container": "#eeecff", "surface-container-high": "#e8e6fe", "canvas-main": "#F9F9FB", "on-surface": "#191a2b", "status-open": "#3888F8", "on-secondary-container": "#595280", "surface-sidebar": "#F8F8FC", "severity-major": "#F8C048", "tertiary-container": "#a44e00", "status-closed": "#9C9CA9", "surface-variant": "#e2e0f8", "border-subtle": "#E5E5EF", "primary-fixed-dim": "#cabeff", "canvas-lavender": "#F5F4FC", "on-tertiary-fixed": "#311300", "surface-container-lowest": "#ffffff", "text-primary": "#141529", "surface-container-highest": "#e2e0f8", "surface-dim": "#d9d8f0", "on-tertiary-container": "#ffdfcd", "outline-variant": "#c9c4d8", "surface-container-low": "#f5f2ff", "on-tertiary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xl": "2rem", "gutter-sm": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "space-md": "1rem", "space-2xl": "3rem" }, "fontFamily": { "label-sm": ["Inter"], "body-sm": ["Inter"], "headline-lg": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-lg": ["Inter"], "label-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "body-lg": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }] } } } };</script></head><body class="bg-canvas-main font-body-md text-text-primary min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto"><div class="p-space-md"><div class="flex items-center justify-between pb-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">LW</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">Live Workspace</span><span class="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud</span></div></div><button aria-label="Collapse sidebar" class="w-7 h-7 rounded-lg hover:bg-canvas-lavender hover:text-text-primary text-text-muted flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">dock_to_right</span></button></div><div class="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between"><div class="flex items-center gap-space-sm"><span class="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold">AT</span><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary truncate max-w-[120px]">Acme Tech</span><span class="font-label-sm text-label-sm text-primary">Enterprise Pro</span></div></div><span class="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span></div><div class="mt-space-sm mb-space-md"><button class="w-full h-10 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center justify-center gap-space-xs shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>Create Action</span></button></div><nav class="space-y-space-md" data-active-classes="bg-canvas-lavender text-primary font-headline-sm font-semibold"><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Workspace</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">home</span><span class="font-label-md text-label-md">Home</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">task_alt</span><span class="font-label-md text-label-md">My Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="my-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span class="font-label-md text-label-md">My Tickets</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="inbox" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">inbox</span><span class="font-label-md text-label-md">Inbox</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold">3</span></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Project Management</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="projects" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">folder_open</span><span class="font-label-md text-label-md">Projects</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tasks" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span><span class="font-label-md text-label-md">All Tasks</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="all-tickets" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_late</span><span class="font-label-md text-label-md">All Tickets</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Collaboration</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="team-members" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">group</span><span class="font-label-md text-label-md">Team Members</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="discussions" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">forum</span><span class="font-label-md text-label-md">Discussions</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="files" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">attach_file</span><span class="font-label-md text-label-md">Files</span></div></a></div></div><div class="space-y-space-xs"><p class="px-space-sm py-space-xs font-label-sm text-label-sm text-text-muted tracking-wider uppercase">Monitoring</p><div class="space-y-0.5"><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="priority-issues" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">warning</span><span class="font-label-md text-label-md">Priority Issues</span></div><span class="w-2 h-2 rounded-full bg-severity-blocker"></span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="sla-overview" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">timer</span><span class="font-label-md text-label-md">SLA Overview</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="activity-logs" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">history</span><span class="font-label-md text-label-md">Activity Logs</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="reports" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">analytics</span><span class="font-label-md text-label-md">Reports</span></div></a></div></div></nav></div><div class="p-space-md space-y-space-sm"><nav class="space-y-0.5" data-active-classes="bg-canvas-lavender text-primary font-semibold"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span class="font-label-md text-label-md">Settings</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors" data-path="help-support" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Help &amp; Support</span></a></nav><div class="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-text-primary leading-tight">Aarav Mehta</span><span class="font-body-sm text-body-sm text-text-secondary leading-tight">Project Manager</span></div></div><span class="material-symbols-outlined text-text-muted text-[18px]">more_vert</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><nav aria-label="Breadcrumb" class="flex items-center space-x-1.5 font-label-md text-label-md"><span class="text-text-muted">Live Workspace</span><span class="text-text-muted">/</span><span class="text-text-muted">Platform Revamp</span><span class="text-text-muted">/</span><span class="font-headline-sm text-headline-sm text-text-primary">Overview</span></nav></div><div class="flex-1 max-w-lg mx-space-xl"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-3 text-text-muted text-[18px]">search</span><input class="w-full h-10 pl-9 pr-4 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search tickets, tasks, projects... (Ctrl + K)" type="text"/></div></div><div class="flex items-center gap-space-md"><button class="h-10 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-[0_2px_8px_rgba(104,72,232,0.2)] transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">add</span><span>New Ticket</span></button><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-severity-blocker"></span></button><button aria-label="Help Documentation" class="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">menu_book</span></button></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="relative"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VIdwd8d6EtlnoK9WYrhJbrdy2Z472ZIfIjhwM5XrOQzzeL8GHxmIGAADo7JCne50iPVFYvqlXsSET2DBvqTzAaAhyfAVf2tm7p5eNfJVXA_nTu4OwhPjKY9imjOwy-1XuNJhM3VxDG5jNcjH5hy4DStD84TbM07gGXfJIyg6uq33IS5dPwUZttL-jQ1MiofGvI82zR1udWbAwXu1aigOdNPQ8DUtM5_dzQYmfjPvb6H-SRIcYtt9bsvoqg"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-card"></span></div></div></div></header><main class="relative pt-16 min-h-screen bg-canvas-main w-full px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- PROJECT WORKSPACE HEADER -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm mb-space-lg">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex items-start sm:items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-canvas-lavender flex items-center justify-center text-primary shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[28px]">deployed_code</span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Platform Revamp 2.0</h1>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+              Sprint 4 of 6
+            </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+              v2.4.0-rc3
+            </span>
+</div>
+<div class="flex items-center gap-space-md mt-1 text-text-secondary font-body-sm text-body-sm flex-wrap">
+<div class="flex items-center gap-1.5">
+<img class="w-4 h-4 rounded-full object-cover" data-alt="Close up portrait photograph of Aarav Mehta, a focused Indian project lead with a modern studio backdrop in soft purple ambient light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbHrUczMBkPkBgrJoNBRJsa8jwpBFw4DI3ffgXLuH_ZR28g7FhzOYSwFSdmQ368mASi49ADRz-zFBSwEAXc5D6U0NwIi2ODepYvHbpyLO3CKaqbvtPdyyxf8NuJKduLhaB8mHp8g4Fanw4nI7l_hLUHhgF-LHe0MEQ4oDCT2cuIeDvF-n9PvvoAKf6IXObWLfpiOTzn5lzmpoA8W2RJUAXYIGprwkT_b0mAA3QKFyK"/>
+<span>Lead: <strong class="text-text-primary font-medium">Aarav Mehta</strong></span>
+</div>
+<span class="text-text-muted">•</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">speed</span>
+<span>Velocity: <strong class="text-text-primary font-semibold">78%</strong> target pace</span>
+</div>
+<span class="text-text-muted">•</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-status-resolved">verified_user</span>
+<span>Audit Chain: <strong class="text-status-resolved font-medium">SOC-2 Verified</strong></span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-end lg:self-center">
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-canvas-lavender text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">lock</span>
+<span>Immutable Ledger</span>
+</div>
+<button class="h-10 px-4 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-2 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Log Policies</span>
+</button>
+<button class="h-10 px-4 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Export Audit Log</span>
+</button>
+</div>
+</div>
+<!-- TABS SUB-NAVIGATION -->
+<div class="flex items-center gap-space-sm mt-space-md overflow-x-auto">
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Overview
+      </a>
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Board <span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container-high text-[11px] text-text-secondary">42</span>
+</a>
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Tickets <span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container-high text-[11px] text-text-secondary">3</span>
+</a>
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Timeline
+      </a>
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Discussion <span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container-high text-[11px] text-text-secondary">12</span>
+</a>
+<a class="px-3.5 py-2 rounded-lg font-label-md text-label-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender transition-colors whitespace-nowrap" href="#">
+        Files <span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container-high text-[11px] text-text-secondary">28</span>
+</a>
+<a class="relative px-3.5 py-2 rounded-lg font-headline-sm text-headline-sm text-primary bg-canvas-lavender whitespace-nowrap" href="#">
+<span>Activity</span>
+<span class="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full"></span>
+</a>
+</div>
+</div>
+<!-- CONTROL & FILTER TOOLBAR -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm mb-space-lg flex flex-col gap-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<!-- Search Input -->
+<div class="relative flex-1 max-w-xl">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-8 rounded-lg bg-canvas-main font-body-sm text-body-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card transition-all" id="activity-search-input" placeholder="Filter activity by actor, task ID, or keyword (e.g. TASK-204, David, PR #402)..." type="text"/>
+<button class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-[16px] material-symbols-outlined" id="clear-search-btn">
+          close
+        </button>
+</div>
+<!-- Quick Action Right Cluster -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<div class="flex items-center gap-2 px-3 h-10 rounded-lg bg-canvas-lavender text-text-primary font-label-md text-label-md cursor-pointer">
+<span class="material-symbols-outlined text-[18px] text-primary">calendar_today</span>
+<span>Nov 18 – Nov 26, 2025</span>
+<span class="text-text-muted font-body-sm text-body-sm">(Current Sprint)</span>
+<span class="material-symbols-outlined text-[16px] text-text-muted">expand_more</span>
+</div>
+<button class="h-10 px-3.5 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-status-resolved">verified</span>
+<span>CSV / JSON</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-status-resolved/10 text-status-resolved ml-1">SOC-2</span>
+</button>
+</div>
+</div>
+<!-- Filter Chips Row -->
+<div class="flex items-center justify-between gap-space-sm flex-wrap pt-space-xs">
+<div class="flex items-center gap-2 overflow-x-auto py-1" id="filter-chips">
+<button class="filter-chip active-chip px-3 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-colors flex items-center gap-1.5" data-filter="all">
+<span>All Events</span>
+<span class="px-1.5 py-0.2 rounded-full bg-on-primary/20 text-[11px] font-bold">142</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5" data-filter="tasks">
+<span>Tasks &amp; Board</span>
+<span class="text-[11px] text-text-muted">68</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5" data-filter="tickets">
+<span>Tickets &amp; SLA</span>
+<span class="text-[11px] text-text-muted">34</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5" data-filter="members">
+<span>Members &amp; Access</span>
+<span class="text-[11px] text-text-muted">12</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5" data-filter="files">
+<span>Files &amp; Specs</span>
+<span class="text-[11px] text-text-muted">18</span>
+</button>
+<button class="filter-chip px-3 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container text-text-secondary hover:text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5" data-filter="discussions">
+<span>Discussions</span>
+<span class="text-[11px] text-text-muted">10</span>
+</button>
+</div>
+<div class="flex items-center gap-2 text-text-secondary font-label-sm text-label-sm ml-auto">
+<span class="w-2 h-2 rounded-full bg-status-resolved animate-pulse"></span>
+<span>Streaming live audit sync</span>
+</div>
+</div>
+</div>
+<!-- MAIN 2-COLUMN LAYOUT -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: TIMELINE STREAM (8 COLUMNS) -->
+<div class="xl:col-span-8 flex flex-col gap-space-lg" id="timeline-container">
+<!-- DATE GROUP 1: TODAY -->
+<div class="timeline-date-group flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-sm">
+<span class="px-3 py-1 rounded-md bg-canvas-lavender text-primary font-headline-sm text-headline-sm tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">calendar_clock</span>
+              Today — November 26, 2025
+            </span>
+<span class="font-label-sm text-label-sm text-text-muted">5 recorded events</span>
+</div>
+<span class="text-text-muted font-body-sm text-body-sm">UTC-08:00 Pacific</span>
+</div>
+<!-- TIMELINE CARDS WRAPPER -->
+<div class="relative pl-6 flex flex-col gap-space-md before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-canvas-lavender">
+<!-- EVENT 1: SLA BLOCKER ESCALATION -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="David K." data-category="tasks tickets" data-tag="TASK-204">
+<!-- Node bullet on spine -->
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-severity-blocker shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Portrait photo of David K., Senior DevOps Lead with glasses and dark tech hoodie in a server room setting with subdued violet neon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2FRJhoRvu92BDDUW8XU3ubuH32RzQcOJRWdRh1AOOLNxnfYk9Kr7Q487kuY5yrvY5XrJLYo9mHQS8NbsqA3357F3S8f4YuMpbCVgD-E5GwuLDbolTwFDELWFYmCFNiiAiss4Uo-lm4vipGIWAS7UFT70l8tyDnHAzY3tkv-P8Unw8QrWjH9qvgzEhVabrc9TILJtqy-ZlNA3lX07mjKnnj0P5xHsAmrW_yKkwMU6O"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">David K.</span>
+<span class="px-2 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">DevOps Lead</span>
+<span class="font-body-md text-body-md text-text-secondary">flagged <strong class="text-text-primary">TASK-204</strong> as Blocker &amp; updated SLA priority</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 14 minutes ago</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">desktop_windows</span> Web UI</span>
+<span>•</span>
+<span class="font-mono text-primary font-medium">Log #AUD-99104</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-severity-blocker/10 text-severity-blocker font-label-sm text-label-sm uppercase flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">report</span> Blocker Escalate
+              </span>
+</div>
+<!-- Affected Object Box -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-severity-blocker text-[20px]">assignment_late</span>
+<span class="font-mono text-primary font-label-md text-label-md">[TASK-204]</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Refactor Auth Middleware for Multi-Tenant Support</span>
+</div>
+<a class="text-primary hover:text-primary-hover font-label-sm text-label-sm flex items-center gap-0.5 shrink-0 ml-2" href="#">
+<span>View Task</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+<!-- Value Change Diff Box -->
+<div class="mt-space-sm grid grid-cols-1 md:grid-cols-2 gap-space-sm text-body-sm font-body-sm">
+<div class="p-space-sm rounded-lg bg-canvas-lavender/60">
+<div class="flex items-center gap-1.5 text-text-muted font-label-sm text-label-sm mb-1 uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">history</span> Previous Value
+                </div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-severity-major/15 text-severity-major font-label-sm text-label-sm">Priority: P2 High</span>
+<span class="px-2 py-0.5 rounded bg-status-wip/15 text-status-wip font-label-sm text-label-sm">Status: In Progress</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-severity-blocker/10">
+<div class="flex items-center gap-1.5 text-severity-blocker font-label-sm text-label-sm mb-1 uppercase tracking-wider font-bold">
+<span class="material-symbols-outlined text-[14px]">priority_high</span> Updated Value
+                </div>
+<div class="flex items-center gap-2 flex-wrap">
+<span class="px-2 py-0.5 rounded bg-severity-blocker text-on-primary font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">bolt</span> P0 Blocker
+                  </span>
+<span class="px-2 py-0.5 rounded bg-severity-blocker/20 text-severity-blocker font-label-sm text-label-sm font-semibold">
+                    Overdue by 1d (SLA Breached)
+                  </span>
+</div>
+</div>
+</div>
+<!-- Dual Timer / Telemetry Context -->
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-text-secondary font-body-sm text-body-sm">
+<span class="text-text-muted">Escalation triggered automated pager duty ping to #sre-oncall</span>
+<div class="flex items-center gap-2 font-mono text-[12px]">
+<span class="text-severity-blocker font-bold">First Response: 00:04:12 (Breach)</span>
+</div>
+</div>
+</div>
+<!-- EVENT 2: GIT PR & CODE ATTACHMENT -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="Maya Shah" data-category="tasks files" data-tag="TASK-198">
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-primary shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Portrait photography of Maya Shah, Lead Frontend Engineer, wearing casual modern workspace attire with natural ambient daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBv1L56iFTEdeKsM2n66rCEtrenLFF_pdzaF8h5DNmaVDGAlnapzeizJnZttf402HMZFUOX6Fp5JDFR16ScqarC11ES8TqxeDcKSG7isLgvqkDl8YxEXGhZtD-pHP6GT6A6GLsVr8P2UtX8eC1cG-dGdhh4NBpNegoQlqLFQ1rynURFBTBOVzg5L61z1Hs2luP34h4DvdEQrRKnXHDJFWVXO8yDPHszd0X7V4Ojc_O"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">Maya Shah</span>
+<span class="px-2 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Lead Frontend</span>
+<span class="font-body-md text-body-md text-text-secondary">merged pull request <strong class="text-primary font-mono">#402</strong> into <span class="font-mono text-text-primary px-1.5 py-0.5 rounded bg-canvas-lavender text-[12px]">staging-v2</span></span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 1 hour ago</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">hub</span> GitHub Webhook</span>
+<span>•</span>
+<span class="font-mono text-text-secondary font-medium">Merge Commit SHA: #e8f902c</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-status-resolved/15 text-status-resolved font-label-sm text-label-sm flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">call_merge</span> PR Merged
+              </span>
+</div>
+<!-- Affected Item & PR Details -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[20px]">code</span>
+<span class="font-mono text-primary font-label-md text-label-md">[TASK-198]</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Zero-downtime schema migration script</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-status-wip/10 text-status-wip font-label-sm text-label-sm">Auto-transitioned: In Review</span>
+</div>
+<div class="flex items-center gap-space-md text-text-secondary font-body-sm text-body-sm pt-1">
+<div class="flex items-center gap-1 text-status-resolved">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>CI checks passed (4/4 jobs)</span>
+</div>
+<span class="text-text-muted">•</span>
+<span class="font-mono text-[12px]">Files changed: +412 / -89</span>
+<span class="text-text-muted">•</span>
+<span>Reviewer sign-off: <strong class="text-text-primary">David K., Aarav Mehta</strong></span>
+</div>
+</div>
+</div>
+<!-- EVENT 3: MILESTONE PROGRESS UPDATE -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="Aarav Mehta" data-category="tasks" data-tag="Milestone">
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-status-resolved shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Portrait photo of Aarav Mehta, Project Manager wearing stylish business casual blazer in a bright contemporary tech company office" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6zDbkgN-_K4Swu6jYCSQ-xwzXVahSCn3iuJYc-mdGvppbyVvgFqf27gF6nooKYOcrCFjpru332WNxvhZP3vEkIjbm0g_Bce-0y3zREmxwIikXKifeYCIlAlXb1Qo3htMY3cqUmZu_jzqH6_nT-t1qOIfSV2vg7AY5iJvGpVMjnE2sWVweEaKLwypWaY89qEdlBruLoybiHrMryLADv3qFnfgxsXwHBeASeHDhvTsU"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">Aarav Mehta</span>
+<span class="px-2 py-0.2 rounded bg-primary-fixed text-primary font-label-sm text-label-sm">Project Manager</span>
+<span class="font-body-md text-body-md text-text-secondary">updated milestone completion progress</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 3 hours ago</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">timeline</span> Roadmap Engine</span>
+<span>•</span>
+<span class="font-mono text-text-secondary">Sync #MS-4401</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">flag</span> Milestone Sync
+              </span>
+</div>
+<!-- Affected Item Header -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[20px]">flag_circle</span>
+<span class="font-label-md text-label-md text-text-secondary uppercase">Milestone:</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Auth Engine OIDC 2.0 Multi-Tenant Gateway</span>
+</div>
+<span class="font-mono text-primary font-bold text-label-md text-label-md">Sprint 4 Key Result</span>
+</div>
+<!-- Value Diff Box -->
+<div class="mt-space-sm grid grid-cols-1 md:grid-cols-2 gap-space-sm text-body-sm font-body-sm">
+<div class="p-space-sm rounded-lg bg-canvas-lavender/60">
+<div class="flex items-center gap-1 text-text-muted font-label-sm text-label-sm mb-1 uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">replay</span> Before
+                </div>
+<div class="flex items-center justify-between">
+<span class="font-semibold text-text-primary">85% completed</span>
+<span class="text-text-muted text-[11px]">Target: Dec 01</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-border-subtle mt-1.5 overflow-hidden">
+<div class="h-full bg-text-muted" style="width: 85%;"></div>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-status-resolved/10">
+<div class="flex items-center gap-1 text-status-resolved font-label-sm text-label-sm mb-1 uppercase tracking-wider font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> Now
+                </div>
+<div class="flex items-center justify-between">
+<span class="font-semibold text-status-resolved">92% completed</span>
+<span class="text-status-resolved text-[11px] font-bold">Ready for QA deployment</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-status-resolved/20 mt-1.5 overflow-hidden">
+<div class="h-full bg-status-resolved" style="width: 92%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- EVENT 4: FILE UPLOAD & FIGMA SPEC LINK -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="Sarah Taylor" data-category="files" data-tag="TASK-201">
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-status-wip shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Portrait photography of Sarah Taylor, Senior Product Designer, smiling in creative design studio with clean minimalist typography posters on wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCVMW5a2DlU1E6omOiP0jDKVFW70NsXVWPB5x4neMMCSOG5mvxuIK1yudzZKd_7qqbNXsX9iJMZALNSUwFQfSRxZHHAYq5MHRcLOkk-EdGxsIWtnPKAr1Az_YpIvGPIzZgOssG8mofA2y_7oYQ33Vmyx8pkwPydsg8wHzFRFVHrBMBfLsN5IQdomvFtmsapGQKMwWdCGcOdpBHDxlc0JPnvelmk5MEPnCjdOmK4pSy"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">Sarah Taylor</span>
+<span class="px-2 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">Product Designer</span>
+<span class="font-body-md text-body-md text-text-secondary">uploaded new spec file and linked to design task</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 5 hours ago</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">attachment</span> Figma Integration</span>
+<span>•</span>
+<span class="font-mono text-text-secondary">File Asset #FL-9082</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-canvas-lavender text-primary font-label-sm text-label-sm flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">folder_zip</span> New Asset
+              </span>
+</div>
+<!-- Affected Attachment Card -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center text-primary font-bold text-label-md shrink-0">
+                  FIG
+                </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-text-primary truncate">v2-navigation-tokens.fig</span>
+<span class="font-body-sm text-body-sm text-text-muted">18.4 MB • Figma Cloud Sync v3.1</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<span class="font-label-sm text-label-sm text-text-muted hidden sm:inline">Linked to:</span>
+<span class="px-2 py-1 rounded bg-surface-card text-text-primary font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="text-primary font-mono">[TASK-201]</span> WCAG 2.1 AAA Contrast Audit
+                </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- DATE GROUP 2: YESTERDAY -->
+<div class="timeline-date-group flex flex-col gap-space-md pt-space-md">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-space-sm">
+<span class="px-3 py-1 rounded-md bg-canvas-lavender text-text-secondary font-headline-sm text-headline-sm tracking-tight flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">history</span>
+              Yesterday — November 25, 2025
+            </span>
+<span class="font-label-sm text-label-sm text-text-muted">4 recorded events</span>
+</div>
+<span class="text-text-muted font-body-sm text-body-sm">Security Snapshot Clean</span>
+</div>
+<div class="relative pl-6 flex flex-col gap-space-md before:content-[''] before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-canvas-lavender">
+<!-- EVENT 5: ACCESS PERMISSION MODIFICATION (CRITICAL AUDIT) -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="Aarav Mehta" data-category="members" data-tag="Security">
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-tertiary-container shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Portrait photography of Aarav Mehta with a modern workspace backdrop, ambient light reflecting in glasses, looking professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMkWs80w9-QTsh6q4kUYd1mUti3jcUTDHQgW8LDhksslT3KXdp8mihm0k4CuEyi2PVHl9wYvIHSAXiW2ijuw9TN34SXKZIIk09gHUC0FAPaR__wbWyktDTiuOWlh7VVgY70C8r7PhJvLF_WhcluSQzDzwrcWVrg5LGFYwiYFmtMqMgvps2t3IIRhn6vjVWu_X9nD-k_EiuJ2MEPKlOmYJLgWjLhqbBkjcgvF_JJC_l"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">Aarav Mehta</span>
+<span class="px-2 py-0.2 rounded bg-primary-fixed text-primary font-label-sm text-label-sm">Workspace Owner</span>
+<span class="font-body-md text-body-md text-text-secondary">modified collaborator access level</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> Yesterday at 4:32 PM</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">shield</span> Admin Panel</span>
+<span>•</span>
+<span class="font-mono text-tertiary font-medium">Audit ID: #AUD-88219</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-tertiary-container/15 text-tertiary-container font-label-sm text-label-sm flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">manage_accounts</span> Role Change
+              </span>
+</div>
+<!-- Affected User Item -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-canvas-lavender flex items-center justify-center font-label-md text-label-md text-primary font-bold">
+                  PN
+                </div>
+<div>
+<span class="font-label-md text-label-md text-text-primary">Priya Nair</span>
+<span class="text-text-muted text-body-sm font-body-sm ml-1.5">(priya.nair@acmetech.io)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-card text-text-secondary font-label-sm text-label-sm shadow-sm">
+                Target User
+              </span>
+</div>
+<!-- Value Change Diff Box -->
+<div class="mt-space-sm grid grid-cols-1 md:grid-cols-2 gap-space-sm text-body-sm font-body-sm">
+<div class="p-space-sm rounded-lg bg-canvas-lavender/60">
+<div class="text-text-muted font-label-sm text-label-sm mb-1 uppercase tracking-wider">Previous Level</div>
+<div class="font-label-md text-label-md text-text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-text-muted">visibility</span>
+<span>QA Reviewer (Read / Comment Only)</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-primary-fixed/40">
+<div class="text-primary font-label-sm text-label-sm mb-1 uppercase tracking-wider font-bold">Elevated Level</div>
+<div class="font-label-md text-label-md text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span>QA Automation Lead (Full Maintainer / Deploy)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- EVENT 6: AUTOMATED SLA ALERT TRIGGER -->
+<div class="timeline-event relative bg-surface-card rounded-xl p-space-md shadow-sm hover:shadow-md transition-all" data-actor="System Bot" data-category="tickets" data-tag="PLT-882">
+<div class="absolute -left-[27px] top-6 w-3 h-3 rounded-full bg-severity-critical shadow-sm ring-4 ring-canvas-main"></div>
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-canvas-lavender flex items-center justify-center text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="font-label-lg text-label-lg text-text-primary">System Telemetry Bot</span>
+<span class="px-2 py-0.2 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-mono text-[10px]">BOT-SERVICE</span>
+<span class="font-body-md text-body-md text-text-secondary">escalated automated incident trigger</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5 text-text-muted font-body-sm text-body-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> Yesterday at 2:15 PM</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">sensors</span> Datadog Webhook</span>
+<span>•</span>
+<span class="font-mono text-severity-critical">Incident #INC-0921</span>
+</div>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-severity-critical/15 text-severity-critical font-label-sm text-label-sm flex items-center gap-1 shrink-0 font-bold">
+<span class="material-symbols-outlined text-[14px]">timer_off</span> SLA Escalation
+              </span>
+</div>
+<!-- Affected Ticket Item -->
+<div class="mt-space-md p-space-sm rounded-lg bg-canvas-main flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-severity-critical text-[20px]">confirmation_number</span>
+<span class="font-mono text-primary font-label-md text-label-md">#PLT-882</span>
+<span class="font-headline-sm text-headline-sm text-text-primary truncate">Database Migration Isolation timeout on replica-cluster-04</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-severity-critical/20 text-severity-critical font-label-sm text-label-sm font-semibold">
+                  Threshold Breached
+                </span>
+</div>
+<div class="p-space-sm rounded bg-surface-card text-body-sm font-body-sm flex items-center justify-between shadow-sm">
+<span class="text-text-secondary">4h MTTR limit reached without acknowledgment. Auto-paged on-call squad via Slack:</span>
+<span class="font-mono text-primary bg-canvas-lavender px-2 py-0.5 rounded font-label-sm text-label-sm">#warroom-db-sprint4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- NO-RESULTS EMPTY STATE (Hidden by default, shown when filters match nothing) -->
+<div class="hidden bg-surface-card rounded-xl p-space-2xl text-center shadow-sm flex flex-col items-center justify-center" id="no-results-state">
+<div class="w-16 h-16 rounded-full bg-canvas-lavender flex items-center justify-center text-primary mb-space-md">
+<span class="material-symbols-outlined text-[32px]">filter_list_off</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-text-primary">No activity logs match your filter</h3>
+<p class="text-text-secondary font-body-md text-body-md mt-1 max-w-md">
+          We couldn't find any events corresponding to your search criteria. Try modifying your filters or clearing keyword searches.
+        </p>
+<button class="mt-space-lg h-10 px-4 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-sm transition-colors" id="reset-filter-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span>Reset All Filters</span>
+</button>
+</div>
+</div>
+<!-- RIGHT COLUMN: AUDIT LOG INTEGRITY & TELEMETRY SIDEBAR (4 COLUMNS) -->
+<div class="xl:col-span-4 flex flex-col gap-space-lg sticky top-20">
+<!-- INTEGRITY STATUS CARD -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-resolved text-[22px]">verified</span>
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Audit Log Integrity</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-status-resolved/15 text-status-resolved font-label-sm text-label-sm font-bold">100% OK</span>
+</div>
+<div class="mt-space-xs p-space-sm rounded-lg bg-canvas-lavender flex flex-col gap-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary">Cryptographic Signatures:</span>
+<span class="font-mono text-primary font-semibold">Valid (SHA-256)</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary">Compliance Framework:</span>
+<span class="font-label-sm text-label-sm font-bold text-text-primary">SOC-2 Type II Certified</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary">Log Retention:</span>
+<span class="font-mono text-text-primary">365 Days Immutable</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-text-secondary">Active Block Height:</span>
+<span class="font-mono text-text-muted">#1,489,204</span>
+</div>
+</div>
+<!-- Progress/Breakdown Metric -->
+<div class="mt-space-md">
+<div class="flex items-center justify-between text-label-sm font-label-sm mb-1.5">
+<span class="text-text-secondary">Activity Sources Ratio</span>
+<span class="text-text-primary font-bold">142 total events</span>
+</div>
+<div class="w-full h-3 rounded-full bg-surface-container-high flex overflow-hidden">
+<div class="bg-primary h-full" style="width: 62%;" title="62% Automated CI/CD &amp; Bot"></div>
+<div class="bg-primary-light h-full" style="width: 38%;" title="38% Manual User Actions"></div>
+</div>
+<div class="flex items-center justify-between mt-2 text-body-sm font-body-sm text-text-secondary">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<span>Automated / Bot: <strong>62%</strong></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-light"></span>
+<span>Manual: <strong>38%</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- QUICK FILTER BY ACTOR CARD -->
+<div class="bg-surface-card rounded-xl p-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-text-primary">Filter by Actor</h2>
+<span class="text-text-muted font-body-sm text-body-sm">Last 7 days</span>
+</div>
+<div class="mt-space-sm flex flex-col gap-space-xs" id="actor-filters">
+<button class="actor-filter-btn w-full p-space-sm rounded-lg hover:bg-canvas-lavender flex items-center justify-between transition-colors text-left group" data-actor-name="Aarav Mehta">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Small circular portrait thumbnail of Aarav Mehta in clean lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaP_IHixRRurSpEczA-bkfwgLgIl_EkLx0cvKJL75PxHizYuq06-Fppl7yKfz49RIUfZLQP_kFFHZFUqlnBcgwMaFS7Eq2axh-DJXSUWaQ8TnDVhV4o08D1L9M0ESGlSQCGSFe0FOij80Xy4Ihfiv9J9uwwcV8Ncami4rKW5R2LdNZr-vHRnuzGF25LRc7O_dK8AIqiEfcN_df2yEmMAQvJEBCNO2zK9A3q4HNNA6Y"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-text-primary group-hover:text-primary transition-colors">Aarav Mehta</span>
+<span class="font-body-sm text-body-sm text-text-muted">Workspace Owner</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-mono text-[11px] font-bold">42</span>
+</button>
+<button class="actor-filter-btn w-full p-space-sm rounded-lg hover:bg-canvas-lavender flex items-center justify-between transition-colors text-left group" data-actor-name="Maya Shah">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Small circular portrait thumbnail of Maya Shah smiling in front of office window" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4-HqqR2nVNTRMn1otFNDDC0FTNIH5Cfa5JGHvw4bw_PwynvZPbypTVz-j0Kful_xxVlF4CiE2OpLeTIv39UTC8hDRwo2EGxX9w9afkXhjivjyPmO9euio-N4hM0hIzq4BxlZqV0jkIrt_S_-Mto7ebWtdOGeDwxWc_dxQCDh-wOEa2-I5N4Y9Lw4Hoaq3t-oFLFMc52NCeu710iQ8z_IoqDcuyMufrdEe9RdsVnJv"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-text-primary group-hover:text-primary transition-colors">Maya Shah</span>
+<span class="font-body-sm text-body-sm text-text-muted">Lead Frontend</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-mono text-[11px] font-bold">38</span>
+</button>
+<button class="actor-filter-btn w-full p-space-sm rounded-lg hover:bg-canvas-lavender flex items-center justify-between transition-colors text-left group" data-actor-name="David K.">
+<div class="flex items-center gap-space-sm">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Small circular portrait thumbnail of David K., Senior DevOps Lead" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8bW4JwyY4O6hUu0KfymwRti5ih0EDA1T9bRaoDC7mfGEY0ey00dL64gAonWB1l6Lhc9gkHtuf9xMHnWG_X_N-rp7zMjl26uShWdZjfvoaWwOFBd9km2Hq6aYKVXTcfcvuOSY1SG5qeWBi2dKAHNHNLyerc21nulXdgAXNi0et4bxDlG7QcZLmR6fEHPTH4a6fh4tyVl4kPv6us-yJ1AggZyTKt1mfQ6ph0Hxv1H0P"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-text-primary group-hover:text-primary transition-colors">David K.</span>
+<span class="font-body-sm text-body-sm text-text-muted">DevOps Lead</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-mono text-[11px] font-bold">29</span>
+</button>
+<button class="actor-filter-btn w-full p-space-sm rounded-lg hover:bg-canvas-lavender flex items-center justify-between transition-colors text-left group" data-actor-name="System Bot">
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded-full bg-canvas-lavender flex items-center justify-center text-primary font-bold">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-text-primary group-hover:text-primary transition-colors">System Telemetry Bot</span>
+<span class="font-body-sm text-body-sm text-text-muted">CI/CD &amp; Automated Pagers</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-primary font-mono text-[11px] font-bold">33</span>
+</button>
+</div>
+</div>
+<!-- RECENT AUDIT COMPLIANCE EXPORT CALLOUT -->
+<div class="p-space-md rounded-xl bg-canvas-lavender flex flex-col gap-space-sm">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[24px]">policy</span>
+<div>
+<span class="font-headline-sm text-headline-sm text-text-primary">Compliance Ready</span>
+<p class="font-body-sm text-body-sm text-text-secondary mt-0.5">
+              Logs in this view meet ISO-27001 &amp; SOC-2 Type II tamper-resistance criteria. All actor sessions are cryptographically bound to hardware security tokens.
+            </p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<a class="font-label-sm text-label-sm text-primary hover:text-primary-hover font-semibold flex items-center gap-1" href="#">
+<span>Download Compliance Report</span>
+<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+<span class="text-text-muted font-mono text-[11px]">HASH: 0x8F9B..21</span>
+</div>
+</div>
+</div>
+</div>
+<!-- INTERACTION SCRIPT FOR LOG FILTERING & REAL-TIME SEARCH -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('activity-search-input');
+      const clearBtn = document.getElementById('clear-search-btn');
+      const filterChips = document.querySelectorAll('.filter-chip');
+      const events = document.querySelectorAll('.timeline-event');
+      const dateGroups = document.querySelectorAll('.timeline-date-group');
+      const noResults = document.getElementById('no-results-state');
+      const resetBtn = document.getElementById('reset-filter-btn');
+      const actorBtns = document.querySelectorAll('.actor-filter-btn');
+
+      let currentCategory = 'all';
+      let currentActor = '';
+      let currentSearch = '';
+
+      function applyFilters() {
+        let visibleCount = 0;
+
+        events.forEach(event => {
+          const category = event.getAttribute('data-category') || '';
+          const actor = event.getAttribute('data-actor') || '';
+          const tag = event.getAttribute('data-tag') || '';
+          const content = event.innerText.toLowerCase();
+
+          const matchesCategory = (currentCategory === 'all') || category.toLowerCase().includes(currentCategory);
+          const matchesActor = !currentActor || actor.toLowerCase().includes(currentActor.toLowerCase());
+          const matchesSearch = !currentSearch || content.includes(currentSearch.toLowerCase()) || tag.toLowerCase().includes(currentSearch.toLowerCase());
+
+          if (matchesCategory && matchesActor && matchesSearch) {
+            event.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            event.classList.add('hidden');
+          }
+        });
+
+        // Hide date group headers if no children are visible
+        dateGroups.forEach(group => {
+          const hasVisibleEvents = group.querySelectorAll('.timeline-event:not(.hidden)').length > 0;
+          if (hasVisibleEvents) {
+            group.classList.remove('hidden');
+          } else {
+            group.classList.add('hidden');
+          }
+        });
+
+        // Show/hide empty state
+        if (visibleCount === 0) {
+          noResults.classList.remove('hidden');
+        } else {
+          noResults.classList.add('hidden');
+        }
+      }
+
+      // Filter chips click
+      filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          filterChips.forEach(c => {
+            c.classList.remove('bg-primary', 'text-on-primary');
+            c.classList.add('bg-canvas-lavender', 'text-text-secondary');
+          });
+          chip.classList.add('bg-primary', 'text-on-primary');
+          chip.classList.remove('bg-canvas-lavender', 'text-text-secondary');
+
+          currentCategory = chip.getAttribute('data-filter');
+          applyFilters();
+        });
+      });
+
+      // Search field input
+      searchInput.addEventListener('input', (e) => {
+        currentSearch = e.target.value.trim();
+        if (currentSearch.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+        applyFilters();
+      });
+
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        currentSearch = '';
+        clearBtn.classList.add('hidden');
+        applyFilters();
+      });
+
+      // Actor sidebar button click
+      actorBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const actorName = btn.getAttribute('data-actor-name');
+          if (currentActor === actorName) {
+            currentActor = '';
+            btn.classList.remove('bg-canvas-lavender');
+          } else {
+            actorBtns.forEach(b => b.classList.remove('bg-canvas-lavender'));
+            currentActor = actorName;
+            btn.classList.add('bg-canvas-lavender');
+          }
+          applyFilters();
+        });
+      });
+
+      // Reset filters button
+      resetBtn.addEventListener('click', () => {
+        currentCategory = 'all';
+        currentActor = '';
+        currentSearch = '';
+        searchInput.value = '';
+        clearBtn.classList.add('hidden');
+
+        filterChips.forEach(c => {
+          c.classList.remove('bg-primary', 'text-on-primary');
+          c.classList.add('bg-canvas-lavender', 'text-text-secondary');
+        });
+        filterChips[0].classList.add('bg-primary', 'text-on-primary');
+        filterChips[0].classList.remove('bg-canvas-lavender', 'text-text-secondary');
+
+        actorBtns.forEach(b => b.classList.remove('bg-canvas-lavender'));
+
+        applyFilters();
+      });
+    });
+  </script>
+</div></main></div></body></html>
