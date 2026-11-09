@@ -5,6 +5,8 @@ import GlobalTopBar from '../components/navigation/GlobalTopBar';
 import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
 import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
 import { notificationService } from '../services/api';
+import CreateTaskModal from '../modules/tasks/components/CreateTaskModal';
+import { taskService } from '../modules/tasks/services/taskService';
 
 /**
  * DashboardLayout
@@ -20,6 +22,7 @@ export const DashboardLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -46,8 +49,10 @@ export const DashboardLayout = () => {
   }, [location.pathname]);
 
   const handleActionSelect = (actionType) => {
-    console.log('Action selected:', actionType);
     setIsPlusMenuOpen(false);
+    if (actionType === 'CREATE_TASK') {
+      setIsCreateTaskModalOpen(true);
+    }
   };
 
   const handleSearchResultSelect = (result) => {
@@ -170,6 +175,14 @@ export const DashboardLayout = () => {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectResult={handleSearchResultSelect}
+      />
+
+      <CreateTaskModal
+        isOpen={isCreateTaskModalOpen}
+        onClose={() => setIsCreateTaskModalOpen(false)}
+        onCreateTask={async (payload) => {
+          await taskService.create(payload);
+        }}
       />
     </div>
   );

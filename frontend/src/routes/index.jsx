@@ -6,6 +6,8 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import DashboardOverviewPage from '../modules/dashboard/pages/DashboardOverviewPage';
 import NotificationCenterPage from '../modules/notifications/pages/NotificationCenterPage';
+import AllTasksPage from '../modules/tasks/pages/AllTasksPage';
+import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
 
 /**
  * AppRoutes
@@ -34,8 +36,11 @@ export const AppRoutes = () => {
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
         <Route path="notifications" element={<NotificationCenterPage />} />
+        <Route path="tasks" element={<AllTasksPage />} />
+        <Route path="tasks/all" element={<AllTasksPage />} />
+        <Route path="tasks/my-tasks" element={<MyTasksPage />} />
+        <Route path="tasks/my" element={<MyTasksPage />} />
         <Route path="projects/*" element={<DashboardOverviewPage />} />
-        <Route path="tasks/*" element={<DashboardOverviewPage />} />
         <Route path="tickets/*" element={<DashboardOverviewPage />} />
         <Route path="sla/*" element={<DashboardOverviewPage />} />
         <Route path="rca/*" element={<DashboardOverviewPage />} />

@@ -189,7 +189,7 @@ export const Sidebar = ({
             <SectionLabel label="Workspace" isCollapsed={isCollapsed} />
             <div className="space-y-0.5">
               <NavItem to="/workspace/dashboard" icon="home" label="Home" isCollapsed={isCollapsed} end />
-              <NavItem to="/workspace/tasks" icon="task_alt" label="My Tasks" isCollapsed={isCollapsed} />
+              <NavItem to="/workspace/tasks/my-tasks" icon="task_alt" label="My Tasks" isCollapsed={isCollapsed} />
               <NavItem
                 to="/workspace/notifications"
                 icon="notifications"
