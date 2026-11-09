@@ -126,8 +126,8 @@ export const DashboardLayout = () => {
 
       {/* ── Main Workspace Viewport ── */}
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 md:${
-          isSidebarCollapsed ? 'pl-20' : 'pl-72'
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${
+          isSidebarCollapsed ? 'md:pl-20' : 'md:pl-72'
         }`}
       >
         {/* Mobile Top Bar (hamburger + logo) */}
