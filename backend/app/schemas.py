@@ -199,16 +199,117 @@ class TaskRead(TaskBase):
 class TicketBase(BaseSchema):
     title: str
     description: Optional[str] = None
-    severity: str  # blocker, critical, major, minor
-    status: str    # open, wip, on_hold, resolved, closed
+    severity: str = "major"  # blocker, critical, major, minor
+    status: str = "open"     # open, wip, on_hold, resolved, closed
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+
+
+class TicketCreate(BaseSchema):
+    title: str
+    description: Optional[str] = None
+    severity: Optional[str] = "major"
+    status: Optional[str] = "open"
+    project_id: str
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+    initial_comment: Optional[str] = None
+
+
+class TicketUpdate(BaseSchema):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    severity: Optional[str] = None
+    status: Optional[str] = None
+    assignee_id: Optional[str] = None
+    deadline: Optional[datetime] = None
+    first_response_at: Optional[datetime] = None
+    steps_to_reproduce: Optional[str] = None
+    diagnostic_trace: Optional[str] = None
+    rca_trigger: Optional[str] = None
+    rca_mitigation: Optional[str] = None
+    rca_action_items: Optional[str] = None
+
+
+class TicketCommentCreate(BaseSchema):
+    content: str
+    is_internal: bool = False
+
+
+class TicketCommentRead(BaseSchema):
+    id: str
+    ticket_id: str
+    author_id: str
+    content: str
+    is_internal: bool = False
+    created_at: datetime
+    author: Optional[UserRead] = None
+
+
+class TicketAttachmentCreate(BaseSchema):
+    name: str
+    size_bytes: int = 0
+    file_url: str = ""
+
+
+class TicketAttachmentRead(BaseSchema):
+    id: str
+    ticket_id: str
+    uploader_id: str
+    name: str
+    size_bytes: int = 0
+    file_url: str = ""
+    created_at: datetime
+    uploader: Optional[UserRead] = None
+
+
+class TicketActivityRead(BaseSchema):
+    id: str
+    ticket_id: str
+    actor_id: str
+    action: str
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    created_at: datetime
+    actor: Optional[UserRead] = None
 
 
 class TicketRead(TicketBase):
     id: str
-    ticket_number: Optional[str] = None
+    ticket_number: str
     project_id: str
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+    assignee: Optional[UserRead] = None
+    reporter: Optional[UserRead] = None
+    comments: List[TicketCommentRead] = Field(default_factory=list)
+    attachments: List[TicketAttachmentRead] = Field(default_factory=list)
+    activities: List[TicketActivityRead] = Field(default_factory=list)
+
+
+class TicketStats(BaseSchema):
+    total: int = 0
+    open: int = 0
+    wip: int = 0
+    on_hold: int = 0
+    resolved: int = 0
+    closed: int = 0
+    sla_breached: int = 0
+
 
 
 # --- Discussions Schemas ---

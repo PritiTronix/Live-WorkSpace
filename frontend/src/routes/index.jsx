@@ -13,6 +13,12 @@ import ProjectTimelineTab from '../modules/projects/ProjectTimelineTab';
 import ProjectDiscussionTab from '../modules/projects/ProjectDiscussionTab';
 import ProjectFilesTab from '../modules/projects/ProjectFilesTab';
 import ProjectActivityTab from '../modules/projects/ProjectActivityTab';
+import {
+  TicketsDashboardPage,
+  TicketBoardPage,
+  TicketPriorityPage,
+  TicketDetailsPage,
+} from '../modules/tickets';
 
 /**
  * AppRoutes
@@ -54,7 +60,13 @@ export const AppRoutes = () => {
           <Route path="tickets" element={<ProjectOverviewTab />} />
         </Route>
         <Route path="tasks/*" element={<DashboardOverviewPage />} />
-        <Route path="tickets/*" element={<DashboardOverviewPage />} />
+        {/* Ticket Management Routes (Screens 61-65) */}
+        <Route path="tickets" element={<TicketsDashboardPage />} />
+        <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
+        <Route path="tickets/board" element={<TicketBoardPage />} />
+        <Route path="tickets/priority" element={<TicketPriorityPage />} />
+        <Route path="tickets/:id" element={<TicketDetailsPage />} />
+        <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/priority" replace />} />
         <Route path="sla/*" element={<DashboardOverviewPage />} />
         <Route path="rca/*" element={<DashboardOverviewPage />} />
         <Route path="discussions/*" element={<DashboardOverviewPage />} />

@@ -1,6 +1,8 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base
@@ -40,6 +42,11 @@ def create_application() -> FastAPI:
 
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    # Static file serving for uploads
+    uploads_dir = os.path.abspath(settings.UPLOAD_DIR)
+    os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
+    application.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
     @application.get("/health", tags=["Health"])
     async def health_check():

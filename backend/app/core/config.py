@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/live_workspace"
     SYNC_DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/live_workspace"
 
+    # Storage
+    STORAGE_PROVIDER: str = "local"
+    UPLOAD_DIR: str = "./uploads"
+    MAX_ATTACHMENT_SIZE_BYTES: int = 15 * 1024 * 1024  # 15 MB
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",

@@ -128,13 +128,71 @@ class Ticket(Base):
     ticket_number: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    severity: Mapped[str] = mapped_column(String(50), default="major")  # blocker, critical, major
-    status: Mapped[str] = mapped_column(String(50), default="open")     # open, wip, on-hold, resolved, closed
+    severity: Mapped[str] = mapped_column(String(50), default="major")  # blocker, critical, major, minor
+    status: Mapped[str] = mapped_column(String(50), default="open")     # open, wip, on_hold, resolved, closed
     project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    assignee_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    reporter_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    first_response_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    steps_to_reproduce: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    diagnostic_trace: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rca_trigger: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rca_mitigation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rca_action_items: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     project: Mapped["Project"] = relationship(back_populates="tickets")
+    assignee: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assignee_id])
+    reporter: Mapped[Optional["User"]] = relationship("User", foreign_keys=[reporter_id])
+    comments: Mapped[list["TicketComment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
+    attachments: Mapped[list["TicketAttachment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
+    activities: Mapped[list["TicketActivity"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
+
+
+class TicketComment(Base):
+    __tablename__ = "ticket_comments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("tickets.id"), nullable=False)
+    author_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    is_internal: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    ticket: Mapped["Ticket"] = relationship(back_populates="comments")
+    author: Mapped["User"] = relationship("User")
+
+
+class TicketAttachment(Base):
+    __tablename__ = "ticket_attachments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("tickets.id"), nullable=False)
+    uploader_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    file_url: Mapped[str] = mapped_column(String(500), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    ticket: Mapped["Ticket"] = relationship(back_populates="attachments")
+    uploader: Mapped["User"] = relationship("User")
+
+
+class TicketActivity(Base):
+    __tablename__ = "ticket_activities"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("tickets.id"), nullable=False)
+    actor_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    action: Mapped[str] = mapped_column(String(100), nullable=False)
+    old_value: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    new_value: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    ticket: Mapped["Ticket"] = relationship(back_populates="activities")
+    actor: Mapped["User"] = relationship("User")
 
 
 class Discussion(Base):
