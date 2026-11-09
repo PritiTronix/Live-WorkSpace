@@ -25,6 +25,11 @@ export const ticketsService = {
     return res.data;
   },
 
+  getCritical: async (params = {}) => {
+    const res = await apiClient.get('/tickets/critical', { params });
+    return res.data;
+  },
+
   getTicket: async (ticketId) => {
     const res = await apiClient.get(`/tickets/${ticketId}`);
     return res.data;
@@ -65,17 +70,53 @@ export const ticketsService = {
     const res = await apiClient.post(`/tickets/${ticketId}/attachments`, payload, { headers });
     return res.data;
   },
+
+  changeStatus: async (ticketId, data) => {
+    const res = await apiClient.patch(`/tickets/${ticketId}/status`, data);
+    return res.data;
+  },
+
+  changeSeverity: async (ticketId, data) => {
+    const res = await apiClient.patch(`/tickets/${ticketId}/severity`, data);
+    return res.data;
+  },
+
+  reassignTicket: async (ticketId, data) => {
+    const res = await apiClient.patch(`/tickets/${ticketId}/assignee`, data);
+    return res.data;
+  },
+
+  changeDeadline: async (ticketId, data) => {
+    const res = await apiClient.patch(`/tickets/${ticketId}/deadline`, data);
+    return res.data;
+  },
+
+  reopenTicket: async (ticketId, data) => {
+    const res = await apiClient.post(`/tickets/${ticketId}/reopen`, data);
+    return res.data;
+  },
+
+  closeTicket: async (ticketId, data) => {
+    const res = await apiClient.post(`/tickets/${ticketId}/close`, data);
+    return res.data;
+  },
+
+  getAttachmentDownloadUrl: (ticketId, attachmentId) => {
+    const baseUrl = apiClient.defaults.baseURL || '/api/v1';
+    return `${baseUrl}/tickets/${ticketId}/attachments/${attachmentId}/download`;
+  },
 };
 
 /**
  * Real-time WebSocket hook for ticket events in workspace
  */
-export const createTicketsWebSocket = (workspaceId = 'org_01', onEvent) => {
-  const token = localStorage.getItem('access_token') || 'mock_jwt_token_maya_shah';
+export const createTicketsWebSocket = (workspaceId, onEvent) => {
+  const token = localStorage.getItem('access_token') || '';
+  const resolvedWorkspaceId = workspaceId || localStorage.getItem('active_workspace_id') || localStorage.getItem('organization_id') || 'org_01';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const query = `?token=${encodeURIComponent(token)}`;
+  const query = token ? `?token=${encodeURIComponent(token)}` : '';
   // Point to backend websocket URL (default port 8000 in local dev)
-  const wsUrl = `${protocol}//${window.location.hostname}:8000/api/v1/tickets/ws/${workspaceId}${query}`;
+  const wsUrl = `${protocol}//${window.location.hostname}:8000/api/v1/tickets/ws/${resolvedWorkspaceId}${query}`;
 
   let ws = null;
   let retryTimer = null;

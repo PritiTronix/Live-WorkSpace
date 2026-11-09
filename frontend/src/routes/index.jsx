@@ -18,6 +18,7 @@ import {
   TicketBoardPage,
   TicketPriorityPage,
   TicketDetailsPage,
+  PriorityIssuesPage,
 } from '../modules/tickets';
 
 /**
@@ -60,13 +61,14 @@ export const AppRoutes = () => {
           <Route path="tickets" element={<ProjectOverviewTab />} />
         </Route>
         <Route path="tasks/*" element={<DashboardOverviewPage />} />
-        {/* Ticket Management Routes (Screens 61-65) */}
+        {/* Ticket Management Routes (Screens 61-65, 69) */}
         <Route path="tickets" element={<TicketsDashboardPage />} />
         <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
         <Route path="tickets/board" element={<TicketBoardPage />} />
         <Route path="tickets/priority" element={<TicketPriorityPage />} />
+        <Route path="tickets/critical" element={<PriorityIssuesPage />} />
         <Route path="tickets/:id" element={<TicketDetailsPage />} />
-        <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/priority" replace />} />
+        <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
         <Route path="sla/*" element={<DashboardOverviewPage />} />
         <Route path="rca/*" element={<DashboardOverviewPage />} />
         <Route path="discussions/*" element={<DashboardOverviewPage />} />

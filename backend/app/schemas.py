@@ -231,6 +231,7 @@ class TicketCreate(BaseSchema):
 class TicketUpdate(BaseSchema):
     title: Optional[str] = None
     description: Optional[str] = None
+    project_id: Optional[str] = None
     severity: Optional[str] = None
     status: Optional[str] = None
     assignee_id: Optional[str] = None
@@ -241,6 +242,44 @@ class TicketUpdate(BaseSchema):
     rca_trigger: Optional[str] = None
     rca_mitigation: Optional[str] = None
     rca_action_items: Optional[str] = None
+
+
+class TicketStatusChangeRequest(BaseSchema):
+    status: str
+    reason: Optional[str] = None
+    follow_up_date: Optional[str] = None
+    remarks: Optional[str] = None
+
+
+class TicketSeverityChangeRequest(BaseSchema):
+    severity: str
+    reason: str
+    operational_notes: Optional[str] = None
+
+
+class TicketReassignRequest(BaseSchema):
+    assignee_id: str
+    reason: Optional[str] = None
+    handover_note: Optional[str] = None
+
+
+class TicketDeadlineChangeRequest(BaseSchema):
+    deadline: datetime
+    reason: str
+    operational_remarks: Optional[str] = None
+
+
+class TicketReopenRequest(BaseSchema):
+    classification: str
+    telemetry_notes: Optional[str] = None
+
+
+class TicketCloseRequest(BaseSchema):
+    resolution_summary: str
+    commit_sha: Optional[str] = None
+    pr_reference: Optional[str] = None
+    verified_in_staging: bool = False
+
 
 
 class TicketCommentCreate(BaseSchema):
@@ -309,6 +348,22 @@ class TicketStats(BaseSchema):
     resolved: int = 0
     closed: int = 0
     sla_breached: int = 0
+
+
+class CriticalIssuesKPI(BaseSchema):
+    blockers_active: int = 0
+    critical_incidents: int = 0
+    major_issues: int = 0
+    sla_breached: int = 0
+    sync_interval_sec: int = 5
+
+
+class CriticalIssuesResponse(BaseSchema):
+    kpi: CriticalIssuesKPI
+    blockers: List[TicketRead] = Field(default_factory=list)
+    critical: List[TicketRead] = Field(default_factory=list)
+    major: List[TicketRead] = Field(default_factory=list)
+
 
 
 
