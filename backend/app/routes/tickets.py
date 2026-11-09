@@ -174,6 +174,7 @@ async def get_critical_priority_issues(
         selectinload(Ticket.project),
         selectinload(Ticket.comments),
         selectinload(Ticket.attachments),
+        selectinload(Ticket.activities),
     )
 
     if project_id and project_id.lower() != "all":
@@ -371,6 +372,7 @@ async def get_ticket_priority(
     return priority_groups
 
 
+@router.get("", response_model=List[TicketRead])
 @router.get("/", response_model=List[TicketRead])
 async def list_tickets(
     project_id: Optional[str] = Query(None, description="Filter by project ID"),
@@ -388,6 +390,7 @@ async def list_tickets(
         selectinload(Ticket.project),
         selectinload(Ticket.comments),
         selectinload(Ticket.attachments),
+        selectinload(Ticket.activities),
     )
 
     if project_id and project_id.lower() != "all":
@@ -407,6 +410,7 @@ async def list_tickets(
     return res.scalars().all()
 
 
+@router.post("", response_model=TicketRead, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=TicketRead, status_code=status.HTTP_201_CREATED)
 async def create_ticket(
     ticket_in: TicketCreate,

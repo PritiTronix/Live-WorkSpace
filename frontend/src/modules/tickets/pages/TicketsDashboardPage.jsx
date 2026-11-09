@@ -39,10 +39,11 @@ export const TicketsDashboardPage = () => {
         }),
       ]);
       setStats(statsData);
-      setTickets(ticketsData || []);
+      setTickets(Array.isArray(ticketsData) ? ticketsData : (ticketsData?.items || []));
     } catch (err) {
       console.error('Failed to load tickets dashboard:', err);
       setError(err.message || 'Failed to load tickets.');
+      setTickets([]);
     } finally {
       setLoading(false);
     }
