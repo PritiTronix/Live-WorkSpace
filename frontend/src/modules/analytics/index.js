@@ -1,4 +1,2 @@
-/**
- * Analytics Module Entry Point
- */
-export default {};
+export { default as ReportsAnalyticsPage } from './pages/ReportsAnalyticsPage';
+export { default as AnalyticsExportModal } from './components/AnalyticsExportModal';

@@ -382,3 +382,5 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
 
 export { projectsService } from './projectsService';
 export { taskService, connectTasksWebSocket } from '../modules/tasks/services/taskService';
+export { analyticsService } from './analyticsService';
+export { auditLogsService } from './auditLogsService';

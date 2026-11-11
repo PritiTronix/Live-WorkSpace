@@ -23,6 +23,8 @@ import NotificationCenterPage from '../modules/notifications/pages/NotificationC
 import AllTasksPage from '../modules/tasks/pages/AllTasksPage';
 import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
 import ModuleComingSoonPage from '../components/ModuleComingSoonPage';
+import ReportsAnalyticsPage from '../modules/analytics/pages/ReportsAnalyticsPage';
+import SystemActivityLogsPage from '../modules/audit/pages/SystemActivityLogsPage';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
 /**
@@ -121,26 +123,13 @@ export const AppRoutes = () => {
             />
           }
         />
-        <Route
-          path="audit-logs/*"
-          element={
-            <ModuleComingSoonPage
-              title="Audit Logs & Compliance Trail"
-              description="Enterprise event logging, SOC-2 activity stream, and security history."
-              icon={ShieldCheck}
-            />
-          }
-        />
-        <Route
-          path="analytics/*"
-          element={
-            <ModuleComingSoonPage
-              title="Analytics & Velocity Reports"
-              description="Sprint burn-down metrics, workload distribution matrix, and automated reporting."
-              icon={BarChart3}
-            />
-          }
-        />
+        {/* System Activity & Audit Logs (Screens 02 & 03 / Batch 05) */}
+        <Route path="audit-logs" element={<SystemActivityLogsPage />} />
+        <Route path="audit-logs/*" element={<SystemActivityLogsPage />} />
+
+        {/* Reports & Analytics (Screen 01 / Batch 05) */}
+        <Route path="analytics" element={<ReportsAnalyticsPage />} />
+        <Route path="analytics/*" element={<ReportsAnalyticsPage />} />
         <Route
           path="settings/*"
           element={
