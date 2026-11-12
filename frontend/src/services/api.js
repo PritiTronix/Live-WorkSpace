@@ -32,29 +32,131 @@ export const DEFAULT_USER = {
   avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrAtOdrqsfXwMC1ggrSafmjA3tRiDOW6nsEXFzXsENjtoM3FWwKbLJA1BlzO43CGB9bykeRE8VGswBaHL8HX-wkA95x3YEk8Ido2sEJcvrr_WEWIIuLU9bOpJslSnCE2ZSZRXsXWqYDmuU8pTNCkkoaTZCzOhLNNQ2NT6sZn8vHrb0A-JPplRuViYPfX-t01H6IZLWAE4pWnivGDAtKKzl6WhvmKwlqcCaUb4gPTna',
 };
 
+// Response interceptor for automatic token refresh
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !originalRequest?.url?.includes('/auth/login') &&
+      !originalRequest?.url?.includes('/auth/refresh') &&
+      localStorage.getItem('refresh_token')
+    ) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
+        if (res.data?.access_token) {
+          localStorage.setItem('access_token', res.data.access_token);
+          if (res.data?.refresh_token) {
+            localStorage.setItem('refresh_token', res.data.refresh_token);
+          }
+          originalRequest.headers.Authorization = `Bearer ${res.data.access_token}`;
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Authentication & Profile Services
 export const authService = {
+  register: async (userData) => {
+    try {
+      const response = await apiClient.post('/auth/register', userData);
+      if (response.data?.access_token) {
+        localStorage.setItem('access_token', response.data.access_token);
+      }
+      if (response.data?.refresh_token) {
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
+      return response.data;
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message || 'Registration failed';
+      throw new Error(message);
+    }
+  },
   login: async (credentials) => {
     try {
       const response = await apiClient.post('/auth/login', credentials);
       if (response.data?.access_token) {
         localStorage.setItem('access_token', response.data.access_token);
       }
+      if (response.data?.refresh_token) {
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
       return response.data;
-    } catch {
-      // Mock authenticated fallback token when backend DB is pending
-      const mockToken = 'mock_jwt_token_maya_shah';
-      localStorage.setItem('access_token', mockToken);
-      return { access_token: mockToken, user: DEFAULT_USER };
+    } catch (err) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      const errDetail = err.response?.data?.detail;
+      const message = typeof errDetail === 'object' ? errDetail?.message || JSON.stringify(errDetail) : errDetail || err.message || 'Incorrect email or password';
+      throw new Error(message);
+    }
+  },
+  refreshToken: async () => {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) throw new Error('No refresh token available');
+    try {
+      const response = await apiClient.post('/auth/refresh', { refresh_token: refreshToken });
+      if (response.data?.access_token) {
+        localStorage.setItem('access_token', response.data.access_token);
+      }
+      if (response.data?.refresh_token) {
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+      }
+      return response.data;
+    } catch (err) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      throw err;
     }
   },
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get('/users/me');
+      const response = await apiClient.get('/auth/me');
       return response.data;
-    } catch {
-      return DEFAULT_USER;
+    } catch (err) {
+      try {
+        const resUsers = await apiClient.get('/users/me');
+        return resUsers.data;
+      } catch (innerErr) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        throw innerErr;
+      }
     }
+  },
+  completeOnboarding: async () => {
+    const response = await apiClient.post('/auth/onboarding/complete');
+    return response.data;
+  },
+  verifyEmail: async ({ token, email }) => {
+    const response = await apiClient.post('/auth/verify-email', { token, email });
+    return response.data;
+  },
+  resendVerification: async ({ email }) => {
+    const response = await apiClient.post('/auth/resend-verification', { email });
+    return response.data;
+  },
+  forgotPassword: async ({ email }) => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+  resetPassword: async ({ token, new_password, email }) => {
+    const response = await apiClient.post('/auth/reset-password', {
+      token,
+      new_password,
+      email,
+    });
+    return response.data;
   },
   updatePresence: async (presence) => {
     try {
@@ -64,8 +166,15 @@ export const authService = {
       return { presence };
     }
   },
-  logout: () => {
-    localStorage.removeItem('access_token');
+  logout: async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+    }
   },
 };
 
@@ -382,3 +491,139 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
 
 export { projectsService } from './projectsService';
 export { taskService, connectTasksWebSocket } from '../modules/tasks/services/taskService';
+
+
+// ---------------------------------------------------------------------------
+// SLA Management Services — Batch 5
+// ---------------------------------------------------------------------------
+export const slaService = {
+  getOverview: async () => {
+    const res = await apiClient.get('/sla/overview');
+    return res.data;
+  },
+  getPolicies: async () => {
+    const res = await apiClient.get('/sla/policies');
+    return res.data;
+  },
+  getPolicy: async (id) => {
+    const res = await apiClient.get(`/sla/policies/${id}`);
+    return res.data;
+  },
+  createPolicy: async (data) => {
+    const res = await apiClient.post('/sla/policies', data);
+    return res.data;
+  },
+  updatePolicy: async (id, data) => {
+    const res = await apiClient.put(`/sla/policies/${id}`, data);
+    return res.data;
+  },
+  deletePolicy: async (id) => {
+    const res = await apiClient.delete(`/sla/policies/${id}`);
+    return res.data;
+  },
+  addRule: async (policyId, data) => {
+    const res = await apiClient.post(`/sla/policies/${policyId}/rules`, data);
+    return res.data;
+  },
+  updateRule: async (ruleId, data) => {
+    const res = await apiClient.put(`/sla/rules/${ruleId}`, data);
+    return res.data;
+  },
+  deleteRule: async (ruleId) => {
+    const res = await apiClient.delete(`/sla/rules/${ruleId}`);
+    return res.data;
+  },
+  getBreaches: async () => {
+    const res = await apiClient.get('/sla/breaches');
+    return res.data;
+  },
+  getEscalations: async () => {
+    const res = await apiClient.get('/sla/escalations');
+    return res.data;
+  },
+  acknowledgeBreach: async (timerId, data = {}) => {
+    const res = await apiClient.post(`/sla/breaches/${timerId}/acknowledge`, data);
+    return res.data;
+  },
+};
+
+export const connectSlaWebSocket = (onMessage, onError) => {
+  const token = localStorage.getItem('access_token');
+  if (!token) return null;
+  const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+  const wsUrl = `${base}/api/v1/sla/ws?token=${token}`;
+  try {
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (onMessage) onMessage(data);
+      } catch (err) {
+        console.error('SLA WS parse error:', err);
+      }
+    };
+    ws.onerror = (err) => { if (onError) onError(err); };
+    return ws;
+  } catch (err) {
+    console.warn('SLA WebSocket error:', err);
+    return null;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// RCA (Root Cause Analysis) Services — Batch 5
+// ---------------------------------------------------------------------------
+export const rcaService = {
+  listRcas: async (params = {}) => {
+    const res = await apiClient.get('/rca', { params });
+    return res.data;
+  },
+  getRca: async (id) => {
+    const res = await apiClient.get(`/rca/${id}`);
+    return res.data;
+  },
+  createRca: async (data) => {
+    const res = await apiClient.post('/rca', data);
+    return res.data;
+  },
+  updateRca: async (id, data) => {
+    const res = await apiClient.put(`/rca/${id}`, data);
+    return res.data;
+  },
+  submitRca: async (id) => {
+    const res = await apiClient.post(`/rca/${id}/submit`);
+    return res.data;
+  },
+  approveRca: async (id) => {
+    const res = await apiClient.post(`/rca/${id}/approve`);
+    return res.data;
+  },
+  publishRca: async (id) => {
+    const res = await apiClient.post(`/rca/${id}/publish`);
+    return res.data;
+  },
+  getVersions: async (id) => {
+    const res = await apiClient.get(`/rca/${id}/versions`);
+    return res.data;
+  },
+  getVersionSnapshot: async (id, versionNumber) => {
+    const res = await apiClient.get(`/rca/${id}/versions/${versionNumber}`);
+    return res.data;
+  },
+  getActionItems: async (id) => {
+    const res = await apiClient.get(`/rca/${id}/action-items`);
+    return res.data;
+  },
+  createActionItem: async (id, data) => {
+    const res = await apiClient.post(`/rca/${id}/action-items`, data);
+    return res.data;
+  },
+  updateActionItem: async (rcaId, itemId, data) => {
+    const res = await apiClient.patch(`/rca/${rcaId}/action-items/${itemId}`, data);
+    return res.data;
+  },
+  deleteActionItem: async (rcaId, itemId) => {
+    const res = await apiClient.delete(`/rca/${rcaId}/action-items/${itemId}`);
+    return res.data;
+  },
+};

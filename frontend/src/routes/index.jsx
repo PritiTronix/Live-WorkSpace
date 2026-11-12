@@ -22,6 +22,18 @@ import {
 import NotificationCenterPage from '../modules/notifications/pages/NotificationCenterPage';
 import AllTasksPage from '../modules/tasks/pages/AllTasksPage';
 import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
+import {
+  LoginPage,
+  SignupPage,
+  RegisterPage,
+  VerifyEmailPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  ProtectedRoute,
+  PublicOnlyRoute,
+} from '../modules/auth';
+import { SLAOverviewPage, SLASettingsPage } from '../modules/sla';
+import { RCAListPage, RCAFormPage, RCADetailsPage } from '../modules/rca';
 import ModuleComingSoonPage from '../components/ModuleComingSoonPage';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
@@ -35,18 +47,62 @@ export const AppRoutes = () => {
       {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Authentication Shell (Screens 01-08) */}
+      {/* Authentication Shell (Screens 01-08 / Batch 4) */}
       <Route path="/auth" element={<AuthLayout />}>
         <Route index element={<Navigate to="/auth/login" replace />} />
-        <Route path="login" element={<LandingPage />} />
-        <Route path="register" element={<LandingPage />} />
-        <Route path="forgot-password" element={<LandingPage />} />
-        <Route path="reset-password" element={<LandingPage />} />
-        <Route path="mfa-challenge" element={<LandingPage />} />
+        <Route
+          path="login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="signup"
+          element={
+            <PublicOnlyRoute>
+              <SignupPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="register"
+          element={
+            <PublicOnlyRoute>
+              <RegisterPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route
+          path="forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="reset-password"
+          element={
+            <PublicOnlyRoute>
+              <ResetPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
 
       {/* Main Authenticated Application Shell */}
-      <Route path="/workspace" element={<DashboardLayout />}>
+      <Route
+        path="/workspace"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
         <Route path="inbox" element={<DashboardOverviewPage />} />
@@ -80,27 +136,15 @@ export const AppRoutes = () => {
         <Route path="tickets/:id" element={<TicketDetailsPage />} />
         <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
 
-        {/* Supporting Modules */}
-        <Route
-          path="sla/*"
-          element={
-            <ModuleComingSoonPage
-              title="SLA Management Engine"
-              description="SLA policy matrix, real-time response counters, and automated breach alerting engine are currently active via backend API endpoints."
-              icon={ShieldCheck}
-            />
-          }
-        />
-        <Route
-          path="rca/*"
-          element={
-            <ModuleComingSoonPage
-              title="Root Cause Analysis (RCA)"
-              description="Incident post-mortem workflows, 5-Whys methodology, and preventative mitigation tracking."
-              icon={Activity}
-            />
-          }
-        />
+        {/* SLA Management Routes (Screens 49-51, 76-78 / Batch 5) */}
+        <Route path="sla" element={<SLAOverviewPage />} />
+        <Route path="sla/overview" element={<SLAOverviewPage />} />
+
+        {/* Root Cause Analysis (RCA) Governance Routes (Screens 52-53 / Batch 5) */}
+        <Route path="rca" element={<RCAListPage />} />
+        <Route path="rca/new" element={<RCAFormPage />} />
+        <Route path="rca/:id" element={<RCADetailsPage />} />
+        <Route path="rca/:id/edit" element={<RCAFormPage />} />
         <Route
           path="discussions/*"
           element={
@@ -141,16 +185,10 @@ export const AppRoutes = () => {
             />
           }
         />
-        <Route
-          path="settings/*"
-          element={
-            <ModuleComingSoonPage
-              title="Workspace Settings"
-              description="Organization preferences, SSO authentication, and team access control."
-              icon={Settings}
-            />
-          }
-        />
+        {/* Workspace Settings (Prompts 76-78 / Batch 5) */}
+        <Route path="settings" element={<SLASettingsPage />} />
+        <Route path="settings/sla" element={<SLASettingsPage />} />
+        <Route path="settings/*" element={<SLASettingsPage />} />
       </Route>
 
       {/* Catch-all 404 handler redirects to workspace */}

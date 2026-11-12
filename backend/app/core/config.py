@@ -19,9 +19,19 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database
-    DATABASE_URL: str = "sqlite+aiosqlite:///./live_workspace.db"
-    SYNC_DATABASE_URL: str = "sqlite:///./live_workspace.db"
+    # SMTP & Email Configuration
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    EMAILS_FROM_EMAIL: str = "noreply@tronix365.cloud"
+    EMAILS_FROM_NAME: str = "Live Workspace"
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    # Database: reads ONLY from environment (backend/.env or .env).
+    # No hardcoded value, no default URL, and no SQLite or in-memory fallback.
+    DATABASE_URL: str = ""
+    SYNC_DATABASE_URL: str = ""
 
     # Storage
     STORAGE_PROVIDER: str = "local"
@@ -44,7 +54,7 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=("backend/.env", ".env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

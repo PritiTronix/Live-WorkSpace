@@ -60,12 +60,12 @@
 
 | # | Screen Name | Stitch ID | Route | Status |
 |:---:|---|---|---|:---:|
-| 4 | Live Workspace - Signup (Reference Matched) | `0d32ef82da304cff9f93e59aea083fff` | `/auth/signup` | ⬜ |
-| 5 | Live Workspace - Account Registration & Signup | `f9bc7e5e49c34e12bac3d1f85a57e705` | `/auth/register` | ⬜ |
-| 6 | Live Workspace - Login (Reference Matched) | `f4c2bd96f1004ceabad7354bac96ea3e` | `/auth/login` | ⬜ |
-| 7 | Live Workspace - Email Verification (Prompt 03) | `fa85ca673aca4156960012c9c52d1ab0` | `/auth/verify-email` | ⬜ |
-| 8 | Live Workspace - Forgot Password (Prompt 07) | `7d53cd20a82c4fef941482fbde54bd90` | `/auth/forgot-password` | ⬜ |
-| 9 | Live Workspace - Reset Password (Prompt 08) | `cf6b6a3e90684d0daeb14bd6c79c5209` | `/auth/reset-password` | ⬜ |
+| 4 | Live Workspace - Signup (Reference Matched) | `0d32ef82da304cff9f93e59aea083fff` | `/auth/signup` | ✅ |
+| 5 | Live Workspace - Account Registration & Signup | `f9bc7e5e49c34e12bac3d1f85a57e705` | `/auth/register` | ✅ |
+| 6 | Live Workspace - Login (Reference Matched) | `f4c2bd96f1004ceabad7354bac96ea3e` | `/auth/login` | ✅ |
+| 7 | Live Workspace - Email Verification (Prompt 03) | `fa85ca673aca4156960012c9c52d1ab0` | `/auth/verify-email` | ✅ |
+| 8 | Live Workspace - Forgot Password (Prompt 07) | `7d53cd20a82c4fef941482fbde54bd90` | `/auth/forgot-password` | ✅ |
+| 9 | Live Workspace - Reset Password (Prompt 08) | `cf6b6a3e90684d0daeb14bd6c79c5209` | `/auth/reset-password` | ✅ |
 | 10 | Live Workspace - Logout Confirmation Modal (Prompt 80) | `f3c70d4869e44ab883249c9c34cb65a5` | `Contextual Modal` | ⬜ |
 
 ---
@@ -130,7 +130,7 @@
 |:---:|---|---|---|:---:|
 | 30 | Live Workspace - Create Organization (Prompt 04) | `976a0a9f588f48c1b81f466370fdfb37` | `/onboarding/create-org` | ⬜ |
 | 31 | Live Workspace - Join Organization (Prompt 05) | `1d769fa219284f3cbb1f48a1a2e2f2fe` | `/onboarding/join-org` | ⬜ |
-| 32 | Live Workspace - First-Time Welcome Popup (Prompt 09) | `a2f137cf234e4c57991eb1dd516994a1` | `Modal / Contextual` | ⬜ |
+| 32 | Live Workspace - First-Time Welcome Popup (Prompt 09) | `a2f137cf234e4c57991eb1dd516994a1` | `Modal / Contextual` | ✅ |
 
 ---
 
@@ -158,8 +158,8 @@
 
 | # | Screen Name | Stitch ID | Route | Status |
 |:---:|---|---|---|:---:|
-| 46 | Live Workspace - Root Cause Analysis (RCA) Form (Prompt 52) | `1ebc0a0f5278413ba328884b3832e17d` | `/workspace/tickets/:id/rca/new` | ⬜ |
-| 47 | Live Workspace - RCA Submitted View & Version History (Prompt 53) | `cf15ae6b0f9040bb9be5a740052398fc` | `/workspace/tickets/:id/rca` | ⬜ |
+| 46 | Live Workspace - Root Cause Analysis (RCA) Form (Prompt 52) | `1ebc0a0f5278413ba328884b3832e17d` | `/workspace/rca/new` | ✅ |
+| 47 | Live Workspace - RCA Submitted View & Version History (Prompt 53) | `cf15ae6b0f9040bb9be5a740052398fc` | `/workspace/rca/:id` | ✅ |
 
 ---
 
@@ -175,7 +175,7 @@
 
 | # | Screen Name | Stitch ID | Route | Status |
 |:---:|---|---|---|:---:|
-| 49 | Live Workspace - SLA Config, Notifications & Appearance (Prompts 76, 77 & 78) | `764e73735d8846a8b3ddf4ad6efbf114` | `/workspace/settings/sla` | ⬜ |
+| 49 | Live Workspace - SLA Config, Notifications & Appearance (Prompts 76, 77 & 78) | `764e73735d8846a8b3ddf4ad6efbf114` | `/workspace/settings/sla` | ✅ |
 | 50 | Live Workspace - Help & Support & Logout Modal (Prompts 79 & 80) | `3fb84ccc35f7483396e4b0e00fb5fc9b` | `Contextual Modal` | ⬜ |
 
 ---
@@ -184,9 +184,9 @@
 
 | # | Screen Name | Stitch ID | Route | Status |
 |:---:|---|---|---|:---:|
-| 51 | Live Workspace - SLA Timer Component Matrix (Prompt 49) | `30eabb3cb78e4822bb24259481466baf` | `Component` | ⬜ |
-| 52 | Live Workspace - SLA Overview Page (Prompt 50) | `3c2bffeb4d714f0eb0081db14b1af176` | `/workspace/sla` | ⬜ |
-| 53 | Live Workspace - SLA Warning & Breach Alert Components (Prompt 51) | `f1784a41ea2148558267fc3974c0a798` | `Feedback Component` | ⬜ |
+| 51 | Live Workspace - SLA Timer Component Matrix (Prompt 49) | `30eabb3cb78e4822bb24259481466baf` | `Component` | ✅ |
+| 52 | Live Workspace - SLA Overview Page (Prompt 50) | `3c2bffeb4d714f0eb0081db14b1af176` | `/workspace/sla` | ✅ |
+| 53 | Live Workspace - SLA Warning & Breach Alert Components (Prompt 51) | `f1784a41ea2148558267fc3974c0a798` | `Feedback Component` | ✅ |
 
 ---
 
@@ -276,4 +276,4 @@ Remaining ⬜ (44 screens across remaining modules)
 
 ---
 
-*Last updated: Batches 1–4 integrated. Source of truth: Stitch project `projects/4257352372154122372`.*
+*Last updated: Batches 1–5 integrated (Onboarding, SLA, RCA). Source of truth: Stitch project `projects/4257352372154122372`.*

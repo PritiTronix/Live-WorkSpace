@@ -3,14 +3,12 @@ import { Outlet } from 'react-router-dom';
 
 /**
  * AuthLayout
- * Layout for Authentication flows (Login, Register, Forgot Password, Reset Password, Onboarding)
+ * Master shell for authentication flows (Login, Signup, Register, Verification, Password Reset)
  */
 export const AuthLayout = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F4FC] p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-[#E5E5EF] p-8">
-        <Outlet />
-      </div>
+    <div className="min-h-screen w-full bg-surface-card flex flex-col">
+      <Outlet />
     </div>
   );
 };

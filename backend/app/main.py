@@ -2,20 +2,14 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from backend.app.core.config import settings
 from backend.app.routes import api_router
-from backend.app.database import engine, Base
+from backend.app.database import check_database_connection
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks: automatically create database tables if running against Postgres
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-    except Exception:
-        pass
+    # Application startup without automatic DB migration/connect (per project rules)
     yield
     # Shutdown tasks (e.g. pool cleanup)
 
@@ -43,16 +37,18 @@ def create_application() -> FastAPI:
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
-    # Secure ticket storage directory (unauthenticated static mount removed for security)
+    # Secure ticket storage directory
     uploads_dir = os.path.abspath(settings.UPLOAD_DIR)
     os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
 
+    # Health check endpoints: report database as 'connected' or 'unavailable'
+    @application.get(f"{settings.API_V1_PREFIX}/health", tags=["Health"])
     @application.get("/health", tags=["Health"])
     async def health_check():
+        db_connected = await check_database_connection()
         return {
-            "status": "healthy",
-            "environment": settings.ENVIRONMENT,
-            "version": "1.0.0",
+            "status": "ok",
+            "database": "connected" if db_connected else "unavailable",
         }
 
     return application

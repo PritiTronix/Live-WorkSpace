@@ -12,6 +12,8 @@ class UserBase(BaseSchema):
     email: EmailStr
     full_name: str
     is_active: bool = True
+    email_verified: bool = False
+    onboarding_completed: bool = False
     role: str = "member"
     title: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -22,6 +24,7 @@ class UserCreate(BaseSchema):
     email: EmailStr
     password: str
     full_name: str
+    organization_name: Optional[str] = None
     role: Optional[str] = "member"
     title: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -36,7 +39,43 @@ class UserRead(UserBase):
 
 class Token(BaseSchema):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
+
+
+class AuthResponse(BaseSchema):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserRead
+
+
+class RefreshTokenRequest(BaseSchema):
+    refresh_token: str
+
+
+class VerifyEmailRequest(BaseSchema):
+    token: str
+    email: Optional[EmailStr] = None
+
+
+class ResendVerificationRequest(BaseSchema):
+    email: EmailStr
+
+
+class ForgotPasswordRequest(BaseSchema):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseSchema):
+    token: str
+    new_password: str
+    email: Optional[EmailStr] = None
+
+
+class MessageResponse(BaseSchema):
+    message: str
+    status: str = "success"
 
 
 # --- Organization Schemas ---
@@ -480,3 +519,216 @@ class SLABase(BaseSchema):
 class SLARead(SLABase):
     id: str
     created_at: datetime
+
+
+# ==============================================================================
+# Batch 5: SLA Management Schemas
+# ==============================================================================
+
+class SLARuleBase(BaseSchema):
+    priority: str = "medium"  # blocker, critical, major, minor
+    response_time_minutes: int = 30
+    resolution_time_minutes: int = 240
+    escalation_tier: str = "tier_1"  # tier_1, tier_2, executive
+
+
+class SLARuleCreate(SLARuleBase):
+    pass
+
+
+class SLARuleUpdate(BaseSchema):
+    priority: Optional[str] = None
+    response_time_minutes: Optional[int] = None
+    resolution_time_minutes: Optional[int] = None
+    escalation_tier: Optional[str] = None
+
+
+class SLARuleRead(SLARuleBase):
+    id: str
+    policy_id: str
+    organization_id: str
+    created_at: datetime
+
+
+class SLAPolicyBase(BaseSchema):
+    name: str
+    description: Optional[str] = None
+    tier: str = "standard"  # tier_1, tier_2, tier_3, standard
+    business_hours_only: bool = False
+    is_active: bool = True
+
+
+class SLAPolicyCreate(SLAPolicyBase):
+    rules: Optional[List[SLARuleCreate]] = None
+
+
+class SLAPolicyUpdate(BaseSchema):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    tier: Optional[str] = None
+    business_hours_only: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class SLAPolicyRead(SLAPolicyBase):
+    id: str
+    organization_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    rules: List[SLARuleRead] = []
+
+
+class SLATimerRead(BaseSchema):
+    id: str
+    ticket_id: Optional[str] = None
+    ticket_number: Optional[str] = None
+    ticket_title: Optional[str] = None
+    ticket_severity: Optional[str] = None
+    policy_id: Optional[str] = None
+    policy_name: Optional[str] = None
+    rule_id: Optional[str] = None
+    timer_type: str = "first_response"  # first_response, resolution
+    status: str = "on_track"  # on_track, at_risk, breached, paused, met
+    started_at: datetime
+    target_at: datetime
+    breached_at: Optional[datetime] = None
+    fulfilled_at: Optional[datetime] = None
+    paused_at: Optional[datetime] = None
+    elapsed_seconds: int = 0
+    organization_id: str
+    created_at: datetime
+
+
+class SLAEscalationRead(BaseSchema):
+    id: str
+    timer_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    ticket_number: Optional[str] = None
+    ticket_title: Optional[str] = None
+    escalation_tier: str = "tier_1"
+    reason: str
+    acknowledged: bool = False
+    acknowledged_by_id: Optional[str] = None
+    acknowledged_by_name: Optional[str] = None
+    acknowledged_at: Optional[datetime] = None
+    created_at: datetime
+
+
+class SLAOverviewMetrics(BaseSchema):
+    compliance_rate: float = 100.0
+    active_timers: int = 0
+    at_risk_count: int = 0
+    breached_count: int = 0
+    timers: List[SLATimerRead] = []
+    escalations: List[SLAEscalationRead] = []
+
+
+class AcknowledgeBreachRequest(BaseSchema):
+    notes: Optional[str] = None
+
+
+# ==============================================================================
+# Batch 5: RCA (Root Cause Analysis) Schemas
+# ==============================================================================
+
+class RCAActionItemBase(BaseSchema):
+    title: str
+    priority: str = "medium"  # high, medium, low
+    status: str = "todo"  # todo, in_progress, done
+    due_date: Optional[datetime] = None
+    assignee_id: Optional[str] = None
+
+
+class RCAActionItemCreate(RCAActionItemBase):
+    pass
+
+
+class RCAActionItemUpdate(BaseSchema):
+    title: Optional[str] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None
+    due_date: Optional[datetime] = None
+    assignee_id: Optional[str] = None
+
+
+class RCAActionItemRead(RCAActionItemBase):
+    id: str
+    rca_id: str
+    assignee_name: Optional[str] = None
+    assignee_avatar: Optional[str] = None
+    organization_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+
+class RCAVersionRead(BaseSchema):
+    id: str
+    rca_id: str
+    version_number: int
+    snapshot_data: str
+    changelog: Optional[str] = None
+    author_id: Optional[str] = None
+    author_name: Optional[str] = None
+    created_at: datetime
+
+
+class RCACreate(BaseSchema):
+    title: str
+    incident_date: Optional[datetime] = None
+    severity: str = "major"  # blocker, critical, major
+    service_affected: str
+    outage_duration_minutes: int = 0
+    customer_impact: Optional[str] = None
+    summary: Optional[str] = None
+    five_whys: Optional[List[str]] = None
+    timeline_events: Optional[List[dict]] = None
+    ticket_id: Optional[str] = None
+    action_items: Optional[List[RCAActionItemCreate]] = None
+
+
+class RCAUpdate(BaseSchema):
+    title: Optional[str] = None
+    incident_date: Optional[datetime] = None
+    severity: Optional[str] = None
+    service_affected: Optional[str] = None
+    outage_duration_minutes: Optional[int] = None
+    customer_impact: Optional[str] = None
+    summary: Optional[str] = None
+    five_whys: Optional[List[str]] = None
+    timeline_events: Optional[List[dict]] = None
+    ticket_id: Optional[str] = None
+    status: Optional[str] = None
+    changelog: Optional[str] = None
+
+
+class RCARead(BaseSchema):
+    id: str
+    rca_number: str
+    title: str
+    incident_date: datetime
+    severity: str
+    service_affected: str
+    outage_duration_minutes: int
+    customer_impact: Optional[str] = None
+    summary: Optional[str] = None
+    five_whys: Optional[List[str]] = None
+    timeline_events: Optional[List[dict]] = None
+    status: str
+    version: int
+    ticket_id: Optional[str] = None
+    ticket_number: Optional[str] = None
+    lead_investigator_id: Optional[str] = None
+    lead_investigator_name: Optional[str] = None
+    organization_id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    action_items: List[RCAActionItemRead] = []
+    versions: List[RCAVersionRead] = []
+
+
+class RCAPaginatedResponse(BaseSchema):
+    items: List[RCARead]
+    total: int
+    page: int
+    page_size: int
+    pages: int

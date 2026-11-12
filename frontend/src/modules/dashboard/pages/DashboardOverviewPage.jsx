@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardService, connectDashboardWebSocket } from '../../../services/api';
+import { WelcomeModal } from '../../onboarding';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 export const DashboardOverviewPage = () => {
+  const { user, refreshUser } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (user && user.onboarding_completed === false) {
+      setShowWelcome(true);
+    }
+  }, [user]);
   const [metrics, setMetrics] = useState({
     total_projects: 14,
     total_tasks: 248,
@@ -723,6 +733,15 @@ export const DashboardOverviewPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Onboarding Welcome Popup (Screen 1 / Prompt 09) */}
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={() => {
+          setShowWelcome(false);
+          refreshUser?.();
+        }}
+      />
     </div>
   );
 };

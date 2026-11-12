@@ -19,9 +19,6 @@ async def get_my_profile(
     res = await db.execute(select(User).where(User.id == current_user_id))
     user = res.scalars().first()
     if not user:
-        res = await db.execute(select(User).where(User.id == "usr_01"))
-        user = res.scalars().first()
-    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",

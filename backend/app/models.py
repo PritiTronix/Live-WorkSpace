@@ -38,6 +38,13 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    verification_token_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    verification_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reset_token_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reset_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    refresh_token_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     organization_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
@@ -312,3 +319,141 @@ class TaskAttachment(Base):
 
     task: Mapped["Task"] = relationship(back_populates="attachments")
     uploader: Mapped["User"] = relationship("User")
+
+
+# ---------------------------------------------------------------------------
+# SLA Management Models (Batch 5)
+# ---------------------------------------------------------------------------
+
+class SLAPolicy(Base):
+    __tablename__ = "sla_policies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tier: Mapped[str] = mapped_column(String(100), default="standard")  # tier_1, tier_2, tier_3, standard
+    business_hours_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=utc_now)
+
+    rules: Mapped[list["SLARule"]] = relationship(back_populates="policy", cascade="all, delete-orphan")
+
+
+class SLARule(Base):
+    __tablename__ = "sla_rules"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("sla_policies.id", ondelete="CASCADE"), nullable=False)
+    priority: Mapped[str] = mapped_column(String(50), nullable=False)  # blocker, critical, major, minor
+    response_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+    resolution_time_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=240)
+    escalation_tier: Mapped[str] = mapped_column(String(50), default="tier_1")  # tier_1, tier_2, executive
+    organization_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    policy: Mapped["SLAPolicy"] = relationship(back_populates="rules")
+
+
+class SLATimer(Base):
+    __tablename__ = "sla_timers"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    ticket_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    policy_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("sla_policies.id"), nullable=True)
+    rule_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("sla_rules.id"), nullable=True)
+    timer_type: Mapped[str] = mapped_column(String(50), default="first_response")  # first_response, resolution
+    status: Mapped[str] = mapped_column(String(50), default="on_track")  # on_track, at_risk, breached, paused, met
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    target_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    breached_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fulfilled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    paused_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    elapsed_seconds: Mapped[int] = mapped_column(Integer, default=0)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    escalations: Mapped[list["SLAEscalation"]] = relationship(back_populates="timer", cascade="all, delete-orphan")
+
+
+class SLAEscalation(Base):
+    __tablename__ = "sla_escalations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    timer_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("sla_timers.id", ondelete="CASCADE"), nullable=True)
+    ticket_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    escalation_tier: Mapped[str] = mapped_column(String(50), default="tier_1")  # tier_1, tier_2, executive
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
+    acknowledged_by_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    acknowledged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    timer: Mapped[Optional["SLATimer"]] = relationship(back_populates="escalations")
+    acknowledged_by: Mapped[Optional["User"]] = relationship("User")
+
+
+# ---------------------------------------------------------------------------
+# RCA (Root Cause Analysis) Models (Batch 5)
+# ---------------------------------------------------------------------------
+
+class RCA(Base):
+    __tablename__ = "rcas"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    rca_number: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    incident_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    severity: Mapped[str] = mapped_column(String(50), default="major")  # blocker, critical, major
+    service_affected: Mapped[str] = mapped_column(String(100), nullable=False)
+    outage_duration_minutes: Mapped[int] = mapped_column(Integer, default=0)
+    customer_impact: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    five_whys: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON-encoded array of whys
+    timeline_events: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON-encoded array of chronological events
+    status: Mapped[str] = mapped_column(String(50), default="draft")  # draft, under_review, approved, published
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    ticket_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
+    lead_investigator_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=utc_now)
+
+    lead_investigator: Mapped[Optional["User"]] = relationship("User")
+    action_items: Mapped[list["RCAActionItem"]] = relationship(back_populates="rca", cascade="all, delete-orphan")
+    versions: Mapped[list["RCAVersion"]] = relationship(back_populates="rca", cascade="all, delete-orphan")
+
+
+class RCAVersion(Base):
+    __tablename__ = "rca_versions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    rca_id: Mapped[str] = mapped_column(String(36), ForeignKey("rcas.id", ondelete="CASCADE"), nullable=False)
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_data: Mapped[str] = mapped_column(Text, nullable=False)  # JSON representation of complete RCA snapshot
+    changelog: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    author_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    rca: Mapped["RCA"] = relationship(back_populates="versions")
+    author: Mapped[Optional["User"]] = relationship("User")
+
+
+class RCAActionItem(Base):
+    __tablename__ = "rca_action_items"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    rca_id: Mapped[str] = mapped_column(String(36), ForeignKey("rcas.id", ondelete="CASCADE"), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    assignee_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    priority: Mapped[str] = mapped_column(String(50), default="medium")  # high, medium, low
+    status: Mapped[str] = mapped_column(String(50), default="todo")  # todo, in_progress, done
+    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), onupdate=utc_now)
+
+    rca: Mapped["RCA"] = relationship(back_populates="action_items")
+    assignee: Mapped[Optional["User"]] = relationship("User")
