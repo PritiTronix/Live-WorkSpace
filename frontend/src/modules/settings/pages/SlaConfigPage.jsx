@@ -12,7 +12,7 @@ import {
   ChevronRight,
   History,
   Save,
-  Tune,
+  SlidersHorizontal,
   ShieldAlert,
   Users,
   Bell,
@@ -224,7 +224,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
               }`}
             >
-              <Tune className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4" />
               <span>Workspace Settings</span>
             </button>
             <button
@@ -888,7 +888,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
                 {/* GROUP 2 */}
                 <tr className="bg-[#eeecff]/40 dark:bg-[#242542]">
                   <td colSpan="4" className="px-4 py-2 text-xs font-bold text-[#6040F0] flex items-center gap-2">
-                    <Tune className="w-4 h-4" />
+                    <SlidersHorizontal className="w-4 h-4" />
                     <span>Group 2: Assignment &amp; Routine Workflow</span>
                   </td>
                 </tr>
