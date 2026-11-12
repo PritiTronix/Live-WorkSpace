@@ -35,18 +35,30 @@ export const DEFAULT_USER = {
 // Authentication & Profile Services
 export const authService = {
   login: async (credentials) => {
-    try {
-      const response = await apiClient.post('/auth/login', credentials);
-      if (response.data?.access_token) {
-        localStorage.setItem('access_token', response.data.access_token);
-      }
-      return response.data;
-    } catch {
-      // Mock authenticated fallback token when backend DB is pending
-      const mockToken = 'mock_jwt_token_maya_shah';
-      localStorage.setItem('access_token', mockToken);
-      return { access_token: mockToken, user: DEFAULT_USER };
+    const response = await apiClient.post('/auth/login', credentials);
+    if (response.data?.access_token) {
+      localStorage.setItem('access_token', response.data.access_token);
     }
+    return response.data;
+  },
+  register: async (userData) => {
+    const response = await apiClient.post('/auth/register', userData);
+    return response.data;
+  },
+  forgotPassword: async (email) => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+  resetPassword: async (token, newPassword) => {
+    const response = await apiClient.post('/auth/reset-password', {
+      token,
+      new_password: newPassword,
+    });
+    return response.data;
+  },
+  verifyEmail: async (token) => {
+    const response = await apiClient.post('/auth/verify-email', { token });
+    return response.data;
   },
   getCurrentUser: async () => {
     try {
@@ -384,3 +396,7 @@ export { projectsService } from './projectsService';
 export { taskService, connectTasksWebSocket } from '../modules/tasks/services/taskService';
 export { analyticsService } from './analyticsService';
 export { auditLogsService } from './auditLogsService';
+export { discussionsService } from './discussionsService';
+export { filesService } from './filesService';
+export { membersService } from './membersService';
+export { settingsService } from './settingsService';

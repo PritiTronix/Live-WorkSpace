@@ -22,16 +22,43 @@ class UserCreate(BaseSchema):
     email: EmailStr
     password: str
     full_name: str
-    role: Optional[str] = "member"
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+
+
+class UserAdminCreate(UserCreate):
+    role: str = "member"
+    organization_id: Optional[str] = None
 
 
 class UserRead(UserBase):
     id: str
     organization_id: Optional[str] = None
     created_at: datetime
+
+
+class UserUpdateProfile(BaseSchema):
+    full_name: Optional[str] = None
+    title: Optional[str] = None
+    department: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class UserChangePassword(BaseSchema):
+    current_password: str
+    new_password: str
+
+
+class UserInviteRequest(BaseSchema):
+    email: EmailStr
+    role: str = "employee"
+    project_id: Optional[str] = None
+    note: Optional[str] = None
+
+
+class ReactionRequest(BaseSchema):
+    emoji: str
 
 
 class Token(BaseSchema):

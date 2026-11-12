@@ -290,7 +290,10 @@ export const Sidebar = ({
 
         {/* User Card (expanded only) */}
         {!isCollapsed && (
-          <div className="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer border border-border-subtle">
+          <NavLink
+            to="/workspace/settings/profile"
+            className="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer border border-border-subtle"
+          >
             <div className="flex items-center gap-space-sm">
               <div className="relative">
                 <img
@@ -310,13 +313,13 @@ export const Sidebar = ({
               </div>
             </div>
             <span className="material-symbols-outlined text-text-muted text-[18px]">more_vert</span>
-          </div>
+          </NavLink>
         )}
 
         {/* Collapsed: show avatar only */}
         {isCollapsed && (
           <div className="flex justify-center pt-space-sm">
-            <div className="relative">
+            <NavLink to="/workspace/settings/profile" className="relative">
               <img
                 alt="Profile"
                 className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
@@ -324,7 +327,7 @@ export const Sidebar = ({
                 title={`${DEFAULT_USER.full_name} — ${DEFAULT_USER.role}`}
               />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
-            </div>
+            </NavLink>
           </div>
         )}
       </div>

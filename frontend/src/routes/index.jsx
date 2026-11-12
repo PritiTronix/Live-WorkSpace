@@ -25,6 +25,20 @@ import MyTasksPage from '../modules/tasks/pages/MyTasksPage';
 import ModuleComingSoonPage from '../components/ModuleComingSoonPage';
 import ReportsAnalyticsPage from '../modules/analytics/pages/ReportsAnalyticsPage';
 import SystemActivityLogsPage from '../modules/audit/pages/SystemActivityLogsPage';
+import { TeamDiscussionsPage, DiscussionThreadPage } from '../modules/discussions';
+import { CentralFilesPage } from '../modules/files';
+import { TeamMembersPage } from '../modules/members';
+import { SlaConfigPage, UserProfilePage } from '../modules/settings';
+import {
+  LoginPage,
+  RegisterPage,
+  SignupPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+} from '../modules/auth';
+import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
+import ProtectedRoute from './ProtectedRoute';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
 /**
@@ -37,18 +51,31 @@ export const AppRoutes = () => {
       {/* Public Landing Page */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Authentication Shell (Screens 01-08) */}
+      {/* Authentication Shell (Screens 4-9) */}
       <Route path="/auth" element={<AuthLayout />}>
         <Route index element={<Navigate to="/auth/login" replace />} />
-        <Route path="login" element={<LandingPage />} />
-        <Route path="register" element={<LandingPage />} />
-        <Route path="forgot-password" element={<LandingPage />} />
-        <Route path="reset-password" element={<LandingPage />} />
-        <Route path="mfa-challenge" element={<LandingPage />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
 
+      {/* Design System Catalogs (Screens 22 & 25) */}
+      <Route path="/design-system/modals" element={<ModalCatalogPage />} />
+      <Route path="/design-system/states" element={<StatesCatalogPage />} />
+
       {/* Main Authenticated Application Shell */}
-      <Route path="/workspace" element={<DashboardLayout />}>
+      <Route
+        path="/workspace"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
         <Route path="inbox" element={<DashboardOverviewPage />} />
@@ -82,17 +109,12 @@ export const AppRoutes = () => {
         <Route path="tickets/:id" element={<TicketDetailsPage />} />
         <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
 
-        {/* Supporting Modules */}
-        <Route
-          path="sla/*"
-          element={
-            <ModuleComingSoonPage
-              title="SLA Management Engine"
-              description="SLA policy matrix, real-time response counters, and automated breach alerting engine are currently active via backend API endpoints."
-              icon={ShieldCheck}
-            />
-          }
-        />
+        {/* SLA Governance & Engine Configuration (Screen 49 / Prompt 76-78) */}
+        <Route path="sla" element={<SlaConfigPage initialTab="sla" />} />
+        <Route path="sla/overview" element={<SlaConfigPage initialTab="sla" />} />
+        <Route path="sla/*" element={<SlaConfigPage initialTab="sla" />} />
+
+        {/* RCA Governance */}
         <Route
           path="rca/*"
           element={
@@ -103,26 +125,20 @@ export const AppRoutes = () => {
             />
           }
         />
-        <Route
-          path="discussions/*"
-          element={
-            <ModuleComingSoonPage
-              title="Team Discussions Hub"
-              description="Workspace-wide collaborative threads outside project workspaces. Project discussions remain fully accessible within project tabs."
-              icon={MessageSquare}
-            />
-          }
-        />
-        <Route
-          path="files/*"
-          element={
-            <ModuleComingSoonPage
-              title="Central Files & Assets"
-              description="Central document browser and cloud storage manager. Project-specific files remain fully accessible inside project tabs."
-              icon={FolderGit2}
-            />
-          }
-        />
+
+        {/* Team Discussions Hub (Screens 11 & 12 / Prompts 61-63) */}
+        <Route path="discussions" element={<TeamDiscussionsPage />} />
+        <Route path="discussions/:id" element={<DiscussionThreadPage />} />
+        <Route path="discussions/*" element={<Navigate to="/workspace/discussions" replace />} />
+
+        {/* Central Files & Assets (Screen 26 / Prompts 64-66) */}
+        <Route path="files" element={<CentralFilesPage />} />
+        <Route path="files/*" element={<CentralFilesPage />} />
+
+        {/* Team Members Directory (Screen 71 & 72 / Prompts 58-60) */}
+        <Route path="members" element={<TeamMembersPage />} />
+        <Route path="members/*" element={<TeamMembersPage />} />
+
         {/* System Activity & Audit Logs (Screens 02 & 03 / Batch 05) */}
         <Route path="audit-logs" element={<SystemActivityLogsPage />} />
         <Route path="audit-logs/*" element={<SystemActivityLogsPage />} />
@@ -130,16 +146,20 @@ export const AppRoutes = () => {
         {/* Reports & Analytics (Screen 01 / Batch 05) */}
         <Route path="analytics" element={<ReportsAnalyticsPage />} />
         <Route path="analytics/*" element={<ReportsAnalyticsPage />} />
-        <Route
-          path="settings/*"
-          element={
-            <ModuleComingSoonPage
-              title="Workspace Settings"
-              description="Organization preferences, SSO authentication, and team access control."
-              icon={Settings}
-            />
-          }
-        />
+
+        {/* Design System Catalogs in Workspace (Screens 22 & 25) */}
+        <Route path="design-system/modals" element={<ModalCatalogPage />} />
+        <Route path="design-system/states" element={<StatesCatalogPage />} />
+        <Route path="design-system/*" element={<Navigate to="/workspace/design-system/modals" replace />} />
+
+        {/* Workspace Settings, SLA, Notifications, Appearance & Profile (Screens 49 & 73) */}
+        <Route path="settings" element={<Navigate to="/workspace/settings/sla" replace />} />
+        <Route path="settings/sla" element={<SlaConfigPage initialTab="sla" />} />
+        <Route path="settings/notifications" element={<SlaConfigPage initialTab="notifications" />} />
+        <Route path="settings/appearance" element={<SlaConfigPage initialTab="appearance" />} />
+        <Route path="settings/profile" element={<UserProfilePage />} />
+        <Route path="settings/*" element={<SlaConfigPage />} />
+        <Route path="profile" element={<Navigate to="/workspace/settings/profile" replace />} />
       </Route>
 
       {/* Catch-all 404 handler redirects to workspace */}

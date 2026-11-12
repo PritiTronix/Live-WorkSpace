@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { authService, DEFAULT_USER } from '../../services/api';
 import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
+import LogoutModal from '../../modules/auth/components/LogoutModal';
 
 export const GlobalTopBar = ({
   onOpenSearch,
@@ -14,6 +15,7 @@ export const GlobalTopBar = ({
   const [user, setUser] = useState(DEFAULT_USER);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [presence, setPresence] = useState('ONLINE');
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const profileRef = useRef(null);
@@ -253,11 +255,27 @@ export const GlobalTopBar = ({
 
               {/* Navigation Items */}
               <div className="pt-1 border-t border-border-subtle space-y-0.5 font-label-md text-label-md">
-                <a href="#settings" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
+                <a
+                  href="/workspace/settings/profile"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsProfileOpen(false);
+                    window.location.href = '/workspace/settings/profile';
+                  }}
+                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
+                >
                   <span className="material-symbols-outlined text-[18px]">settings</span>
                   <span>Personal Settings</span>
                 </a>
-                <a href="#notifications" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
+                <a
+                  href="/workspace/settings/notifications"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsProfileOpen(false);
+                    window.location.href = '/workspace/settings/notifications';
+                  }}
+                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
+                >
                   <span className="material-symbols-outlined text-[18px]">tune</span>
                   <span>Notification Preferences</span>
                 </a>
@@ -267,7 +285,11 @@ export const GlobalTopBar = ({
                 </a>
                 <div className="pt-1 border-t border-border-subtle">
                   <button
-                    onClick={() => authService.logout()}
+                    type="button"
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      setIsLogoutModalOpen(true);
+                    }}
                     className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-error hover:bg-error-container/30 transition-colors text-left"
                   >
                     <span className="material-symbols-outlined text-[18px]">logout</span>
@@ -277,6 +299,13 @@ export const GlobalTopBar = ({
               </div>
             </div>
           )}
+
+          {/* Screen 10: Logout Confirmation Modal */}
+          <LogoutModal
+            isOpen={isLogoutModalOpen}
+            onClose={() => setIsLogoutModalOpen(false)}
+            currentUser={user}
+          />
         </div>
       </div>
     </header>

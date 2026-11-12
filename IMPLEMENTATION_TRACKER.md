@@ -89,17 +89,17 @@
 - [ ] `Log Detail Drawer & Export Dialog (Prompts 56 & 57)` (`72adc753...`)
 
 ### 7. Collaboration, Team & Files
-- [ ] `Team Members Directory (Prompt 58)` (`2d2765d4...`)
-- [ ] `Member Details Drawer & Invite Modal (Prompts 59 & 60)` (`cf049b04...`)
-- [ ] `Team Discussions Page (Prompt 61)` (`c8bd34fff...`)
-- [ ] `Discussion Thread & Create Modal (Prompts 62 & 63)` (`36736e09...`)
-- [ ] `Central Files, Upload Modal & Preview Drawer (Prompts 64, 65 & 66)` (`8fe42f54...`)
+- [x] `Team Members Directory (Prompt 58)` (`2d2765d4...`)
+- [x] `Member Details Drawer & Invite Modal (Prompts 59 & 60)` (`cf049b04...`)
+- [x] `Team Discussions Page (Prompt 61)` (`c8bd34fff...`)
+- [x] `Discussion Thread & Create Modal (Prompts 62 & 63)` (`36736e09...`)
+- [x] `Central Files, Upload Modal & Preview Drawer (Prompts 64, 65 & 66)` (`8fe42f54...`)
 
 ### 8. Analytics & Workspace Settings
-- [ ] `Reports & Analytics Dashboard & Export Modal (Prompts 67 & 68)` (`5da08357...`)
-- [ ] `User Profile, Edit Profile & Change Password (Prompts 69, 70 & 71)` (`27f3aeeaa...`)
+- [x] `Reports & Analytics Dashboard & Export Modal (Prompts 67 & 68)` (`5da08357...`)
+- [x] `User Profile, Edit Profile & Change Password (Prompts 69, 70 & 71)` (`27f3aeeaa...`)
 - [ ] `Workspace Settings, RBAC & Member Management (Prompts 72-75)` (`35124cea...`)
-- [ ] `SLA Config, Notifications & Appearance (Prompts 76, 77 & 78)` (`764e7373...`)
+- [x] `SLA Config, Notifications & Appearance (Prompts 76, 77 & 78)` (`764e7373...`)
 - [ ] `Help & Support & Logout Modal (Prompts 79 & 80)` (`3fb84ccc...`)
 - [ ] `Logout Confirmation Modal (Prompt 80)` (`f3c70d48...`)
 
