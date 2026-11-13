@@ -1,4 +1,2 @@
-/**
- * Rca Module Entry Point
- */
-export default {};
+export { RcaManagementPage } from './pages/RcaManagementPage';
+export { rcaService } from './services/rcaService';

@@ -1,12 +1,12 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, or_, and_, desc, func, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_user_id
+from backend.app.dependencies import get_current_active_user, get_current_user_id, require_roles
 from backend.app.models import Project, ProjectMember, ProjectInvitation, Task, Ticket, User, Organization, Discussion, ProjectFile, ProjectActivity
 from backend.app.schemas import (
     ProjectCreate,
@@ -39,20 +39,17 @@ def generate_key_from_name(name: str) -> str:
 
 
 async def calculate_project_metrics(project_id: str, db: AsyncSession) -> ProjectMetrics:
-    # 1. Tasks
     tasks_res = await db.execute(select(Task).where(Task.project_id == project_id))
     tasks = tasks_res.scalars().all()
     total_tasks = len(tasks)
-    completed_tasks = sum(1 for t in tasks if t.status.lower() in ("done", "completed", "resolved"))
-
+    completed_tasks = sum(1 for t in tasks if (t.status or "").lower() in ("done", "completed", "resolved"))
     sprint_progress = round((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
 
-    # 2. Tickets
     tickets_res = await db.execute(select(Ticket).where(Ticket.project_id == project_id))
     tickets = tickets_res.scalars().all()
-    open_tickets = sum(1 for tk in tickets if tk.status.lower() not in ("closed", "resolved"))
-    blocker_tickets = sum(1 for tk in tickets if tk.severity.lower() == "blocker" and tk.status.lower() != "closed")
-    critical_tickets = sum(1 for tk in tickets if tk.severity.lower() == "critical" and tk.status.lower() != "closed")
+    open_tickets = sum(1 for tk in tickets if (tk.status or "").lower() not in ("closed", "resolved"))
+    blocker_tickets = sum(1 for tk in tickets if (tk.severity or "").lower() == "blocker" and (tk.status or "").lower() != "closed")
+    critical_tickets = sum(1 for tk in tickets if (tk.severity or "").lower() == "critical" and (tk.status or "").lower() != "closed")
 
     attention_severity = None
     attention_text = None
@@ -75,7 +72,8 @@ async def calculate_project_metrics(project_id: str, db: AsyncSession) -> Projec
     )
 
 
-@router.get("/", response_model=List[ProjectRead])
+@router.get("", response_model=List[ProjectRead])
+@router.get("/", response_model=List[ProjectRead], include_in_schema=False)
 async def list_projects(
     search: Optional[str] = Query(None, description="Search term for title, description, key"),
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by status (all, active, planning, on_hold, completed, archived)"),
@@ -83,15 +81,18 @@ async def list_projects(
     scope: Optional[str] = Query(None, description="Filter by visibility scope (organization, restricted)"),
     sort: Optional[str] = Query("updated_at", description="Sort order: updated_at, name, created_at, progress"),
     include_archived: bool = Query(False, description="Whether to include archived projects"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List all projects in the current workspace with metrics and members."""
+    """
+    List all projects in the caller's organization.
+    Guarantees strict tenant isolation and batches metrics computation (no N+1).
+    """
     query = select(Project).options(
         selectinload(Project.lead),
         selectinload(Project.members).selectinload(ProjectMember.user),
         selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
-    )
+    ).where(Project.organization_id == current_user.organization_id)
 
     if not include_archived and (not status_filter or status_filter.lower() != "archived"):
         query = query.where(Project.is_archived.is_(False))
@@ -125,10 +126,59 @@ async def list_projects(
     result = await db.execute(query)
     projects = result.scalars().all()
 
-    # Compute live metrics for each project
+    if not projects:
+        return []
+
+    project_ids = [p.id for p in projects]
+
+    # Batch load tasks and tickets across projects in 2 queries to eliminate N+1 problem
+    tasks_res = await db.execute(select(Task).where(Task.project_id.in_(project_ids)))
+    all_tasks = tasks_res.scalars().all()
+    tasks_by_proj: Dict[str, list] = {pid: [] for pid in project_ids}
+    for t in all_tasks:
+        if t.project_id in tasks_by_proj:
+            tasks_by_proj[t.project_id].append(t)
+
+    tickets_res = await db.execute(select(Ticket).where(Ticket.project_id.in_(project_ids)))
+    all_tickets = tickets_res.scalars().all()
+    tickets_by_proj: Dict[str, list] = {pid: [] for pid in project_ids}
+    for tk in all_tickets:
+        if tk.project_id in tickets_by_proj:
+            tickets_by_proj[tk.project_id].append(tk)
+
     response_list = []
     for proj in projects:
-        metrics = await calculate_project_metrics(proj.id, db)
+        p_tasks = tasks_by_proj.get(proj.id, [])
+        p_tickets = tickets_by_proj.get(proj.id, [])
+
+        total_tasks = len(p_tasks)
+        completed_tasks = sum(1 for t in p_tasks if (t.status or "").lower() in ("done", "completed", "resolved"))
+        sprint_progress = round((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
+
+        open_tickets = sum(1 for tk in p_tickets if (tk.status or "").lower() not in ("closed", "resolved"))
+        blocker_tickets = sum(1 for tk in p_tickets if (tk.severity or "").lower() == "blocker" and (tk.status or "").lower() != "closed")
+        critical_tickets = sum(1 for tk in p_tickets if (tk.severity or "").lower() == "critical" and (tk.status or "").lower() != "closed")
+
+        attention_severity = None
+        attention_text = None
+        if blocker_tickets > 0:
+            attention_severity = "blocker"
+            attention_text = f"{blocker_tickets} Blocker"
+        elif critical_tickets > 0:
+            attention_severity = "critical"
+            attention_text = f"{critical_tickets} Critical"
+
+        metrics = ProjectMetrics(
+            total_tasks=total_tasks,
+            completed_tasks=completed_tasks,
+            open_tickets=open_tickets,
+            blocker_tickets=blocker_tickets,
+            critical_tickets=critical_tickets,
+            sprint_progress=sprint_progress,
+            attention_severity=attention_severity,
+            attention_text=attention_text,
+        )
+
         proj_dict = ProjectRead.model_validate(proj)
         proj_dict.metrics = metrics
         response_list.append(proj_dict)
@@ -139,25 +189,25 @@ async def list_projects(
     return response_list
 
 
-@router.post("/", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProjectRead, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_project(
     project_in: ProjectCreate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new project workspace."""
-    # Ensure organization
-    org_res = await db.execute(select(Organization))
-    org = org_res.scalars().first()
-    org_id = org.id if org else "org_01"
+    """Create a new project workspace bound strictly to caller's organization."""
+    org_id = current_user.organization_id
+    if not org_id:
+        raise HTTPException(status_code=400, detail="User must belong to an organization to create projects")
 
     key = project_in.key
     if not key or not key.strip():
         key = generate_key_from_name(project_in.name)
 
-    lead_id = project_in.lead_id or current_user_id
-
+    lead_id = project_in.lead_id or current_user.id
     now = datetime.now(timezone.utc)
+
     new_project = Project(
         name=project_in.name,
         key=key,
@@ -203,7 +253,6 @@ async def create_project(
 
     await db.commit()
 
-    # Load with relationships
     query = (
         select(Project)
         .options(
@@ -225,10 +274,10 @@ async def create_project(
 @router.get("/{project_id}", response_model=ProjectRead)
 async def get_project(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get project details, metrics, and members."""
+    """Get project details, metrics, and members within caller's organization."""
     query = (
         select(Project)
         .options(
@@ -236,7 +285,10 @@ async def get_project(
             selectinload(Project.members).selectinload(ProjectMember.user),
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
-        .where(Project.id == project_id)
+        .where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
     )
     res = await db.execute(query)
     project = res.scalars().first()
@@ -255,7 +307,7 @@ async def get_project(
 @router.get("/{project_id}/overview", response_model=ProjectOverviewSummary)
 async def get_project_overview(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Aggregate real-time metrics, burndown, milestones, workload, and alerts for Screen 40."""
@@ -266,7 +318,10 @@ async def get_project_overview(
             selectinload(Project.members).selectinload(ProjectMember.user),
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
-        .where(Project.id == project_id)
+        .where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
     )
     res = await db.execute(query)
     project = res.scalars().first()
@@ -280,11 +335,10 @@ async def get_project_overview(
     proj_read = ProjectRead.model_validate(project)
     proj_read.metrics = metrics
 
-    # 1. Burndown stats
     tasks_res = await db.execute(select(Task).where(Task.project_id == project_id))
     tasks = tasks_res.scalars().all()
-    total_pts = len(tasks) * 3  # estimate ~3 story points per task
-    done_pts = sum(3 for t in tasks if t.status in ("done", "completed", "resolved"))
+    total_pts = len(tasks) * 3
+    done_pts = sum(3 for t in tasks if (t.status or "").lower() in ("done", "completed", "resolved"))
     burndown = {
         "sprint_name": "Sprint 4 of 6",
         "progress_pct": metrics.sprint_progress,
@@ -295,7 +349,6 @@ async def get_project_overview(
         "days_remaining": 14,
     }
 
-    # 2. Key Milestones
     milestones = [
         {
             "id": "ms_01",
@@ -304,7 +357,6 @@ async def get_project_overview(
             "tasks_count": 8,
             "status": "on_track",
             "owner": "Aarav Mehta",
-            "owner_avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg",
             "due_date": "Dec 01, 2025",
         },
         {
@@ -314,39 +366,26 @@ async def get_project_overview(
             "tasks_count": 5,
             "status": "at_risk",
             "owner": "David K.",
-            "owner_avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuDVWTSLNi0GXnptwfl_xCnCJDsc4HvgETwUC34jhvb60mvLuQD-1m8SbomgblI-1Khtgxz-YIFR_GrBMiCCjBMF57DId8aNCrd7Qv8VleUPw0yGTVYEw3IWylcDmjXxsqKaDb8KRDVn5QsnFKWWMQ53xl6FKVTau3ufkYrQqol-GISclAV0oH77YrosPTEFXR2BCzYI8l6DvnDWavrx4gi1Oeve7NBIjJbr1Rk0ZTuX",
             "due_date": "Dec 12, 2025",
-        },
-        {
-            "id": "ms_03",
-            "title": "Edge Cache Invalidation Pipeline",
-            "progress_pct": 18,
-            "tasks_count": 6,
-            "status": "delayed",
-            "owner": "Sarah Taylor",
-            "owner_avatar": "https://lh3.googleusercontent.com/aida-public/AB6AXuAZR3R45TSkuyi5-9-QC88ejJbDWv3yFmbIh5ihy1fn3yrKE07uN_LmJVpWhpYlHwziMyjPvtPpBj54idYhILVcQaT2Z_gtfSlDy6pVQqg9X2it2aDiY0MBSy3dn7OcXM7RWHA8yITcG8lNnLR767DovdLaIAQ00WCMNyHA9P5hENrqJnq9hjwwc7Cs5hFebTLKpZ1xXlbl01HrOx5OphfYB_U15TE1XpYYV5j_L_Re",
-            "due_date": "Dec 20, 2025",
         },
     ]
 
-    # 3. Team Workload from actual project members
     workload = []
     for mem in project.members:
         u = mem.user
         if not u:
             continue
-        mem_tasks = [t for t in tasks if t.assigned_to_id == u.id]
+        mem_tasks = [t for t in tasks if (t.assignee_id == u.id or t.assigned_to_id == u.id)]
         workload.append({
             "user_id": u.id,
             "name": u.full_name,
             "role": u.title or mem.role,
             "avatar_url": u.avatar_url,
-            "active_tasks_count": len([t for t in mem_tasks if t.status != "done"]),
+            "active_tasks_count": len([t for t in mem_tasks if (t.status or "").lower() != "done"]),
             "capacity_pct": min(100, len(mem_tasks) * 22),
             "status": "optimal" if len(mem_tasks) <= 4 else "overloaded",
         })
 
-    # 4. Urgent Issues & Tickets
     tkt_res = await db.execute(
         select(Ticket)
         .where(
@@ -354,7 +393,6 @@ async def get_project_overview(
             Ticket.status.in_(["open", "wip", "on_hold"])
         )
         .order_by(
-            # Sort blockers first, then critical, then major
             desc(Ticket.severity == "blocker"),
             desc(Ticket.severity == "critical"),
             desc(Ticket.created_at)
@@ -363,7 +401,6 @@ async def get_project_overview(
     )
     urgent_tickets = [TicketRead.model_validate(t) for t in tkt_res.scalars().all()]
 
-    # 5. Recent Activity
     act_res = await db.execute(
         select(ProjectActivity)
         .options(selectinload(ProjectActivity.actor))
@@ -387,10 +424,10 @@ async def get_project_overview(
 async def update_project(
     project_id: str,
     project_update: ProjectUpdate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Update project details, assignees, dates and status."""
+    """Update project details within caller's organization."""
     query = (
         select(Project)
         .options(
@@ -398,7 +435,10 @@ async def update_project(
             selectinload(Project.members).selectinload(ProjectMember.user),
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
-        .where(Project.id == project_id)
+        .where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
     )
     res = await db.execute(query)
     project = res.scalars().first()
@@ -416,20 +456,16 @@ async def update_project(
 
     project.updated_at = datetime.now(timezone.utc)
 
-    # Sync contributors if provided
     if contributor_ids is not None:
-        # Keep lead/owner
         existing_members = {m.user_id: m for m in project.members}
         new_ids = set(contributor_ids)
         if project.lead_id:
             new_ids.add(project.lead_id)
 
-        # Remove members not in new_ids (unless owner)
         for uid, mem in list(existing_members.items()):
             if uid not in new_ids and mem.role != "owner":
                 await db.delete(mem)
 
-        # Add new members
         for uid in new_ids:
             if uid not in existing_members:
                 role = "owner" if uid == project.lead_id else "developer"
@@ -444,7 +480,6 @@ async def update_project(
 
     await db.commit()
 
-    # Re-fetch fresh
     res = await db.execute(query)
     updated_project = res.scalars().first()
     metrics = await calculate_project_metrics(updated_project.id, db)
@@ -456,10 +491,10 @@ async def update_project(
 @router.post("/{project_id}/archive", response_model=ProjectRead)
 async def archive_project(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead", "manager"])),
     db: AsyncSession = Depends(get_db)
 ):
-    """Archive a project, pausing its sprints and active SLA timers non-destructively."""
+    """Archive a project non-destructively. Requires manager/admin/owner role."""
     query = (
         select(Project)
         .options(
@@ -467,15 +502,15 @@ async def archive_project(
             selectinload(Project.members).selectinload(ProjectMember.user),
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
-        .where(Project.id == project_id)
+        .where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
     )
     res = await db.execute(query)
     project = res.scalars().first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
     project.is_archived = True
     project.status = "archived"
@@ -493,7 +528,7 @@ async def archive_project(
 @router.post("/{project_id}/unarchive", response_model=ProjectRead)
 async def unarchive_project(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead", "manager"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Restore an archived project to active status."""
@@ -504,15 +539,15 @@ async def unarchive_project(
             selectinload(Project.members).selectinload(ProjectMember.user),
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
-        .where(Project.id == project_id)
+        .where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
     )
     res = await db.execute(query)
     project = res.scalars().first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
     project.is_archived = False
     project.status = "active"
@@ -530,11 +565,16 @@ async def unarchive_project(
 @router.delete("/{project_id}", status_code=status.HTTP_200_OK)
 async def delete_project(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin"])),
     db: AsyncSession = Depends(get_db)
 ):
-    """Permanently delete a project and its associated resources."""
-    res = await db.execute(select(Project).where(Project.id == project_id))
+    """Permanently delete a project. Enforces Owner/Admin RBAC."""
+    res = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
     project = res.scalars().first()
     if not project:
         raise HTTPException(
@@ -542,7 +582,6 @@ async def delete_project(
             detail=f"Project with ID '{project_id}' not found",
         )
 
-    # Cascades delete project_members, tasks, tickets, invitations
     await db.delete(project)
     await db.commit()
 
@@ -553,16 +592,23 @@ async def delete_project(
     }
 
 
-# --- Project Members Management Endpoints (Screen 37) ---
-
 @router.get("/{project_id}/members")
 async def get_project_members(
     project_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get roster of project members and pending invitations."""
-    # Members
+    """Get roster of project members and pending invitations within organization."""
+    # Ensure project belongs to current organization
+    p_check = await db.execute(
+        select(Project.id).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not p_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
     members_res = await db.execute(
         select(ProjectMember)
         .options(selectinload(ProjectMember.user))
@@ -571,7 +617,6 @@ async def get_project_members(
     )
     members = members_res.scalars().all()
 
-    # Invitations
     invites_res = await db.execute(
         select(ProjectInvitation)
         .options(selectinload(ProjectInvitation.invited_by))
@@ -590,27 +635,40 @@ async def get_project_members(
 async def add_project_member(
     project_id: str,
     member_in: ProjectMemberCreate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead", "manager"])),
     db: AsyncSession = Depends(get_db)
 ):
-    """Add a member or create an invitation by email."""
-    # Verify project exists
-    p_res = await db.execute(select(Project).where(Project.id == project_id))
+    """Add a member or create an invitation by email to project."""
+    p_res = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
     if not p_res.scalars().first():
         raise HTTPException(status_code=404, detail="Project not found")
 
     target_user = None
     if member_in.user_id:
-        u_res = await db.execute(select(User).where(User.id == member_in.user_id))
+        u_res = await db.execute(
+            select(User).where(
+                User.id == member_in.user_id,
+                User.organization_id == current_user.organization_id
+            )
+        )
         target_user = u_res.scalars().first()
     elif member_in.email:
-        u_res = await db.execute(select(User).where(User.email == str(member_in.email).lower()))
+        u_res = await db.execute(
+            select(User).where(
+                User.email == str(member_in.email).lower(),
+                User.organization_id == current_user.organization_id
+            )
+        )
         target_user = u_res.scalars().first()
 
     now = datetime.now(timezone.utc)
 
     if target_user:
-        # Check if already a member
         m_res = await db.execute(
             select(ProjectMember).where(
                 ProjectMember.project_id == project_id,
@@ -643,12 +701,11 @@ async def add_project_member(
         return ProjectMemberRead.model_validate(res.scalars().first())
 
     elif member_in.email:
-        # Create pending invitation
         inv = ProjectInvitation(
             project_id=project_id,
             email=str(member_in.email).lower(),
             role=member_in.role,
-            invited_by_id=current_user_id,
+            invited_by_id=current_user.id,
             status="pending",
             created_at=now,
         )
@@ -670,10 +727,19 @@ async def update_project_member(
     project_id: str,
     member_id: str,
     member_update: ProjectMemberUpdate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Update role or access permissions of an assigned project member."""
+    p_check = await db.execute(
+        select(Project.id).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not p_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
     res = await db.execute(
         select(ProjectMember)
         .options(selectinload(ProjectMember.user))
@@ -702,10 +768,19 @@ async def update_project_member(
 async def remove_project_member(
     project_id: str,
     member_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Remove a collaborator from a project."""
+    p_check = await db.execute(
+        select(Project.id).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not p_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
     res = await db.execute(
         select(ProjectMember).where(ProjectMember.id == member_id, ProjectMember.project_id == project_id)
     )
@@ -726,10 +801,19 @@ async def remove_project_member(
 async def resend_invitation(
     project_id: str,
     invitation_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Resend a pending invitation."""
+    p_check = await db.execute(
+        select(Project.id).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not p_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
     res = await db.execute(
         select(ProjectInvitation).where(
             ProjectInvitation.id == invitation_id,
@@ -749,10 +833,19 @@ async def resend_invitation(
 async def revoke_invitation(
     project_id: str,
     invitation_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
     db: AsyncSession = Depends(get_db)
 ):
     """Revoke a pending project invitation."""
+    p_check = await db.execute(
+        select(Project.id).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not p_check.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Project not found")
+
     res = await db.execute(
         select(ProjectInvitation).where(
             ProjectInvitation.id == invitation_id,

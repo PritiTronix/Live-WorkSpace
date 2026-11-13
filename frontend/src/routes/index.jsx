@@ -36,7 +36,9 @@ import {
   ForgotPasswordPage,
   ResetPasswordPage,
   VerifyEmailPage,
+  JoinOrgPage,
 } from '../modules/auth';
+import { RcaManagementPage } from '../modules/rca';
 import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
 import ProtectedRoute from './ProtectedRoute';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
@@ -60,6 +62,7 @@ export const AppRoutes = () => {
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="join" element={<JoinOrgPage />} />
         <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
 
@@ -115,16 +118,8 @@ export const AppRoutes = () => {
         <Route path="sla/*" element={<SlaConfigPage initialTab="sla" />} />
 
         {/* RCA Governance */}
-        <Route
-          path="rca/*"
-          element={
-            <ModuleComingSoonPage
-              title="Root Cause Analysis (RCA)"
-              description="Incident post-mortem workflows, 5-Whys methodology, and preventative mitigation tracking."
-              icon={Activity}
-            />
-          }
-        />
+        <Route path="rca" element={<RcaManagementPage />} />
+        <Route path="rca/*" element={<RcaManagementPage />} />
 
         {/* Team Discussions Hub (Screens 11 & 12 / Prompts 61-63) */}
         <Route path="discussions" element={<TeamDiscussionsPage />} />

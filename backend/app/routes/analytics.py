@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_user_id
+from backend.app.dependencies import get_current_active_user
 from backend.app.models import Task, Ticket, Project, User
 from backend.app.schemas import (
     AnalyticsDashboardResponse,
@@ -54,12 +54,12 @@ def _format_duration_delta(diff_seconds: float) -> str:
 
 @router.get("/summary")
 async def get_analytics_summary(
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get high-level workspace performance analytics (organization scoped)."""
-    user_res = await db.execute(select(User).where(User.id == current_user_id))
-    current_user = user_res.scalar_one_or_none()
+    user_res = None
+    # current_user is injected directly
     org_id = current_user.organization_id if current_user else None
 
     if not org_id:
@@ -117,13 +117,13 @@ async def get_analytics_dashboard(
     time_horizon: str = Query("30d", description="Time window: today, 7d, 30d, month"),
     project_id: Optional[str] = Query(None, description="Filter by project ID or 'all'"),
     severity: Optional[str] = Query(None, description="Filter by severity or 'all'"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> AnalyticsDashboardResponse:
     """Retrieve verified organization-scoped analytics telemetry for Screen 1."""
     # 1. Fetch current user and org
-    user_res = await db.execute(select(User).where(User.id == current_user_id))
-    current_user = user_res.scalar_one_or_none()
+    user_res = None
+    # current_user is injected directly
     org_id = current_user.organization_id if current_user else None
 
     # Strict Tenant Isolation: if user has no org, return empty structure with zero fabricated data
@@ -422,7 +422,7 @@ async def get_analytics_dashboard(
 @router.post("/export")
 async def export_analytics_report(
     req: AnalyticsExportRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Generate and stream real organization-scoped analytics export report (CSV only)."""
@@ -433,8 +433,8 @@ async def export_analytics_report(
             detail=f"Export format '{req.format}' is not supported. Supported formats: csv"
         )
 
-    user_res = await db.execute(select(User).where(User.id == current_user_id))
-    current_user = user_res.scalar_one_or_none()
+    user_res = None
+    # current_user is injected directly
     org_id = current_user.organization_id if current_user else None
 
     if not org_id:

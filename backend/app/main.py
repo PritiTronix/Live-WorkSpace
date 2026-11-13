@@ -5,15 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.app.core.config import settings
 from backend.app.routes import api_router
-from backend.app.database import engine, Base
+from backend.app.database import engine, Base, AsyncSessionLocal
+from backend.app.seed import seed_initial_data_if_empty
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks: automatically create database tables if running against Postgres
+    # Startup tasks: automatically create database tables and seed if empty
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        async with AsyncSessionLocal() as session:
+            await seed_initial_data_if_empty(session)
     except Exception:
         pass
     yield
@@ -46,6 +49,8 @@ def create_application() -> FastAPI:
     # Secure ticket storage directory (unauthenticated static mount removed for security)
     uploads_dir = os.path.abspath(settings.UPLOAD_DIR)
     os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
+    os.makedirs(os.path.join(uploads_dir, "files"), exist_ok=True)
+    os.makedirs(os.path.join(uploads_dir, "tasks"), exist_ok=True)
 
     @application.get("/health", tags=["Health"])
     async def health_check():

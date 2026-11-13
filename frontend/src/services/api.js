@@ -39,6 +39,9 @@ export const authService = {
     if (response.data?.access_token) {
       localStorage.setItem('access_token', response.data.access_token);
     }
+    if (response.data?.user) {
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
     return response.data;
   },
   register: async (userData) => {
@@ -60,12 +63,23 @@ export const authService = {
     const response = await apiClient.post('/auth/verify-email', { token });
     return response.data;
   },
+  getCurrentUserSync: () => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : DEFAULT_USER;
+    } catch {
+      return DEFAULT_USER;
+    }
+  },
   getCurrentUser: async () => {
     try {
       const response = await apiClient.get('/users/me');
+      if (response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+      }
       return response.data;
     } catch {
-      return DEFAULT_USER;
+      return authService.getCurrentUserSync();
     }
   },
   updatePresence: async (presence) => {
@@ -78,6 +92,7 @@ export const authService = {
   },
   logout: () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
   },
 };
 

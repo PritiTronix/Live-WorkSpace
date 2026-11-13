@@ -38,6 +38,7 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     organization_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
@@ -312,3 +313,88 @@ class TaskAttachment(Base):
 
     task: Mapped["Task"] = relationship(back_populates="attachments")
     uploader: Mapped["User"] = relationship("User")
+
+
+# ---------------------------------------------------------------------------
+# Persistent Notification & Workspace Settings models (P1 Architecture)
+# ---------------------------------------------------------------------------
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False, default="system")
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    actor_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    target_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    target_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    target_route: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+    actor: Mapped[Optional["User"]] = relationship("User", foreign_keys=[actor_id])
+
+
+class WorkspaceSetting(Base):
+    __tablename__ = "workspace_settings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), unique=True, index=True, nullable=False)
+    working_schedule: Mapped[str] = mapped_column(String(255), default="24x7 Continuous Tier-1 Operations")
+    timezone: Mapped[str] = mapped_column(String(100), default="UTC")
+    holidays_observed: Mapped[int] = mapped_column(Integer, default=10)
+    pause_on_hold: Mapped[bool] = mapped_column(Boolean, default=True)
+    sla_config: Mapped[str] = mapped_column(Text, default="{}")
+    notification_config: Mapped[str] = mapped_column(Text, default="{}")
+    appearance_config: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    organization: Mapped["Organization"] = relationship("Organization")
+
+
+class UserInvitation(Base):
+    __tablename__ = "user_invitations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(50), default="member")
+    token: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
+    invited_by_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, accepted, expired, revoked
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    organization: Mapped["Organization"] = relationship("Organization")
+    invited_by: Mapped["User"] = relationship("User", foreign_keys=[invited_by_id])
+
+
+class RCARecord(Base):
+    __tablename__ = "rca_records"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("tickets.id"), unique=True, index=True, nullable=False)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    author_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    incident_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    severity: Mapped[str] = mapped_column(String(50), default="critical")
+    five_whys: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    root_cause: Mapped[str] = mapped_column(Text, nullable=False)
+    immediate_mitigation: Mapped[str] = mapped_column(Text, nullable=False)
+    preventative_actions: Mapped[Optional[str]] = mapped_column(Text, nullable=True, default="[]")
+    impact_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="draft")  # draft, under_review, approved, closed
+    approved_by_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    ticket: Mapped["Ticket"] = relationship("Ticket")
+    author: Mapped["User"] = relationship("User", foreign_keys=[author_id])
+    approved_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[approved_by_id])

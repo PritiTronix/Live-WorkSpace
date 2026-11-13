@@ -455,25 +455,36 @@ All endpoints are prefixed with `/api/v1` and document their OpenAPI specificati
 | `POST` | `/tasks/{id}/comments` | Add new task comment | **Yes** | Member+ |
 | `GET` | `/tasks/{id}/attachments`| List task attachment metadata | **Yes** | Member+ |
 | `POST` | `/tasks/{id}/attachments`| Register uploaded file metadata | **Yes** | Member+ |
-| `WS`  | `/tasks/ws` | Real-time WebSocket stream for task events | No | Public |
+| `WS`  | `/tasks/ws` | Real-time WebSocket stream for task events | **Yes** | Member+ (JWT Auth) |
 | `GET` | `/notifications` | List and filter notifications | **Yes** | Member+ |
 | `GET` | `/notifications/unread-count` | Get live unread notification counter | **Yes** | Member+ |
 | `PATCH`| `/notifications/{id}/read` | Mark individual notification as read | **Yes** | Member+ |
 | `PATCH`| `/notifications/read-all` | Mark all notifications as read | **Yes** | Member+ |
-| `WS`  | `/notifications/ws` | Real-time WebSocket stream for notification alerts | No | Public |
+| `WS`  | `/notifications/ws` | Real-time WebSocket stream for notification alerts | **Yes** | Member+ (JWT Auth) |
 | `GET` | `/tickets` | List tickets (Table, Board, Priority views) | **Yes** | Member+ |
 | `POST` | `/tickets` | Create ticket & initialize dual SLA timers | **Yes** | Member+ |
 | `PATCH`| `/tickets/{id}/status` | Transition ticket status (Open $\rightarrow$ WIP $\rightarrow$ Resolved) | **Yes** | Member+ |
 | `PATCH`| `/tickets/{id}/severity`| Update severity (recalibrates active SLA) | **Yes** | Manager+ |
-| `GET` | `/sla/metrics` | Retrieve SLA compliance percentages | **Yes** | Manager+ |
+| `GET` | `/sla/metrics` | Retrieve SLA compliance percentages | **Yes** | Member+ |
 | `GET` | `/sla/policies` | List configured SLA response/resolution rules | **Yes** | Member+ |
-| `GET` | `/rca/ticket/{id}` | Retrieve Root Cause Analysis document | **Yes** | Member+ |
-| `POST` | `/rca/ticket/{id}` | Submit completed RCA incident record | **Yes** | Member+ |
+| `GET` | `/rca` | List Root Cause Analysis records | **Yes** | Member+ |
+| `POST` | `/rca` | Submit completed RCA incident record | **Yes** | Member+ |
+| `POST` | `/rca/{id}/approve` | Approve RCA post-mortem report | **Yes** | Admin/Owner |
 | `GET` | `/files` | List centralized workspace files | **Yes** | Member+ |
 | `POST` | `/files/upload` | Upload attachment or project asset | **Yes** | Member+ |
-| `GET` | `/analytics/summary` | Aggregate workspace performance analytics | **Yes** | Manager+ |
+| `GET` | `/analytics/summary` | Aggregate workspace performance analytics | **Yes** | Member+ |
 | `GET` | `/audit-logs` | Retrieve immutable system activity audit logs | **Yes** | Admin/Owner |
 | `GET` | `/settings/workspace` | Get workspace configuration and branding | **Yes** | Admin/Owner |
+| `PATCH`| `/settings/workspace` | Update workspace configuration | **Yes** | Admin/Owner |
+
+---
+
+## Production Reports & Documentation
+- [Production Remediation Tracker](docs/PRODUCTION_REMEDIATION_TRACKER.md)
+- [Security Implementation Report](docs/SECURITY_IMPLEMENTATION_REPORT.md)
+- [Final Production Readiness Report](docs/FINAL_PRODUCTION_READINESS_REPORT.md)
+- [Database Migration & Schema Guide](docs/DATABASE_MIGRATION_GUIDE.md)
+- [Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
 
 ---
 

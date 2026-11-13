@@ -14,14 +14,13 @@ from fastapi import (
     File,
     status,
 )
-from jose import JWTError, jwt
 from sqlalchemy import select, and_, desc, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from backend.app.core.config import settings
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_user_id
+from backend.app.dependencies import get_current_active_user
 from backend.app.models import (
     Ticket,
     Project,
@@ -51,7 +50,7 @@ from backend.app.schemas import (
     TicketAttachmentRead,
     TicketActivityRead,
 )
-from backend.app.core.websockets import ws_manager
+from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
 
@@ -68,70 +67,6 @@ ALLOWED_ATTACHMENT_MIME_TYPES = {
 }
 
 
-async def authenticate_ws_connection(
-    websocket: WebSocket,
-    token: Optional[str],
-    workspace_id: str,
-    db: AsyncSession
-) -> Optional[User]:
-    """
-    Authenticate WebSocket handshake against existing JWT / user session.
-    Rejects and closes connection with 1008 Policy Violation if unauthenticated
-    or if user is not authorized to access the requested workspace.
-    """
-    if not token or token in ("null", "undefined"):
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication token")
-        return None
-
-    user_id = None
-    if token.startswith("mock_jwt_token"):
-        user_id = "usr_01"
-    else:
-        try:
-            payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
-            user_id = payload.get("sub")
-        except JWTError:
-            if settings.DEBUG:
-                user_id = "usr_01"
-            else:
-                await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication token")
-                return None
-
-    if not user_id:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid credentials")
-        return None
-
-    res = await db.execute(select(User).where(User.id == user_id))
-    user = res.scalars().first()
-    if not user:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="User not found")
-        return None
-
-    if not user.organization_id:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="User has no workspace affiliation")
-        return None
-
-    org_res = await db.execute(select(Organization).where(Organization.id == user.organization_id))
-    org = org_res.scalars().first()
-    if not org:
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Workspace not found")
-        return None
-
-    # Validate user belongs to the workspace by organization ID or slug
-    if workspace_id != org.id and workspace_id != org.slug:
-        pm_res = await db.execute(
-            select(ProjectMember).join(Project).where(
-                ProjectMember.user_id == user.id,
-                Project.organization_id == workspace_id
-            )
-        )
-        if not pm_res.scalars().first():
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized access to workspace")
-            return None
-
-    return user
-
-
 @router.websocket("/ws/{workspace_id}")
 async def tickets_websocket_endpoint(
     websocket: WebSocket,
@@ -140,7 +75,7 @@ async def tickets_websocket_endpoint(
     db: AsyncSession = Depends(get_db)
 ):
     """Authenticated and workspace-scoped WebSocket endpoint for real-time ticket events."""
-    user = await authenticate_ws_connection(websocket, token, workspace_id, db)
+    user = await authenticate_ws(websocket, token, db, required_workspace_id=workspace_id)
     if not user:
         return
 
@@ -164,17 +99,22 @@ async def get_critical_priority_issues(
     sort_by: Optional[str] = Query("severity", description="Sort by: severity, deadline, updated"),
     sort_order: Optional[str] = Query("desc", description="Sort order: asc, desc"),
     search: Optional[str] = Query(None, description="Search by title or ticket number"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 69: Live Incident Queue with KPI Impact summary and multi-tier filtering."""
-    query = select(Ticket).options(
-        selectinload(Ticket.assignee),
-        selectinload(Ticket.reporter),
-        selectinload(Ticket.project),
-        selectinload(Ticket.comments),
-        selectinload(Ticket.attachments),
-        selectinload(Ticket.activities),
+    query = (
+        select(Ticket)
+        .options(
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.reporter),
+            selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
+        )
+        .join(Ticket.project)
+        .where(Project.organization_id == current_user.organization_id)
     )
 
     if project_id and project_id.lower() != "all":
@@ -259,11 +199,11 @@ async def get_critical_priority_issues(
 @router.get("/stats", response_model=TicketStats)
 async def get_ticket_stats(
     project_id: Optional[str] = Query(None, description="Optional project filter"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 61: Summary counts for dashboard stat cards."""
-    query = select(Ticket)
+    query = select(Ticket).join(Ticket.project).where(Project.organization_id == current_user.organization_id)
     if project_id and project_id.lower() != "all":
         query = query.where(Ticket.project_id == project_id)
 
@@ -294,14 +234,19 @@ async def get_ticket_board(
     project_id: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 62: Tickets grouped by status columns for the Kanban board."""
-    query = select(Ticket).options(
-        selectinload(Ticket.assignee),
-        selectinload(Ticket.reporter),
-        selectinload(Ticket.project),
+    query = (
+        select(Ticket)
+        .options(
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.reporter),
+            selectinload(Ticket.project),
+        )
+        .join(Ticket.project)
+        .where(Project.organization_id == current_user.organization_id)
     )
 
     if project_id and project_id.lower() != "all":
@@ -336,14 +281,19 @@ async def get_ticket_priority(
     project_id: Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 63: Tickets grouped by priority swimlanes/sections."""
-    query = select(Ticket).options(
-        selectinload(Ticket.assignee),
-        selectinload(Ticket.reporter),
-        selectinload(Ticket.project),
+    query = (
+        select(Ticket)
+        .options(
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.reporter),
+            selectinload(Ticket.project),
+        )
+        .join(Ticket.project)
+        .where(Project.organization_id == current_user.organization_id)
     )
 
     if project_id and project_id.lower() != "all":
@@ -380,17 +330,22 @@ async def list_tickets(
     status: Optional[str] = Query(None, description="Filter by status (open, wip, on_hold, resolved, closed)"),
     assignee_id: Optional[str] = Query(None, description="Filter by assignee ID"),
     search: Optional[str] = Query(None, description="Search in title or ticket number"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 61: List tickets for dashboard table with filtering."""
-    query = select(Ticket).options(
-        selectinload(Ticket.assignee),
-        selectinload(Ticket.reporter),
-        selectinload(Ticket.project),
-        selectinload(Ticket.comments),
-        selectinload(Ticket.attachments),
-        selectinload(Ticket.activities),
+    query = (
+        select(Ticket)
+        .options(
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.reporter),
+            selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
+        )
+        .join(Ticket.project)
+        .where(Project.organization_id == current_user.organization_id)
     )
 
     if project_id and project_id.lower() != "all":
@@ -414,19 +369,36 @@ async def list_tickets(
 @router.post("/", response_model=TicketRead, status_code=status.HTTP_201_CREATED)
 async def create_ticket(
     ticket_in: TicketCreate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Screen 64: Create a new ticket with concurrency-safe ticket number generation:
+    - Verifies project belongs to authenticated user's organization.
     - Protects against simultaneous generation races using database row locking where supported.
     - Uses controlled retry loop with transaction savepoint on unique constraint conflicts.
     - Computes next sequence without hardcoded offsets.
     """
-    p_res = await db.execute(select(Project).where(Project.id == ticket_in.project_id))
+    p_res = await db.execute(
+        select(Project).where(
+            Project.id == ticket_in.project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
     project = p_res.scalars().first()
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=404, detail="Project not found or does not belong to your organization")
+
+    # Validate assignee if provided
+    if ticket_in.assignee_id and ticket_in.assignee_id != current_user.id:
+        u_res = await db.execute(
+            select(User).where(
+                User.id == ticket_in.assignee_id,
+                User.organization_id == current_user.organization_id
+            )
+        )
+        if not u_res.scalars().first():
+            raise HTTPException(status_code=400, detail="Assignee does not belong to your organization")
 
     now = datetime.now(timezone.utc)
     new_ticket = None
@@ -435,8 +407,14 @@ async def create_ticket(
     for attempt in range(MAX_RETRIES):
         try:
             async with db.begin_nested():
-                # Query highest existing ticket number
-                q = select(Ticket.ticket_number).order_by(desc(Ticket.created_at)).limit(200)
+                # Query highest existing ticket number within organization's projects
+                q = (
+                    select(Ticket.ticket_number)
+                    .join(Ticket.project)
+                    .where(Project.organization_id == current_user.organization_id)
+                    .order_by(desc(Ticket.created_at))
+                    .limit(200)
+                )
                 try:
                     if db.bind and db.bind.dialect.name == "postgresql":
                         q = q.with_for_update(read=True)
@@ -463,7 +441,7 @@ async def create_ticket(
                     status=(ticket_in.status or "open").lower(),
                     project_id=ticket_in.project_id,
                     assignee_id=ticket_in.assignee_id,
-                    reporter_id=ticket_in.reporter_id or current_user_id,
+                    reporter_id=ticket_in.reporter_id or current_user.id,
                     deadline=ticket_in.deadline,
                     first_response_at=ticket_in.first_response_at,
                     steps_to_reproduce=ticket_in.steps_to_reproduce,
@@ -492,7 +470,7 @@ async def create_ticket(
     if ticket_in.initial_comment and ticket_in.initial_comment.strip():
         comm = TicketComment(
             ticket_id=new_ticket.id,
-            author_id=current_user_id,
+            author_id=current_user.id,
             content=ticket_in.initial_comment.strip(),
             is_internal=True,
             created_at=now,
@@ -502,7 +480,7 @@ async def create_ticket(
     # Initial activity record
     activity = TicketActivity(
         ticket_id=new_ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="ticket_created",
         old_value=None,
         new_value=f"Severity: {new_ticket.severity}, Status: {new_ticket.status}",
@@ -542,7 +520,7 @@ async def create_ticket(
 @router.get("/{ticket_id}", response_model=TicketRead)
 async def get_ticket_details(
     ticket_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 65: Get full ticket details with comments, attachments, activity."""
@@ -557,7 +535,7 @@ async def get_ticket_details(
         ).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket
 
@@ -566,7 +544,7 @@ async def get_ticket_details(
 async def update_ticket(
     ticket_id: str,
     ticket_in: TicketUpdate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update ticket fields with activity tracking and workspace broadcast."""
@@ -574,7 +552,7 @@ async def update_ticket(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     update_data = ticket_in.model_dump(exclude_unset=True)
@@ -586,7 +564,7 @@ async def update_ticket(
         if new_status != ticket.status:
             act = TicketActivity(
                 ticket_id=ticket.id,
-                actor_id=current_user_id,
+                actor_id=current_user.id,
                 action="status_changed",
                 old_value=ticket.status,
                 new_value=new_status,
@@ -600,7 +578,7 @@ async def update_ticket(
         if new_sev != ticket.severity:
             act = TicketActivity(
                 ticket_id=ticket.id,
-                actor_id=current_user_id,
+                actor_id=current_user.id,
                 action="severity_changed",
                 old_value=ticket.severity,
                 new_value=new_sev,
@@ -620,7 +598,7 @@ async def update_ticket(
         if new_assignee != ticket.assignee_id:
             act = TicketActivity(
                 ticket_id=ticket.id,
-                actor_id=current_user_id,
+                actor_id=current_user.id,
                 action="reassigned",
                 old_value=ticket.assignee_id or "unassigned",
                 new_value=new_assignee or "unassigned",
@@ -633,7 +611,7 @@ async def update_ticket(
         new_deadline = update_data["deadline"]
         act = TicketActivity(
             ticket_id=ticket.id,
-            actor_id=current_user_id,
+            actor_id=current_user.id,
             action="deadline_changed",
             old_value=ticket.deadline.isoformat() if ticket.deadline else "none",
             new_value=new_deadline.isoformat() if new_deadline else "none",
@@ -677,7 +655,7 @@ async def update_ticket(
     out_obj = res.scalars().first()
 
     # Broadcast event to workspace
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -690,16 +668,16 @@ async def update_ticket(
 @router.delete("/{ticket_id}", status_code=status.HTTP_200_OK)
 async def delete_ticket(
     ticket_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a ticket with workspace-scoped broadcast."""
     res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id))
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    workspace_id = ticket.project.organization_id if ticket.project else "org_01"
+    workspace_id = ticket.project.organization_id if ticket.project else current_user.organization_id
     await db.delete(ticket)
     await db.commit()
 
@@ -716,19 +694,19 @@ async def delete_ticket(
 async def add_ticket_comment(
     ticket_id: str,
     comment_in: TicketCommentCreate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Add comment / triage note to ticket with workspace-scoped broadcast."""
     t_res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id))
     ticket = t_res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     now = datetime.now(timezone.utc)
     comment = TicketComment(
         ticket_id=ticket_id,
-        author_id=current_user_id,
+        author_id=current_user.id,
         content=comment_in.content.strip(),
         is_internal=comment_in.is_internal,
         created_at=now,
@@ -737,7 +715,7 @@ async def add_ticket_comment(
 
     act = TicketActivity(
         ticket_id=ticket_id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="comment_added",
         old_value=None,
         new_value=comment.content[:100],
@@ -751,7 +729,7 @@ async def add_ticket_comment(
     )
     out_c = res.scalars().first()
 
-    workspace_id = ticket.project.organization_id if ticket.project else "org_01"
+    workspace_id = ticket.project.organization_id if ticket.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="comment_added",
@@ -765,7 +743,7 @@ async def add_ticket_comment(
 async def upload_ticket_attachment(
     ticket_id: str,
     file: UploadFile = File(...),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -783,27 +761,8 @@ async def upload_ticket_attachment(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
-
-    user_res = await db.execute(select(User).where(User.id == current_user_id))
-    user = user_res.scalars().first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-
-    # Authorization: check organization or project membership
-    if user.organization_id != ticket.project.organization_id:
-        pm_res = await db.execute(
-            select(ProjectMember).where(
-                ProjectMember.project_id == ticket.project_id,
-                ProjectMember.user_id == current_user_id
-            )
-        )
-        if not pm_res.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not authorized to upload attachments to this ticket."
-            )
 
     # Sanitize filename and block path traversal
     raw_filename = file.filename or "attachment.bin"
@@ -862,7 +821,7 @@ async def upload_ticket_attachment(
     att = TicketAttachment(
         id=att_id,
         ticket_id=ticket.id,
-        uploader_id=current_user_id,
+        uploader_id=current_user.id,
         name=safe_name,
         size_bytes=total_bytes,
         file_url=f"/api/v1/tickets/{ticket.id}/attachments/{att_id}/download",
@@ -872,7 +831,7 @@ async def upload_ticket_attachment(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="attachment_added",
         old_value=None,
         new_value=f"{safe_name} ({total_bytes} bytes)",
@@ -887,7 +846,7 @@ async def upload_ticket_attachment(
     out_att = res_att.scalars().first()
 
     # Broadcast event to workspace
-    workspace_id = ticket.project.organization_id if ticket.project else "org_01"
+    workspace_id = ticket.project.organization_id if ticket.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="attachment_added",
@@ -901,7 +860,7 @@ async def upload_ticket_attachment(
 async def download_ticket_attachment(
     ticket_id: str,
     attachment_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -913,27 +872,8 @@ async def download_ticket_attachment(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
-
-    user_res = await db.execute(select(User).where(User.id == current_user_id))
-    user = user_res.scalars().first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not authenticated")
-
-    # Authorization check
-    if user.organization_id != ticket.project.organization_id:
-        pm_res = await db.execute(
-            select(ProjectMember).where(
-                ProjectMember.project_id == ticket.project_id,
-                ProjectMember.user_id == current_user_id
-            )
-        )
-        if not pm_res.scalars().first():
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not authorized to download attachments from this ticket."
-            )
 
     # Locate attachment record
     att_res = await db.execute(
@@ -985,7 +925,7 @@ ALLOWED_LIFECYCLE_TRANSITIONS = {
 async def change_ticket_status(
     ticket_id: str,
     payload: TicketStatusChangeRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -996,7 +936,7 @@ async def change_ticket_status(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     new_status = payload.status.lower().strip()
@@ -1033,7 +973,7 @@ async def change_ticket_status(
 
         act = TicketActivity(
             ticket_id=ticket.id,
-            actor_id=current_user_id,
+            actor_id=current_user.id,
             action="status_changed",
             old_value=old_status,
             new_value=" | ".join(note_parts),
@@ -1057,7 +997,7 @@ async def change_ticket_status(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -1070,7 +1010,7 @@ async def change_ticket_status(
 async def change_ticket_severity(
     ticket_id: str,
     payload: TicketSeverityChangeRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -1081,7 +1021,7 @@ async def change_ticket_severity(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     new_sev = payload.severity.lower().strip()
@@ -1106,7 +1046,7 @@ async def change_ticket_severity(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="severity_changed",
         old_value=old_sev,
         new_value=" | ".join(act_parts),
@@ -1129,7 +1069,7 @@ async def change_ticket_severity(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -1142,7 +1082,7 @@ async def change_ticket_severity(
 async def reassign_ticket(
     ticket_id: str,
     payload: TicketReassignRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -1154,32 +1094,24 @@ async def reassign_ticket(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     new_assignee_id = payload.assignee_id
     assignee_name = "Unassigned"
     if new_assignee_id:
-        u_res = await db.execute(select(User).where(User.id == new_assignee_id))
+        u_res = await db.execute(
+            select(User).where(
+                User.id == new_assignee_id,
+                User.organization_id == current_user.organization_id
+            )
+        )
         target_user = u_res.scalars().first()
         if not target_user:
-            raise HTTPException(status_code=404, detail="Assignee user not found")
+            raise HTTPException(status_code=404, detail="Assignee user not found in your organization")
         if not target_user.is_active:
             raise HTTPException(status_code=400, detail="Cannot assign ticket to an inactive user account.")
 
-        # Project or organization membership authorization check
-        if target_user.organization_id != ticket.project.organization_id:
-            pm_res = await db.execute(
-                select(ProjectMember).where(
-                    ProjectMember.project_id == ticket.project_id,
-                    ProjectMember.user_id == new_assignee_id
-                )
-            )
-            if not pm_res.scalars().first():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Target assignee is not a member of the project or organization."
-                )
         assignee_name = target_user.full_name or target_user.email
 
     now = datetime.now(timezone.utc)
@@ -1192,7 +1124,7 @@ async def reassign_ticket(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="reassigned",
         old_value=old_assignee,
         new_value=" | ".join(act_parts),
@@ -1215,7 +1147,7 @@ async def reassign_ticket(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -1228,7 +1160,7 @@ async def reassign_ticket(
 async def change_ticket_deadline(
     ticket_id: str,
     payload: TicketDeadlineChangeRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -1239,7 +1171,7 @@ async def change_ticket_deadline(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     if not (payload.reason and payload.reason.strip()):
@@ -1258,7 +1190,7 @@ async def change_ticket_deadline(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="deadline_changed",
         old_value=old_deadline_str,
         new_value=" | ".join(act_parts),
@@ -1281,7 +1213,7 @@ async def change_ticket_deadline(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -1294,7 +1226,7 @@ async def change_ticket_deadline(
 async def reopen_ticket(
     ticket_id: str,
     payload: TicketReopenRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -1307,7 +1239,7 @@ async def reopen_ticket(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     if ticket.status.lower() not in ("resolved", "closed"):
@@ -1332,7 +1264,7 @@ async def reopen_ticket(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="reopened",
         old_value=old_status,
         new_value=" | ".join(act_parts),
@@ -1355,7 +1287,7 @@ async def reopen_ticket(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",
@@ -1368,7 +1300,7 @@ async def reopen_ticket(
 async def close_ticket(
     ticket_id: str,
     payload: TicketCloseRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -1381,7 +1313,7 @@ async def close_ticket(
         select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
     )
     ticket = res.scalars().first()
-    if not ticket:
+    if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     if ticket.status.lower() != "resolved":
@@ -1410,7 +1342,7 @@ async def close_ticket(
 
     act = TicketActivity(
         ticket_id=ticket.id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="closed",
         old_value=old_status,
         new_value=" | ".join(act_parts),
@@ -1433,7 +1365,7 @@ async def close_ticket(
     )
     out_obj = refreshed.scalars().first()
 
-    workspace_id = out_obj.project.organization_id if out_obj.project else "org_01"
+    workspace_id = out_obj.project.organization_id if out_obj.project else current_user.organization_id
     await ws_manager.broadcast(
         workspace_id=workspace_id,
         event_type="ticket_updated",

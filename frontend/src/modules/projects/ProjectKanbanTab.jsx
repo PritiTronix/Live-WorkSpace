@@ -170,7 +170,11 @@ export const ProjectKanbanTab = () => {
         /* Kanban Columns Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md items-start">
           {columns.map((col) => {
-            const colTasks = filteredTasks.filter((t) => (t.status || 'to_do').toLowerCase() === col.key);
+            const colTasks = filteredTasks.filter((t) => {
+              const s = (t.status || 'to_do').toLowerCase().replace('_', '');
+              const target = col.key.replace('_', '');
+              return s === target;
+            });
 
             return (
               <div

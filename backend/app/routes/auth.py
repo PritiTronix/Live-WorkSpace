@@ -14,6 +14,8 @@ from backend.app.core.security import (
     get_password_hash,
     verify_password,
     create_access_token,
+    create_password_reset_token,
+    create_email_verification_token,
     verify_password_fingerprint,
 )
 
@@ -41,10 +43,35 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
             detail="A user with this email address already exists.",
         )
 
-    # Link to default organization
-    org_res = await db.execute(select(Organization))
-    org = org_res.scalars().first()
-    org_id = org.id if org else "org_01"
+    # Link to specified organization, default organization, or create a new organization
+    org = None
+    role = "member"
+    if user_in.organization_name:
+        slug = user_in.organization_name.lower().strip().replace(" ", "-")
+        org_slug_res = await db.execute(select(Organization).where(Organization.slug == slug))
+        org = org_slug_res.scalars().first()
+        if not org:
+            org = Organization(
+                id=f"org_{uuid.uuid4().hex[:8]}",
+                name=user_in.organization_name.strip(),
+                slug=slug,
+                created_at=datetime.now(timezone.utc),
+            )
+            db.add(org)
+            await db.flush()
+        role = "owner"
+    else:
+        org_res = await db.execute(select(Organization))
+        org = org_res.scalars().first()
+        if not org:
+            org = Organization(
+                id=f"org_{uuid.uuid4().hex[:8]}",
+                name="Acme Tech",
+                slug="acme-tech",
+                created_at=datetime.now(timezone.utc),
+            )
+            db.add(org)
+            await db.flush()
 
     now = datetime.now(timezone.utc)
     new_user = User(
@@ -52,12 +79,13 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         email=user_in.email.lower().strip(),
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name.strip(),
-        role="member",  # Enforce least-privilege member role; client input cannot assign role
+        role=role,
         title=user_in.title or "Software Engineer",
         department=user_in.department or "Engineering",
         avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
         is_active=True,
-        organization_id=org_id,
+        email_verified=False,
+        organization_id=org.id,
         created_at=now,
     )
     db.add(new_user)
@@ -81,8 +109,8 @@ async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user account",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user account. Contact your workspace administrator.",
         )
 
     access_token = create_access_token(subject=user.id)
@@ -108,27 +136,23 @@ class VerifyEmailRequest(BaseModel):
 
 @router.post("/forgot-password")
 async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
-    """Request password reset link.
-    
-    Returns a uniform response regardless of whether the email address is registered,
-    completely preventing account existence enumeration.
-    In environments without an active SMTP provider, automated email dispatch is unavailable.
-    """
-    # Uniformly returns HTTP 501 for all inputs to eliminate email existence enumeration
-    # while honestly reporting SMTP configuration availability.
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Email delivery service (SMTP) is not configured in this environment. Password reset email cannot be automatically dispatched.",
-    )
+    """Request password reset link. Returns a uniform response preventing user enumeration."""
+    res = await db.execute(select(User).where(User.email == payload.email.lower().strip()))
+    user = res.scalars().first()
+    reset_token = None
+    if user and user.is_active:
+        reset_token = create_password_reset_token(subject=user.id, password_hash=user.hashed_password)
+
+    return {
+        "status": "success",
+        "message": "If an active account exists with that email address, password reset instructions have been generated.",
+        "reset_token": reset_token if (settings.ENVIRONMENT == "development" or settings.DEBUG) else None
+    }
 
 
 @router.post("/reset-password")
 async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
-    """Cryptographically verify reset token and securely update password in database.
-    
-    Validates token signature, expiration, type, user identity, and hash-based state fingerprint
-    to prevent single-use token replay without requiring database schema changes.
-    """
+    """Cryptographically verify reset token and securely update password in database."""
     try:
         decoded = jwt.decode(payload.token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
     except JWTError:
@@ -159,8 +183,6 @@ async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depen
             detail="User account associated with this token was not found.",
         )
 
-    # Strictly enforce token fingerprint validation before mutating password state:
-    # Reject the token if pwd_fp is missing, empty, or fails constant-time comparison against current stored password hash.
     if not token_pwd_fp or not verify_password_fingerprint(user.hashed_password, token_pwd_fp):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -174,7 +196,7 @@ async def reset_password(payload: ResetPasswordRequest, db: AsyncSession = Depen
 
 @router.post("/verify-email")
 async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
-    """Cryptographically verify email verification token."""
+    """Cryptographically verify email verification token and update user record."""
     try:
         decoded = jwt.decode(payload.token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
     except JWTError:
@@ -198,8 +220,11 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(g
             detail="User account associated with this verification token was not found.",
         )
 
+    user.email_verified = True
+    await db.commit()
+
     return {
         "verified": True,
         "email": user.email,
-        "message": "Email signature cryptographically verified. Note: database schema does not currently define an email_verified column for persistent storage.",
+        "message": "Email signature successfully verified.",
     }

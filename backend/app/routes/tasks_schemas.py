@@ -85,6 +85,8 @@ class TaskCreate(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if self.status:
+            self.status = self.status.lower().replace("to_do", "todo")
         return self
 
 
@@ -106,11 +108,19 @@ class TaskUpdate(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if self.status:
+            self.status = self.status.lower().replace("to_do", "todo")
         return self
 
 
 class TaskStatusChange(BaseSchema):
     status: str    # must be a valid TaskStatus value
+
+    @model_validator(mode="after")
+    def normalize_status(self):
+        if self.status:
+            self.status = self.status.lower().replace("to_do", "todo")
+        return self
 
 
 class TaskRead(BaseSchema):
@@ -140,6 +150,8 @@ class TaskRead(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if self.status:
+            self.status = self.status.lower().replace("to_do", "todo")
         return self
 
 

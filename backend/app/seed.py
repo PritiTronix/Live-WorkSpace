@@ -2,7 +2,17 @@ import logging
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.app.models import Organization, User, Project, ProjectMember, ProjectInvitation, Task, Ticket
+from backend.app.models import (
+    Organization,
+    User,
+    Project,
+    ProjectMember,
+    ProjectInvitation,
+    Task,
+    Ticket,
+    WorkspaceSetting,
+    Notification,
+)
 from backend.app.core.security import get_password_hash
 
 logger = logging.getLogger(__name__)
@@ -101,6 +111,7 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
             department=u["department"],
             avatar_url=u["avatar_url"],
             is_active=True,
+            email_verified=True,
             organization_id=org.id,
             created_at=utc_now() - timedelta(days=90),
         )
@@ -313,14 +324,16 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
         done_count, total_count = p["tasks_count"]
         for i in range(1, total_count + 1):
             is_done = i <= done_count
-            task_status = "done" if is_done else ("in_progress" if i == done_count + 1 else "to_do")
+            task_status = "done" if is_done else ("in_progress" if i == done_count + 1 else "todo")
             task = Task(
                 task_number=f"{proj.key}-{100 + i}",
                 title=f"Sprint deliverable milestone component #{i} for {proj.name}",
                 description=f"Automated deliverable ticket for {proj.key}",
                 status=task_status,
                 project_id=proj.id,
-                assigned_to_id=proj.lead_id,
+                assignee_id=proj.lead_id,
+                reporter_id="usr_01",
+                organization_id=org.id,
                 created_at=proj.created_at + timedelta(hours=i),
             )
             db.add(task)
@@ -338,6 +351,81 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
             )
             db.add(ticket)
 
-    await db.commit()
-    logger.info("Successfully seeded initial Live Workspace organization, users, and projects.")
+    # 4. Workspace Settings
+    setting = WorkspaceSetting(
+        organization_id=org.id,
+        working_schedule="24x7 Continuous Tier-1 Operations",
+        timezone="UTC",
+        holidays_observed=10,
+        pause_on_hold=True,
+        sla_config='{"p1_response_min": 15, "p1_resolve_min": 240, "p2_response_min": 60, "p2_resolve_min": 480}',
+        notification_config='{"email_alerts": true, "in_app_toast": true, "sla_breach_sms": false}',
+        appearance_config='{"theme": "system", "density": "comfortable"}',
+    )
+    db.add(setting)
 
+    # 5. Notifications
+    seed_notifs = [
+        {
+            "id": "notif_001",
+            "type": "sla_breach",
+            "title": "SLA Breach — TKT-1025",
+            "body": "Auth proxy latency spike crossed SLA threshold. Immediate action required.",
+            "is_read": False,
+            "target_id": "TKT-1025",
+            "target_type": "ticket",
+            "target_route": "/workspace/tickets/TKT-1025",
+        },
+        {
+            "id": "notif_002",
+            "type": "ticket_assigned",
+            "title": "Ticket Assigned — TKT-1031",
+            "body": "Payment Webhook retry queue exhaustion has been assigned to you.",
+            "is_read": False,
+            "actor_id": "usr_02",
+            "target_id": "TKT-1031",
+            "target_type": "ticket",
+            "target_route": "/workspace/tickets/TKT-1031",
+        },
+        {
+            "id": "notif_003",
+            "type": "mention",
+            "title": "Mention in TKT-1028",
+            "body": "David K. mentioned you: '@maya please review the Kafka lag investigation.'",
+            "is_read": False,
+            "actor_id": "usr_03",
+            "target_id": "TKT-1028",
+            "target_type": "ticket",
+            "target_route": "/workspace/tickets/TKT-1028",
+        },
+        {
+            "id": "notif_004",
+            "type": "comment",
+            "title": "New Comment — TKT-1019",
+            "body": "Priya Nair added a comment on cross-region telemetry replication failover.",
+            "is_read": True,
+            "actor_id": "usr_05",
+            "target_id": "TKT-1019",
+            "target_type": "ticket",
+            "target_route": "/workspace/tickets/TKT-1019",
+        },
+    ]
+    for sn in seed_notifs:
+        n_obj = Notification(
+            id=sn["id"],
+            user_id="usr_01",
+            organization_id=org.id,
+            type=sn["type"],
+            title=sn["title"],
+            body=sn["body"],
+            is_read=sn["is_read"],
+            actor_id=sn.get("actor_id"),
+            target_id=sn.get("target_id"),
+            target_type=sn.get("target_type"),
+            target_route=sn.get("target_route"),
+            created_at=utc_now() - timedelta(minutes=30),
+        )
+        db.add(n_obj)
+
+    await db.commit()
+    logger.info("Successfully seeded initial Live Workspace organization, users, projects, settings and notifications.")

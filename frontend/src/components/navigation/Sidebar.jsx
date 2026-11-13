@@ -15,9 +15,9 @@
  * "(Cleaned)" is used as source of truth; "(Prompt 12)" adds the nested
  * Tickets sub-nav rows which are incorporated here.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { DEFAULT_USER } from '../../services/api';
+import { DEFAULT_USER, authService } from '../../services/api';
 
 /** Single nav link with optional badge and tooltip for collapsed state */
 const NavItem = ({ to, icon, label, badge, isCollapsed, end = false }) => (
@@ -119,6 +119,16 @@ export const Sidebar = ({
   unreadNotifications = 0,
   isMobile = false,
 }) => {
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
+
+  useEffect(() => {
+    let mounted = true;
+    authService.getCurrentUser().then((user) => {
+      if (mounted && user) setCurrentUser(user);
+    });
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto border-r border-border-subtle transition-all duration-200 ${
@@ -299,16 +309,16 @@ export const Sidebar = ({
                 <img
                   alt="Profile"
                   className="w-8 h-8 rounded-full object-cover"
-                  src={DEFAULT_USER.avatar_url}
+                  src={currentUser?.avatar_url || DEFAULT_USER.avatar_url}
                 />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
               </div>
               <div className="flex flex-col text-left">
                 <span className="font-label-md text-label-md text-text-primary leading-tight">
-                  {DEFAULT_USER.full_name}
+                  {currentUser?.full_name || DEFAULT_USER.full_name}
                 </span>
-                <span className="font-body-sm text-body-sm text-text-secondary leading-tight">
-                  {DEFAULT_USER.role}
+                <span className="font-body-sm text-body-sm text-text-secondary leading-tight capitalize">
+                  {currentUser?.role || DEFAULT_USER.role}
                 </span>
               </div>
             </div>
@@ -323,8 +333,8 @@ export const Sidebar = ({
               <img
                 alt="Profile"
                 className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                src={DEFAULT_USER.avatar_url}
-                title={`${DEFAULT_USER.full_name} — ${DEFAULT_USER.role}`}
+                src={currentUser?.avatar_url || DEFAULT_USER.avatar_url}
+                title={`${currentUser?.full_name || DEFAULT_USER.full_name} — ${currentUser?.role || DEFAULT_USER.role}`}
               />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
             </NavLink>

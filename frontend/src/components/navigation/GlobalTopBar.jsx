@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService, DEFAULT_USER } from '../../services/api';
 import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
 import LogoutModal from '../../modules/auth/components/LogoutModal';
@@ -12,7 +13,8 @@ export const GlobalTopBar = ({
   slaBreachCount = 2,
   isCollapsed = false,
 }) => {
-  const [user, setUser] = useState(DEFAULT_USER);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(() => authService.getCurrentUserSync());
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -255,30 +257,28 @@ export const GlobalTopBar = ({
 
               {/* Navigation Items */}
               <div className="pt-1 border-t border-border-subtle space-y-0.5 font-label-md text-label-md">
-                <a
-                  href="/workspace/settings/profile"
-                  onClick={(e) => {
-                    e.preventDefault();
+                <button
+                  type="button"
+                  onClick={() => {
                     setIsProfileOpen(false);
-                    window.location.href = '/workspace/settings/profile';
+                    navigate('/workspace/settings/profile');
                   }}
-                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
+                  className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors text-left"
                 >
                   <span className="material-symbols-outlined text-[18px]">settings</span>
                   <span>Personal Settings</span>
-                </a>
-                <a
-                  href="/workspace/settings/notifications"
-                  onClick={(e) => {
-                    e.preventDefault();
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setIsProfileOpen(false);
-                    window.location.href = '/workspace/settings/notifications';
+                    navigate('/workspace/settings/notifications');
                   }}
-                  className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
+                  className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors text-left"
                 >
                   <span className="material-symbols-outlined text-[18px]">tune</span>
                   <span>Notification Preferences</span>
-                </a>
+                </button>
                 <a href="#shortcuts" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
                   <span className="material-symbols-outlined text-[18px]">keyboard</span>
                   <span>Keyboard Shortcuts</span>

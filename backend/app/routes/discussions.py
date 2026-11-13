@@ -6,8 +6,8 @@ from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_user_id
-from backend.app.models import Discussion, DiscussionComment, Project, ProjectActivity
+from backend.app.dependencies import get_current_active_user
+from backend.app.models import Discussion, DiscussionComment, Project, ProjectActivity, User
 from backend.app.schemas import (
     DiscussionCreate,
     DiscussionRead,
@@ -19,31 +19,34 @@ from backend.app.schemas import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[DiscussionRead])
+@router.get("", response_model=List[DiscussionRead])
+@router.get("/", response_model=List[DiscussionRead], include_in_schema=False)
 async def list_discussions(
     project_id: Optional[str] = Query(None, description="Filter by project ID"),
     category: Optional[str] = Query(None, description="Filter by category (announcement, rfc, question, general)"),
     search: Optional[str] = Query(None, description="Search in title or content"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List discussions with authors and comments."""
+    """List discussions with authors and comments, scoped to tenant."""
     query = (
         select(Discussion)
         .options(
             selectinload(Discussion.author),
             selectinload(Discussion.comments).selectinload(DiscussionComment.author),
+            selectinload(Discussion.project),
         )
+        .join(Discussion.project)
+        .where(Project.organization_id == current_user.organization_id)
     )
 
-    if project_id:
+    if project_id and project_id.lower() != "all":
         query = query.where(Discussion.project_id == project_id)
     if category and category.lower() != "all":
         query = query.where(Discussion.category == category.lower())
     if search:
-        query = query.where(
-            Discussion.title.ilike(f"%{search.strip()}%") | Discussion.content.ilike(f"%{search.strip()}%")
-        )
+        s = f"%{search.strip()}%"
+        query = query.where(Discussion.title.ilike(s) | Discussion.content.ilike(s))
 
     query = query.order_by(desc(Discussion.is_pinned), desc(Discussion.created_at))
     res = await db.execute(query)
@@ -53,7 +56,7 @@ async def list_discussions(
 @router.get("/{discussion_id}", response_model=DiscussionRead)
 async def get_discussion(
     discussion_id: str,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Retrieve a single discussion thread with comments and authors."""
@@ -62,39 +65,50 @@ async def get_discussion(
         .options(
             selectinload(Discussion.author),
             selectinload(Discussion.comments).selectinload(DiscussionComment.author),
+            selectinload(Discussion.project),
         )
         .where(Discussion.id == discussion_id)
     )
     disc = res.scalars().first()
-    if not disc:
+    if not disc or not disc.project or disc.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Discussion not found")
     return disc
 
 
-@router.post("/", response_model=DiscussionRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=DiscussionRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=DiscussionRead, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_discussion(
     disc_in: DiscussionCreate,
     project_id: Optional[str] = Query(None, description="Project ID"),
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new discussion topic or announcement in project."""
+    """Create a new discussion topic or announcement in project within tenant."""
     target_project_id = project_id
     if not target_project_id:
-        p_res = await db.execute(select(Project).order_by(Project.created_at))
+        p_res = await db.execute(
+            select(Project)
+            .where(Project.organization_id == current_user.organization_id)
+            .order_by(Project.created_at)
+        )
         proj = p_res.scalars().first()
         if not proj:
-            raise HTTPException(status_code=400, detail="No workspace project available")
+            raise HTTPException(status_code=400, detail="No workspace project available in your organization")
         target_project_id = proj.id
     else:
-        p_res = await db.execute(select(Project).where(Project.id == target_project_id))
+        p_res = await db.execute(
+            select(Project).where(
+                Project.id == target_project_id,
+                Project.organization_id == current_user.organization_id
+            )
+        )
         if not p_res.scalars().first():
-            raise HTTPException(status_code=404, detail="Project not found")
+            raise HTTPException(status_code=404, detail="Project not found or not in your organization")
 
     now = datetime.now(timezone.utc)
     new_disc = Discussion(
         project_id=target_project_id,
-        author_id=current_user_id,
+        author_id=current_user.id,
         title=disc_in.title.strip(),
         content=disc_in.content.strip(),
         category=(disc_in.category or "general").lower(),
@@ -108,7 +122,7 @@ async def create_discussion(
 
     activity = ProjectActivity(
         project_id=target_project_id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="discussion_created",
         category="discussions",
         target_type="discussion",
@@ -125,6 +139,7 @@ async def create_discussion(
         .options(
             selectinload(Discussion.author),
             selectinload(Discussion.comments).selectinload(DiscussionComment.author),
+            selectinload(Discussion.project),
         )
         .where(Discussion.id == new_disc.id)
     )
@@ -135,13 +150,17 @@ async def create_discussion(
 async def toggle_discussion_reaction(
     discussion_id: str,
     payload: ReactionRequest,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Toggle an emoji reaction on a discussion."""
-    res = await db.execute(select(Discussion).where(Discussion.id == discussion_id))
+    res = await db.execute(
+        select(Discussion)
+        .options(selectinload(Discussion.project))
+        .where(Discussion.id == discussion_id)
+    )
     disc = res.scalars().first()
-    if not disc:
+    if not disc or not disc.project or disc.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Discussion not found")
 
     emoji = payload.emoji.strip()
@@ -162,19 +181,23 @@ async def toggle_discussion_reaction(
 async def add_comment_to_discussion(
     discussion_id: str,
     comment_in: DiscussionCommentCreate,
-    current_user_id: str = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Reply or comment on a discussion thread."""
-    d_res = await db.execute(select(Discussion).where(Discussion.id == discussion_id))
+    d_res = await db.execute(
+        select(Discussion)
+        .options(selectinload(Discussion.project))
+        .where(Discussion.id == discussion_id)
+    )
     disc = d_res.scalars().first()
-    if not disc:
+    if not disc or not disc.project or disc.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Discussion not found")
 
     now = datetime.now(timezone.utc)
     new_comment = DiscussionComment(
         discussion_id=discussion_id,
-        author_id=current_user_id,
+        author_id=current_user.id,
         content=comment_in.content.strip(),
         created_at=now,
     )
@@ -183,7 +206,7 @@ async def add_comment_to_discussion(
 
     activity = ProjectActivity(
         project_id=disc.project_id,
-        actor_id=current_user_id,
+        actor_id=current_user.id,
         action="discussion_comment_added",
         category="discussions",
         target_type="discussion",
@@ -201,4 +224,3 @@ async def add_comment_to_discussion(
         .where(DiscussionComment.id == new_comment.id)
     )
     return res.scalars().first()
-

@@ -22,6 +22,7 @@ class UserCreate(BaseSchema):
     email: EmailStr
     password: str
     full_name: str
+    organization_name: Optional[str] = None
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None

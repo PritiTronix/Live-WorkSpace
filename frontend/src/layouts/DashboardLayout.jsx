@@ -7,6 +7,11 @@ import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
 import { notificationService } from '../services/api';
 import CreateTaskModal from '../modules/tasks/components/CreateTaskModal';
 import { taskService } from '../modules/tasks/services/taskService';
+import CreateTicketModal from '../modules/tickets/components/CreateTicketModal';
+import CreateProjectModal from '../modules/projects/CreateProjectModal';
+import InviteMemberModal from '../modules/members/components/InviteMemberModal';
+import FileUploadModal from '../modules/files/components/FileUploadModal';
+import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
 
 /**
  * DashboardLayout
@@ -25,6 +30,11 @@ export const DashboardLayout = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
+  const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
+  const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false);
+  const [isCreateDiscussionModalOpen, setIsCreateDiscussionModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Fetch live unread count on mount and location change
@@ -60,10 +70,17 @@ export const DashboardLayout = () => {
   const handleActionSelect = (actionType) => {
     setIsPlusMenuOpen(false);
     if (actionType === 'CREATE_PROJECT') {
-      navigate('/workspace/projects');
-    }
-    if (actionType === 'CREATE_TASK') {
+      setIsCreateProjectModalOpen(true);
+    } else if (actionType === 'CREATE_TASK') {
       setIsCreateTaskModalOpen(true);
+    } else if (actionType === 'CREATE_TICKET') {
+      setIsCreateTicketModalOpen(true);
+    } else if (actionType === 'INVITE_MEMBER') {
+      setIsInviteMemberModalOpen(true);
+    } else if (actionType === 'UPLOAD_DOC') {
+      setIsFileUploadModalOpen(true);
+    } else if (actionType === 'POST_ANNOUNCEMENT') {
+      setIsCreateDiscussionModalOpen(true);
     }
   };
 
@@ -212,6 +229,48 @@ export const DashboardLayout = () => {
         onClose={() => setIsCreateTaskModalOpen(false)}
         onCreateTask={async (payload) => {
           await taskService.create(payload);
+        }}
+      />
+
+      <CreateTicketModal
+        isOpen={isCreateTicketModalOpen}
+        onClose={() => setIsCreateTicketModalOpen(false)}
+        onTicketCreated={() => {
+          setIsCreateTicketModalOpen(false);
+          window.dispatchEvent(new CustomEvent('ticket-created'));
+        }}
+      />
+
+      <CreateProjectModal
+        isOpen={isCreateProjectModalOpen}
+        onClose={() => setIsCreateProjectModalOpen(false)}
+        onProjectCreated={() => {
+          setIsCreateProjectModalOpen(false);
+          window.dispatchEvent(new CustomEvent('project-created'));
+        }}
+      />
+
+      <InviteMemberModal
+        isOpen={isInviteMemberModalOpen}
+        onClose={() => setIsInviteMemberModalOpen(false)}
+        onMemberInvited={() => {
+          setIsInviteMemberModalOpen(false);
+        }}
+      />
+
+      <FileUploadModal
+        isOpen={isFileUploadModalOpen}
+        onClose={() => setIsFileUploadModalOpen(false)}
+        onFileUploaded={() => {
+          setIsFileUploadModalOpen(false);
+        }}
+      />
+
+      <CreateDiscussionModal
+        isOpen={isCreateDiscussionModalOpen}
+        onClose={() => setIsCreateDiscussionModalOpen(false)}
+        onDiscussionCreated={() => {
+          setIsCreateDiscussionModalOpen(false);
         }}
       />
     </div>
