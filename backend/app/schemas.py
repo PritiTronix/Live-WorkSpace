@@ -22,16 +22,43 @@ class UserCreate(BaseSchema):
     email: EmailStr
     password: str
     full_name: str
-    role: Optional[str] = "member"
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+
+
+class UserAdminCreate(UserCreate):
+    role: str = "member"
+    organization_id: Optional[str] = None
 
 
 class UserRead(UserBase):
     id: str
     organization_id: Optional[str] = None
     created_at: datetime
+
+
+class UserUpdateProfile(BaseSchema):
+    full_name: Optional[str] = None
+    title: Optional[str] = None
+    department: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class UserChangePassword(BaseSchema):
+    current_password: str
+    new_password: str
+
+
+class UserInviteRequest(BaseSchema):
+    email: EmailStr
+    role: str = "employee"
+    project_id: Optional[str] = None
+    note: Optional[str] = None
+
+
+class ReactionRequest(BaseSchema):
+    emoji: str
 
 
 class Token(BaseSchema):
@@ -480,3 +507,144 @@ class SLABase(BaseSchema):
 class SLARead(SLABase):
     id: str
     created_at: datetime
+
+
+# --- Batch 05: Reports & Analytics Schemas (Screen 01) ---
+
+class AnalyticsKPIMetrics(BaseSchema):
+    total_tickets: int = 0
+    total_tickets_delta_pct: Optional[float] = None
+    resolved_tickets: int = 0
+    completion_rate: float = 0.0
+    open_backlog: int = 0
+    high_priority_backlog: int = 0
+    sla_adherence_pct: Optional[float] = None
+    sla_target_pct: Optional[float] = None
+    avg_response_time: Optional[str] = None
+    avg_response_delta: Optional[str] = None
+    avg_mttr: Optional[str] = None
+    avg_mttr_delta: Optional[str] = None
+
+
+class VelocityTrendItem(BaseSchema):
+    period_label: str
+    created_count: int = 0
+    resolved_count: Optional[int] = None
+    target_sla: Optional[int] = None
+
+
+class VelocityTrendResponse(BaseSchema):
+    items: List[VelocityTrendItem] = Field(default_factory=list)
+    baseline_threshold: Optional[int] = None
+    net_velocity_ratio: Optional[float] = None
+    sprint_velocity_pct: Optional[float] = None
+
+
+class SeverityDistributionItem(BaseSchema):
+    key: str
+    label: str
+    count: int = 0
+    percentage: float = 0.0
+
+
+class StatusDistributionItem(BaseSchema):
+    key: str
+    label: str
+    count: int = 0
+    percentage: float = 0.0
+
+
+class SquadSLAComplianceItem(BaseSchema):
+    squad_name: str
+    adherence_rate: Optional[float] = None
+    status: str = "unavailable"
+    diff_pct: Optional[float] = None
+
+
+class EmployeeWorkloadItem(BaseSchema):
+    user_id: str
+    name: str
+    role: str
+    avatar_url: Optional[str] = None
+    squad: str
+    resolved_count: int = 0
+    mean_mttr: Optional[str] = None
+    sla_adherence: Optional[float] = None
+    active_tickets: int = 0
+    active_capacity: Optional[int] = None
+    capacity_status: Optional[str] = None
+
+
+class AnalyticsDashboardResponse(BaseSchema):
+    window_label: str = "Last 30 Days"
+    kpis: AnalyticsKPIMetrics
+    velocity_trend: VelocityTrendResponse
+    severity_distribution: List[SeverityDistributionItem] = Field(default_factory=list)
+    status_distribution: List[StatusDistributionItem] = Field(default_factory=list)
+    squad_sla: List[SquadSLAComplianceItem] = Field(default_factory=list)
+    employees: List[EmployeeWorkloadItem] = Field(default_factory=list)
+    total_employees: int = 0
+
+
+class AnalyticsExportRequest(BaseSchema):
+    format: str = "csv"  # Only csv is currently supported
+    time_horizon: Optional[str] = "30d"
+    project_id: Optional[str] = "all"
+    severity: Optional[str] = "all"
+    include_sla_audit: bool = True
+    include_rca_breakdown: bool = True
+    include_workload_charts: bool = True
+
+
+# --- Batch 05: System Activity & Audit Log Schemas (Screens 02 & 03) ---
+
+class AuditLogKPIMetrics(BaseSchema):
+    event_volume_24h: int = 0
+    event_volume_delta_pct: Optional[float] = None
+    escalations_count: int = 0
+    signoffs_count: int = 0
+    automated_ingests_count: Optional[int] = None
+    automated_ingests_pct: Optional[float] = None
+    ledger_hash: Optional[str] = None
+
+
+class AuditLogItemRead(BaseSchema):
+    id: str
+    log_ref: str
+    created_at: datetime
+    ticket_id: Optional[str] = None
+    ticket_number: Optional[str] = None
+    ticket_title: Optional[str] = None
+    ticket_severity: Optional[str] = None
+    ticket_status: Optional[str] = None
+    actor: Optional[UserRead] = None
+    event_type: str
+    event_label: str
+    description: str
+    previous_value: Optional[str] = None
+    new_value: Optional[str] = None
+    immutable_hash: str  # Computed record fingerprint
+
+
+class AuditLogsListResponse(BaseSchema):
+    items: List[AuditLogItemRead] = Field(default_factory=list)
+    total: int = 0
+    page: int = 1
+    page_size: int = 25
+    total_pages: int = 1
+    kpis: AuditLogKPIMetrics
+
+
+class AuditLogDetailRead(AuditLogItemRead):
+    originating_interface: str = "Not recorded"
+    auth_host: str = "Not recorded"
+    context_justification: Optional[str] = None
+    target_entity_details: Optional[dict] = None
+
+
+class AuditLogExportRequest(BaseSchema):
+    format: str = "csv"  # csv, json
+    time_horizon: Optional[str] = "7d"
+    event_domains: Optional[List[str]] = Field(default_factory=list)
+    severity: Optional[str] = "all"
+

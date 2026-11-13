@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -12,6 +13,7 @@ from backend.app.schemas import (
     DiscussionRead,
     DiscussionCommentCreate,
     DiscussionCommentRead,
+    ReactionRequest,
 )
 
 router = APIRouter()
@@ -48,21 +50,50 @@ async def list_discussions(
     return res.scalars().all()
 
 
+@router.get("/{discussion_id}", response_model=DiscussionRead)
+async def get_discussion(
+    discussion_id: str,
+    current_user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve a single discussion thread with comments and authors."""
+    res = await db.execute(
+        select(Discussion)
+        .options(
+            selectinload(Discussion.author),
+            selectinload(Discussion.comments).selectinload(DiscussionComment.author),
+        )
+        .where(Discussion.id == discussion_id)
+    )
+    disc = res.scalars().first()
+    if not disc:
+        raise HTTPException(status_code=404, detail="Discussion not found")
+    return disc
+
+
 @router.post("/", response_model=DiscussionRead, status_code=status.HTTP_201_CREATED)
 async def create_discussion(
     disc_in: DiscussionCreate,
-    project_id: str = Query(..., description="Project ID"),
+    project_id: Optional[str] = Query(None, description="Project ID"),
     current_user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new discussion topic or announcement in project."""
-    p_res = await db.execute(select(Project).where(Project.id == project_id))
-    if not p_res.scalars().first():
-        raise HTTPException(status_code=404, detail="Project not found")
+    target_project_id = project_id
+    if not target_project_id:
+        p_res = await db.execute(select(Project).order_by(Project.created_at))
+        proj = p_res.scalars().first()
+        if not proj:
+            raise HTTPException(status_code=400, detail="No workspace project available")
+        target_project_id = proj.id
+    else:
+        p_res = await db.execute(select(Project).where(Project.id == target_project_id))
+        if not p_res.scalars().first():
+            raise HTTPException(status_code=404, detail="Project not found")
 
     now = datetime.now(timezone.utc)
     new_disc = Discussion(
-        project_id=project_id,
+        project_id=target_project_id,
         author_id=current_user_id,
         title=disc_in.title.strip(),
         content=disc_in.content.strip(),
@@ -76,7 +107,7 @@ async def create_discussion(
     await db.flush()
 
     activity = ProjectActivity(
-        project_id=project_id,
+        project_id=target_project_id,
         actor_id=current_user_id,
         action="discussion_created",
         category="discussions",
@@ -98,6 +129,33 @@ async def create_discussion(
         .where(Discussion.id == new_disc.id)
     )
     return res.scalars().first()
+
+
+@router.post("/{discussion_id}/reactions")
+async def toggle_discussion_reaction(
+    discussion_id: str,
+    payload: ReactionRequest,
+    current_user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db)
+):
+    """Toggle an emoji reaction on a discussion."""
+    res = await db.execute(select(Discussion).where(Discussion.id == discussion_id))
+    disc = res.scalars().first()
+    if not disc:
+        raise HTTPException(status_code=404, detail="Discussion not found")
+
+    emoji = payload.emoji.strip()
+    try:
+        reactions_dict = json.loads(disc.reactions or "{}")
+    except Exception:
+        reactions_dict = {}
+
+    current_val = reactions_dict.get(emoji, 0)
+    reactions_dict[emoji] = current_val + 1
+
+    disc.reactions = json.dumps(reactions_dict)
+    await db.commit()
+    return {"reactions": reactions_dict}
 
 
 @router.post("/{discussion_id}/comments", response_model=DiscussionCommentRead, status_code=status.HTTP_201_CREATED)
