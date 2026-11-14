@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
+from backend.app.core.security import validate_password_strength
 
 
 class BaseSchema(BaseModel):
@@ -27,6 +28,12 @@ class UserCreate(BaseSchema):
     avatar_url: Optional[str] = None
     department: Optional[str] = None
 
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        validate_password_strength(v)
+        return v
+
 
 class UserAdminCreate(UserCreate):
     role: str = "member"
@@ -50,6 +57,12 @@ class UserChangePassword(BaseSchema):
     current_password: str
     new_password: str
 
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        validate_password_strength(v)
+        return v
+
 
 class UserInviteRequest(BaseSchema):
     email: EmailStr
@@ -65,6 +78,11 @@ class ReactionRequest(BaseSchema):
 class Token(BaseSchema):
     access_token: str
     token_type: str = "bearer"
+    refresh_token: Optional[str] = None
+
+
+class TokenRefreshRequest(BaseSchema):
+    refresh_token: str
 
 
 # --- Organization Schemas ---

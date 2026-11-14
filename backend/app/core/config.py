@@ -20,10 +20,10 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database (Neon PostgreSQL)
-    DATABASE_URL: str = "postgresql+asyncpg://neondb_owner:npg_bxLmGShl2e0i@ep-muddy-cell-az6wy4dg.c-3.ap-southeast-1.aws.neon.tech/neondb?ssl=require"
+    # Database (Neon PostgreSQL / Hosted PostgreSQL)
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/live_workspace"
     DATABASE_URL_POOLED: Optional[str] = None
-    SYNC_DATABASE_URL: str = "postgresql+psycopg2://neondb_owner:npg_bxLmGShl2e0i@ep-muddy-cell-az6wy4dg.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+    SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/live_workspace"
 
     # S3 Object Storage (Neon S3 Compatible)
     STORAGE_PROVIDER: str = "local"  # "s3" or "local"
@@ -90,7 +90,7 @@ class Settings(BaseSettings):
         return url
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "backend/.env", "../.env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

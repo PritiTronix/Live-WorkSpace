@@ -1,4 +1,4 @@
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Dict
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -13,6 +13,17 @@ oauth2_scheme = OAuth2PasswordBearer(
     auto_error=False
 )
 
+# Standardized Enterprise RBAC Hierarchy
+ROLE_HIERARCHY: Dict[str, int] = {
+    "owner": 100,
+    "admin": 80,
+    "manager": 60,
+    "lead": 60,
+    "member": 40,
+    "employee": 40,
+    "viewer": 20,
+}
+
 
 async def get_current_active_user(
     token: Optional[str] = Depends(oauth2_scheme),
@@ -20,7 +31,7 @@ async def get_current_active_user(
 ) -> User:
     """
     Authoritative authentication dependency.
-    Validates JWT token signature, expiration, and issuer.
+    Validates JWT token signature, expiration, and algorithm.
     Fetches the active user from database without insecure fallbacks.
     """
     credentials_exception = HTTPException(
@@ -50,7 +61,7 @@ async def get_current_active_user(
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user account",
+            detail="Inactive user account. Contact your workspace administrator.",
         )
 
     return user
@@ -88,21 +99,52 @@ async def get_current_tenant_id(
 def require_roles(allowed_roles: List[str]) -> Callable:
     """
     Role-Based Access Control (RBAC) dependency factory.
-    Enforces minimum role privilege across protected endpoints.
+    Enforces role privilege using both explicit role matching and hierarchy ranking.
+    Elevated roles (such as Owner) automatically inherit downstream privileges.
     """
     clean_allowed = [r.lower().strip() for r in allowed_roles]
+    # Compute the minimum rank required among specified roles
+    min_required_rank = min(
+        (ROLE_HIERARCHY.get(r, 0) for r in clean_allowed),
+        default=40
+    )
 
     async def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
         user_role = (current_user.role or "member").lower().strip()
-        if user_role not in clean_allowed:
+        user_rank = ROLE_HIERARCHY.get(user_role, 0)
+
+        # Allow if exact role matched OR user outranks the required threshold (e.g. Owner)
+        if user_role not in clean_allowed and user_rank < min_required_rank:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Operation requires one of the following roles: {', '.join(allowed_roles)}",
+                detail=f"Operation requires one of the following roles: {', '.join(allowed_roles)} (Current role: {current_user.role})",
             )
         return current_user
 
     return role_checker
 
 
+def require_min_role(min_role: str) -> Callable:
+    """
+    Enforce a minimum rank in the enterprise role hierarchy.
+    Example: require_min_role("admin") allows both "admin" and "owner".
+    """
+    clean_min = min_role.lower().strip()
+    target_rank = ROLE_HIERARCHY.get(clean_min, 40)
+
+    async def min_role_checker(current_user: User = Depends(get_current_active_user)) -> User:
+        user_role = (current_user.role or "member").lower().strip()
+        user_rank = ROLE_HIERARCHY.get(user_role, 0)
+        if user_rank < target_rank:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Operation requires minimum role privilege '{min_role}'",
+            )
+        return current_user
+
+    return min_role_checker
+
+
+require_owner = require_roles(["owner"])
 require_admin = require_roles(["owner", "admin"])
 require_manager = require_roles(["owner", "admin", "manager", "lead"])

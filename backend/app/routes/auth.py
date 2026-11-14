@@ -2,21 +2,26 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
+
 from backend.app.core.config import settings
 from backend.app.database import get_db
+from backend.app.dependencies import get_current_active_user
 from backend.app.models import User, Organization
-from backend.app.schemas import UserCreate, UserRead, Token
+from backend.app.schemas import UserCreate, UserRead, Token, TokenRefreshRequest
 from backend.app.core.security import (
     get_password_hash,
     verify_password,
     create_access_token,
+    create_refresh_token,
+    decode_jwt_token,
     create_password_reset_token,
     create_email_verification_token,
     verify_password_fingerprint,
+    validate_password_strength,
 )
 
 router = APIRouter()
@@ -30,13 +35,14 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    refresh_token: Optional[str] = None
     user: UserRead
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user account with hashed password and default organization link."""
-    existing_user_res = await db.execute(select(User).where(User.email == user_in.email.lower()))
+    existing_user_res = await db.execute(select(User).where(User.email == user_in.email.lower().strip()))
     if existing_user_res.scalars().first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -113,12 +119,74 @@ async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Inactive user account. Contact your workspace administrator.",
         )
 
-    access_token = create_access_token(subject=user.id)
+    access_token = create_access_token(
+        subject=user.id,
+        role=user.role,
+        org_id=user.organization_id,
+        email=user.email,
+    )
+    refresh_token = create_refresh_token(subject=user.id)
+
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
+        refresh_token=refresh_token,
         user=UserRead.model_validate(user),
     )
+
+
+@router.post("/refresh-token", response_model=LoginResponse)
+async def refresh_access_token(payload: TokenRefreshRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Industrial refresh token rotation.
+    Validates cryptographic signature, checks user active status, and returns a new access token.
+    """
+    try:
+        decoded = decode_jwt_token(payload.refresh_token, expected_type="refresh")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = decoded.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    res = await db.execute(select(User).where(User.id == user_id))
+    user = res.scalars().first()
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account is inactive or not found.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    new_access_token = create_access_token(
+        subject=user.id,
+        role=user.role,
+        org_id=user.organization_id,
+        email=user.email,
+    )
+    new_refresh_token = create_refresh_token(subject=user.id)
+
+    return LoginResponse(
+        access_token=new_access_token,
+        token_type="bearer",
+        refresh_token=new_refresh_token,
+        user=UserRead.model_validate(user),
+    )
+
+
+@router.get("/me", response_model=UserRead)
+async def get_current_authenticated_user(current_user: User = Depends(get_current_active_user)):
+    """Retrieve verified profile of currently authenticated user session."""
+    return current_user
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -128,6 +196,12 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(..., min_length=8, description="New password with minimum 8 characters")
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_pwd(cls, v: str) -> str:
+        validate_password_strength(v)
+        return v
 
 
 class VerifyEmailRequest(BaseModel):

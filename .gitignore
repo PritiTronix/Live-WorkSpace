@@ -1,4 +1,4 @@
-# Python Virtual Environment
+# Python Virtual Environment (Rule 2)
 myenv/
 venv/
 .venv/
@@ -11,6 +11,7 @@ __pycache__/
 *.so
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 
 # Node & Dependencies
@@ -27,16 +28,41 @@ build/
 .next/
 out/
 
-# Environment Variables & Secrets
+# Environment Variables & Secrets (CRITICAL: Never commit secrets)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!backend/.env.example
+*.env
+*.env.*
+
+# Private Keys, Certificates & Credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.asc
+*.der
+secrets/
+credentials/
+certs/
+token.json
+serviceAccountKey*.json
+client_secret*.json
 
 # Logs
 *.log
 logs/
+
+# Uploads & Temporary Media
+uploads/*
+!uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+temp/
+tmp/
 
 # IDE & OS
 .vscode/
@@ -52,6 +78,7 @@ Thumbs.db
 
 # Local SQLite database
 *.db
+*.sqlite
 *.sqlite3
 
 # Directory Junction Aliases
