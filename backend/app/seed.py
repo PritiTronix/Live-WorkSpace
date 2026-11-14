@@ -43,24 +43,24 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
     await db.flush()
 
     # 2. Users (from Stitch design system and user directory)
-    default_password_hash = get_password_hash("workspace123")
+    default_password_hash = get_password_hash("bhavesh729")
 
     users_data = [
         {
             "id": "usr_01",
-            "full_name": "Aarav Mehta",
-            "email": "aarav@acmetech.io",
+            "full_name": "Bhavesh Burad",
+            "email": "bhaveshburad729@gmail.com",
             "role": "owner",
-            "title": "Lead Architect / Project Manager",
-            "department": "Platform & Architecture",
+            "title": "Founder & Lead Architect",
+            "department": "Executive & Architecture",
             "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg",
         },
         {
             "id": "usr_02",
-            "full_name": "Maya Shah",
-            "email": "maya.shah@tronix365.cloud",
+            "full_name": "Shubham",
+            "email": "shubhaam.tronix365@gmail.com",
             "role": "admin",
-            "title": "SRE Lead / Lead Frontend",
+            "title": "Co-Founder & Platform Lead",
             "department": "Platform & Reliability",
             "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W",
         },

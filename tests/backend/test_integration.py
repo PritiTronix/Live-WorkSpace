@@ -14,7 +14,7 @@ def client():
 
 @pytest.fixture
 def auth_headers(client):
-    res = client.post("/api/v1/auth/login", json={"email": "aarav@acmetech.io", "password": "workspace123"})
+    res = client.post("/api/v1/auth/login", json={"email": "bhaveshburad729@gmail.com", "password": "bhavesh729"})
     assert res.status_code == 200
     token = res.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -164,7 +164,7 @@ def test_notifications_endpoints(client, auth_headers):
 
 def test_auth_and_user_endpoints(client):
     # 1. Login with seeded credentials
-    login_res = client.post("/api/v1/auth/login", json={"email": "aarav@acmetech.io", "password": "workspace123"})
+    login_res = client.post("/api/v1/auth/login", json={"email": "bhaveshburad729@gmail.com", "password": "bhavesh729"})
     assert login_res.status_code == 200
     token = login_res.json()["access_token"]
     assert token
@@ -173,7 +173,7 @@ def test_auth_and_user_endpoints(client):
     me_res = client.get("/api/v1/users/me", headers={"Authorization": f"Bearer {token}"})
     assert me_res.status_code == 200
     user = me_res.json()
-    assert user["email"] == "aarav@acmetech.io"
+    assert user["email"] == "bhaveshburad729@gmail.com"
     assert user["role"] == "owner"
 
 
@@ -240,7 +240,7 @@ def test_rbac_authorization(client, auth_headers):
     Admins/Owners can update workspace settings; regular members receive 403 Forbidden.
     """
     # 1. Login as member (usr_03: david.k@acmetech.io)
-    login_member = client.post("/api/v1/auth/login", json={"email": "david.k@acmetech.io", "password": "workspace123"})
+    login_member = client.post("/api/v1/auth/login", json={"email": "david.k@acmetech.io", "password": "bhavesh729"})
     assert login_member.status_code == 200
     member_headers = {"Authorization": f"Bearer {login_member.json()['access_token']}"}
 

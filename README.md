@@ -362,9 +362,47 @@ In a separate terminal:
 cd frontend
 npm run dev
 ```
-- Application Client: `http://localhost:3000` (proxies `/api` requests to backend port 8000)
+- Application Client: `http://localhost:5173` (or `http://localhost:3000`)
+- **Primary Login Credentials:**
+  - **Owner:** `bhaveshburad729@gmail.com` | **Password:** `bhavesh729`
+  - **Admin:** `shubhaam.tronix365@gmail.com` | **Password:** `bhavesh729`
 
-### 3. Build Frontend for Production
+### 3. Database Management Scripts (Migrations, Seeding, Cleaning & Reset)
+Industrial-grade automation scripts located in `backend/scripts/`:
+
+#### A. Run Database Migrations (Alembic to HEAD)
+```bash
+python -m backend.scripts.run_migrations
+# Or inspect current revision without applying:
+python -m backend.scripts.run_migrations --check
+```
+
+#### B. Seed Canonical Data & Administrator Credentials
+```bash
+python -m backend.scripts.seed_database
+```
+
+#### C. Clean / Reset Database (For Testing & Production Transition)
+> **Safety Guard**: Requires explicit `--confirm` parameter to prevent accidental deletion.
+```bash
+# Full wipe of all 20 tables:
+python -m backend.scripts.clean_database --confirm
+
+# Wipe only transactional test records (tasks, tickets, files, discussions) preserving users & orgs:
+python -m backend.scripts.clean_database --test-data-only --confirm
+```
+
+#### D. Verify Database Health & Authenticate Credentials
+```bash
+python -m backend.scripts.verify_database
+```
+
+#### E. Complete Test-to-Production Orchestration (Clean -> Migrate -> Seed -> Verify)
+```bash
+python -m backend.scripts.reset_and_seed --confirm
+```
+
+### 4. Build Frontend for Production
 ```bash
 cd frontend
 npm run build

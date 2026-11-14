@@ -24,12 +24,12 @@ apiClient.interceptors.request.use(
 // Fallback user context matching Stitch design specification
 export const DEFAULT_USER = {
   id: 'usr_01',
-  full_name: 'Maya Shah',
-  email: 'maya.shah@tronix365.cloud',
-  role: 'SRE Lead',
-  department: 'Platform & Reliability',
+  full_name: 'Bhavesh Burad',
+  email: 'bhaveshburad729@gmail.com',
+  role: 'owner',
+  department: 'Executive & Architecture',
   presence: 'ONLINE',
-  avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrAtOdrqsfXwMC1ggrSafmjA3tRiDOW6nsEXFzXsENjtoM3FWwKbLJA1BlzO43CGB9bykeRE8VGswBaHL8HX-wkA95x3YEk8Ido2sEJcvrr_WEWIIuLU9bOpJslSnCE2ZSZRXsXWqYDmuU8pTNCkkoaTZCzOhLNNQ2NT6sZn8vHrb0A-JPplRuViYPfX-t01H6IZLWAE4pWnivGDAtKKzl6WhvmKwlqcCaUb4gPTna',
+  avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg',
 };
 
 // Authentication & Profile Services

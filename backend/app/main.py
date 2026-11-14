@@ -9,6 +9,7 @@ from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base, AsyncSessionLocal, get_db
 from backend.app.seed import seed_initial_data_if_empty
+from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,12 @@ def create_application() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+
+    # Enterprise Security Headers Middleware
+    application.add_middleware(SecurityHeadersMiddleware)
+
+    # Brute-force & Credential Stuffing Protection Middleware
+    application.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
 
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
