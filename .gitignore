@@ -53,3 +53,7 @@ Thumbs.db
 # Local SQLite database
 *.db
 *.sqlite3
+
+# Directory Junction Aliases
+client
+server

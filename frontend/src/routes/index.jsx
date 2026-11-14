@@ -40,6 +40,7 @@ import {
 } from '../modules/auth';
 import { RcaManagementPage } from '../modules/rca';
 import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
+import CompleteProfilePage from '../modules/users/CompleteProfilePage';
 import ProtectedRoute from './ProtectedRoute';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
@@ -65,6 +66,18 @@ export const AppRoutes = () => {
         <Route path="join" element={<JoinOrgPage />} />
         <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
+
+      {/* Onboarding Shell (Screens 10, 29, 31) */}
+      <Route
+        path="/onboarding/profile"
+        element={
+          <ProtectedRoute>
+            <CompleteProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/onboarding/create-org" element={<RegisterPage />} />
+      <Route path="/onboarding/join-org" element={<JoinOrgPage />} />
 
       {/* Design System Catalogs (Screens 22 & 25) */}
       <Route path="/design-system/modals" element={<ModalCatalogPage />} />

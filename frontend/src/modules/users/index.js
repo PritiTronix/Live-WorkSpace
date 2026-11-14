@@ -1,4 +1,5 @@
 /**
  * Users Module Entry Point
  */
-export default {};
+export { CompleteProfilePage } from './CompleteProfilePage';
+export default { CompleteProfilePage };

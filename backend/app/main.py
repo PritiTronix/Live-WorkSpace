@@ -1,12 +1,16 @@
 import os
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.routes import api_router
-from backend.app.database import engine, Base, AsyncSessionLocal
+from backend.app.database import engine, Base, AsyncSessionLocal, get_db
 from backend.app.seed import seed_initial_data_if_empty
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -17,10 +21,14 @@ async def lifespan(app: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
         async with AsyncSessionLocal() as session:
             await seed_initial_data_if_empty(session)
-    except Exception:
-        pass
+            await session.commit()
+        logger.info("Database initialized and verified on Neon PostgreSQL.")
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+        raise e
     yield
-    # Shutdown tasks (e.g. pool cleanup)
+    # Shutdown tasks: dispose engine pool
+    await engine.dispose()
 
 
 def create_application() -> FastAPI:
@@ -46,7 +54,7 @@ def create_application() -> FastAPI:
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
-    # Secure ticket storage directory (unauthenticated static mount removed for security)
+    # Secure ticket storage directory
     uploads_dir = os.path.abspath(settings.UPLOAD_DIR)
     os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
     os.makedirs(os.path.join(uploads_dir, "files"), exist_ok=True)
@@ -58,6 +66,16 @@ def create_application() -> FastAPI:
             "status": "healthy",
             "environment": settings.ENVIRONMENT,
             "version": "1.0.0",
+            "database": "PostgreSQL (Neon)",
+        }
+
+    @application.get("/health/db", tags=["Health"])
+    async def db_health_check(db: AsyncSession = Depends(get_db)):
+        result = await db.execute(text("SELECT 1"))
+        return {
+            "database_status": "connected",
+            "check": result.scalar(),
+            "dialect": "postgresql",
         }
 
     return application

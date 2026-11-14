@@ -17,7 +17,9 @@ Engineered using modern clean architecture, strict client-server decoupling, and
 8. [Environment Variables & Secrets Management](#environment-variables)
 9. [Security Best Practices & Critical Warnings](#security-best-practices--warnings)
 10. [RESTful API Details & Endpoints](#api-details)
-11. [Future Scope & Suggested Architectural Improvements](#future-scope--architectural-improvements)
+11. [Neon PostgreSQL & S3 Integration](#neon-integration)
+12. [72-Screen Integration & Audit Documentation](#audit-documentation)
+13. [Future Scope & Suggested Architectural Improvements](#future-scope--architectural-improvements)
 
 ---
 
@@ -100,16 +102,25 @@ Engineered using modern clean architecture, strict client-server decoupling, and
 ```text
 Live-Workspace/
 │
+├── client/                         # [Junction -> frontend] Mandatory frontend code directory
+├── server/                         # [Junction -> backend] Mandatory backend code directory
+├── frontend/                       # Frontend React 18 + Vite SPA root
+├── backend/                        # Backend FastAPI service root
+├── myenv/                          # Python virtual environment (Rule 2 Mandatory)
+├── .gitignore                      # Git exclusion rules (myenv, node_modules, .env, dist)
+├── requirements.txt                # Pinned backend dependencies list
+├── .env.example                    # Master environment variables template
+├── README.md                       # Master documentation & developer guidelines
 ├── STITCH_SCREEN_INVENTORY.md      # Complete audit of 72 Stitch screens & routes
 ├── IMPLEMENTATION_TRACKER.md       # Screen-by-screen implementation tracking checklist
 ├── DESIGN_SYSTEM.md                # Official Stitch UI design tokens & typography specs
-├── README.md                       # Master documentation & developer guidelines
-├── requirements.txt                # Pinned backend dependencies list
-├── .env.example                    # Master environment variables template
-├── .gitignore                      # Git exclusion rules (myenv, node_modules, .env, dist)
-├── myenv/                          # Python virtual environment (Rule 2 Mandatory)
 │
 ├── docs/                           # Architecture, workflows & API documentation
+│   ├── DATABASE_INTEGRATION_AUDIT.md     # Authoritative audit across all 72 screens
+│   ├── SCREEN_DATABASE_MAPPING.md        # Exact 1-to-1 screen to database & API mapping
+│   ├── API_INTEGRATION_PLAN.md           # API specification, schemas & WebSockets
+│   ├── DATABASE_SCHEMA.md                # Relational PostgreSQL architecture & ER diagram
+│   ├── DATABASE_INTEGRATION_PROGRESS.md  # 72-screen status tracker (100% Verified)
 │   ├── architecture/
 │   │   ├── APPLICATION_ARCHITECTURE.md  # High-level architecture, module boundaries & data flow
 │   │   ├── DATABASE_ARCHITECTURE.md     # PostgreSQL schemas, ER diagram, keys & indexes
@@ -476,6 +487,31 @@ All endpoints are prefixed with `/api/v1` and document their OpenAPI specificati
 | `GET` | `/audit-logs` | Retrieve immutable system activity audit logs | **Yes** | Admin/Owner |
 | `GET` | `/settings/workspace` | Get workspace configuration and branding | **Yes** | Admin/Owner |
 | `PATCH`| `/settings/workspace` | Update workspace configuration | **Yes** | Admin/Owner |
+
+---
+
+## Neon PostgreSQL & S3 Integration
+
+The Live Workspace platform is configured to run directly against hosted **Neon Serverless PostgreSQL** and **Neon S3 Storage**:
+
+- **Database Host:** `ep-muddy-cell-az6wy4dg.c-3.ap-southeast-1.aws.neon.tech`
+- **Database Engine:** PostgreSQL 16 (SSL enabled, channel binding supported)
+- **Object Storage Host:** `https://br-plain-bird-aznwxr4t.storage.c-3.ap-southeast-1.aws.neon.tech` (S3 bucket: `uploads`)
+- **Realtime Endpoint:** `https://ep-muddy-cell-az6wy4dg.rt.c-3.ap-southeast-1.aws.neon.tech/`
+- **Connection Mode:** AsyncPG pooler with `pool_size=10`, `max_overflow=20`, `pool_recycle=300`, `pool_pre_ping=True`.
+- **Zero SQLite Fallback:** Database queries strictly mandate PostgreSQL. No silent fallbacks to local SQLite.
+
+---
+
+## 72-Screen Integration & Audit Documentation
+
+All 72 production screens extracted from the official Google Stitch workspace have been integrated, connected to persistent PostgreSQL storage, and verified end-to-end:
+
+- [Database Integration Audit](docs/DATABASE_INTEGRATION_AUDIT.md) — Comprehensive technical audit across all 72 screens.
+- [Screen Database Mapping Matrix](docs/SCREEN_DATABASE_MAPPING.md) — Exact 1-to-1 mapping of routes, screens, models, and API endpoints.
+- [API Integration Plan](docs/API_INTEGRATION_PLAN.md) — Complete REST & WebSocket specification covering 86 endpoints.
+- [Database Schema & ER Model](docs/DATABASE_SCHEMA.md) — 20 relational normalized PostgreSQL tables with foreign key cascades and indexes.
+- [Database Integration Progress](docs/DATABASE_INTEGRATION_PROGRESS.md) — 72-screen status tracker confirming 100% verified status.
 
 ---
 
