@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { searchService } from '../../services/api';
 
 export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('gateway-timeout');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedTicket, setSelectedTicket] = useState('TKT-1025');
@@ -540,14 +542,22 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
-                            className="h-8 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors"
+                            onClick={() => {
+                              onClose();
+                              navigate('/workspace/discussions');
+                            }}
+                            className="h-8 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors cursor-pointer"
                             type="button"
                           >
                             <span className="material-symbols-outlined text-[16px]">chat</span>
                             <span>Ping</span>
                           </button>
                           <button
-                            className="h-8 px-3 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors"
+                            onClick={() => {
+                              onClose();
+                              navigate('/workspace/tasks');
+                            }}
+                            className="h-8 px-3 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors cursor-pointer"
                             type="button"
                           >
                             <span className="material-symbols-outlined text-[16px]">assignment_ind</span>

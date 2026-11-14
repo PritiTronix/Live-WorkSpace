@@ -427,7 +427,8 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
                   </p>
                   <button
                     type="button"
-                    className="w-full py-2 bg-[#F5F4FC] dark:bg-[#242542] hover:bg-[#eeecff] dark:hover:bg-[#2e2f41] text-[#6040F0] text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                    onClick={() => triggerToast('10 Observed 2025 Engineering Holidays Active (SLA clock pauses during observed dates)')}
+                    className="w-full py-2 bg-[#F5F4FC] dark:bg-[#242542] hover:bg-[#eeecff] dark:hover:bg-[#2e2f41] text-[#6040F0] text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4" />
                     <span>Manage Holidays (2025)</span>

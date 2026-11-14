@@ -12,6 +12,7 @@ import CreateProjectModal from '../modules/projects/CreateProjectModal';
 import InviteMemberModal from '../modules/members/components/InviteMemberModal';
 import FileUploadModal from '../modules/files/components/FileUploadModal';
 import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
+import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal';
 
 /**
  * DashboardLayout
@@ -40,6 +41,7 @@ export const DashboardLayout = () => {
   const [isInviteMemberModalOpen, setIsInviteMemberModalOpen] = useState(false);
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false);
   const [isCreateDiscussionModalOpen, setIsCreateDiscussionModalOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
@@ -79,12 +81,15 @@ export const DashboardLayout = () => {
     return ['Live Workspace', 'Platform Revamp', 'Overview'];
   };
 
-  // Global keyboard shortcuts (Ctrl+K or Cmd+K)
+  // Global keyboard shortcuts (Ctrl+K or Cmd+K for Search, ? for Shortcuts)
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen((prev) => !prev);
+      } else if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
@@ -110,6 +115,8 @@ export const DashboardLayout = () => {
       setIsFileUploadModalOpen(true);
     } else if (actionType === 'POST_ANNOUNCEMENT') {
       setIsCreateDiscussionModalOpen(true);
+    } else if (actionType === 'OPEN_SHORTCUTS') {
+      setIsShortcutsOpen(true);
     }
   };
 
@@ -301,6 +308,11 @@ export const DashboardLayout = () => {
         onDiscussionCreated={() => {
           setIsCreateDiscussionModalOpen(false);
         }}
+      />
+
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );

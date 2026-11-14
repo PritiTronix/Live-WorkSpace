@@ -288,14 +288,14 @@ export const Sidebar = ({
             <span className="material-symbols-outlined text-[18px]">settings</span>
             {!isCollapsed && <span className="font-label-md text-label-md">Settings</span>}
           </NavLink>
-          <a
-            href="#help"
-            title={isCollapsed ? 'Help & Support' : undefined}
+          <NavLink
+            to="/workspace/design-system/modals"
+            title={isCollapsed ? 'Help & Documentation' : undefined}
             className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">help</span>
-            {!isCollapsed && <span className="font-label-md text-label-md">Help & Support</span>}
-          </a>
+            {!isCollapsed && <span className="font-label-md text-label-md">Help & Docs</span>}
+          </NavLink>
         </nav>
 
         {/* User Card (expanded only) */}

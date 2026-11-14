@@ -254,13 +254,16 @@ export const DiscussionThreadPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                className="px-3 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-btn-primary font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm"
+              <a
+                href={discussion?.attachment_url || `/api/v1/files/download`}
+                target="_blank"
+                rel="noopener noreferrer"
+                download="Architectural-Specification.pdf"
+                className="px-3 py-1.5 rounded-lg bg-primary-container text-on-primary hover:bg-btn-primary font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">download</span>
                 <span>Download</span>
-              </button>
+              </a>
             </div>
           </div>
 

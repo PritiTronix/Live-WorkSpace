@@ -342,8 +342,10 @@ export const CommentComposerAndAttachmentPicker = ({
                 </div>
 
                 <a
-                  href={`#download-${att.id}`}
-                  onClick={(e) => e.preventDefault()}
+                  href={att.file_url || `/api/v1/files/${att.id}/download`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={att.filename || 'attachment'}
                   className="w-8 h-8 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors flex-shrink-0"
                   title="Download"
                 >

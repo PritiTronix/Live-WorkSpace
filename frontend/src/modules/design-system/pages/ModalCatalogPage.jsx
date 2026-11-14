@@ -13,6 +13,7 @@ export const ModalCatalogPage = () => {
   const [activeModal, setActiveModal] = useState(null); // 'danger' | 'warning' | 'info' | 'success' | 'sm' | 'md' | 'lg' | 'xl' | 'delete-ticket' | 'export-data'
   const [isProcessing, setIsProcessing] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
+  const [exportFmt, setExportFmt] = useState('JSON (Complete)');
 
   const showNotification = (msg) => {
     setFeedbackMessage(msg);
@@ -402,13 +403,14 @@ export const ModalCatalogPage = () => {
               Export Format
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {['JSON (Complete)', 'CSV (Spreadsheet)', 'PDF (Audit Summary)'].map((fmt, i) => (
+              {['JSON (Complete)', 'CSV (Spreadsheet)', 'PDF (Audit Summary)'].map((fmt) => (
                 <button
                   key={fmt}
                   type="button"
-                  className={`py-2 px-3 rounded-lg border text-center font-label-sm text-label-sm ${
-                    i === 0
-                      ? 'border-btn-primary bg-canvas-lavender text-primary font-bold'
+                  onClick={() => setExportFmt(fmt)}
+                  className={`py-2 px-3 rounded-lg border text-center font-label-sm text-label-sm cursor-pointer transition-colors ${
+                    exportFmt === fmt
+                      ? 'border-btn-primary bg-canvas-lavender text-primary font-bold shadow-xs'
                       : 'border-border-subtle text-text-secondary hover:bg-canvas-main'
                   }`}
                 >

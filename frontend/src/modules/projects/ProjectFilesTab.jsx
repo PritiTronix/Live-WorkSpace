@@ -277,10 +277,11 @@ export const ProjectFilesTab = () => {
                       <div className="flex items-center justify-between text-text-muted font-body-sm text-[11px] pt-space-xs border-t border-border-subtle/40">
                         <span className="truncate">{f.uploader?.full_name || 'Team member'}</span>
                         <a
-                          href={f.file_url || '#'}
+                          href={f.file_url || `/api/v1/files/${f.id}/download`}
                           target="_blank"
-                          rel="noreferrer"
-                          className="text-primary hover:text-primary-hover font-bold flex items-center gap-0.5"
+                          rel="noopener noreferrer"
+                          download={f.name || 'file'}
+                          className="text-primary hover:text-primary-hover font-bold flex items-center gap-0.5 cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-[15px]">download</span>
                         </a>
@@ -342,10 +343,11 @@ export const ProjectFilesTab = () => {
                       <div className="flex items-center justify-between text-text-muted font-body-sm text-[11px] pt-space-xs border-t border-border-subtle/40">
                         <span className="truncate">{f.uploader?.full_name || 'Team member'}</span>
                         <a
-                          href={f.file_url || '#'}
+                          href={f.file_url || `/api/v1/files/${f.id}/download`}
                           target="_blank"
-                          rel="noreferrer"
-                          className="text-primary hover:text-primary-hover font-bold flex items-center gap-0.5"
+                          rel="noopener noreferrer"
+                          download={f.name || 'file'}
+                          className="text-primary hover:text-primary-hover font-bold flex items-center gap-0.5 cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-[15px]">download</span>
                         </a>

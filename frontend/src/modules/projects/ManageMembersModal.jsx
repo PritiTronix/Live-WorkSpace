@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { projectsService } from '../../services/projectsService';
 
 /**
@@ -6,6 +7,7 @@ import { projectsService } from '../../services/projectsService';
  * Full RBAC project membership management with active roster, pending invitations, inline removal safeguard popover, and UI mode toggles
  */
 export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated }) => {
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [users, setUsers] = useState([]);
@@ -693,22 +695,33 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
                 Tronix365 Cloud Console.
               </span>
             </div>
-            <a href="#learn-more" className="font-label-sm text-label-sm text-primary hover:underline whitespace-nowrap">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate('/workspace/settings/sla');
+              }}
+              className="font-label-sm text-label-sm text-primary hover:underline whitespace-nowrap cursor-pointer"
+            >
               Learn More
-            </a>
+            </button>
           </div>
         </div>
 
         {/* 8. STICKY MODAL FOOTER */}
         <div className="px-space-xl py-space-md bg-surface-card shadow-[0_-4px_16px_rgba(20,21,41,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm border-t border-surface-container">
           <div className="flex items-center gap-2">
-            <a
-              href="#audit-log"
-              className="font-label-sm text-label-sm text-text-muted hover:text-primary flex items-center gap-1.5 transition-colors"
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate('/workspace/audit-logs');
+              }}
+              className="font-label-sm text-label-sm text-text-muted hover:text-primary flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-[16px]">history</span>
               <span>Audit Log • 3 changes today</span>
-            </a>
+            </button>
           </div>
           <div className="flex items-center gap-space-sm justify-end">
             <button

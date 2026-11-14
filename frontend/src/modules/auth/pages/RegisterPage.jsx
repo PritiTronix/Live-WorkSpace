@@ -20,6 +20,7 @@ export const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [legalModal, setLegalModal] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -204,13 +205,27 @@ export const RegisterPage = () => {
             />
             <span className="font-body-sm text-body-sm text-text-secondary leading-snug">
               I agree to the{' '}
-              <a href="#terms" className="text-btn-primary hover:underline font-medium">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLegalModal('terms');
+                }}
+                className="text-btn-primary hover:underline font-medium cursor-pointer"
+              >
                 Terms of Service
-              </a>{' '}
+              </button>{' '}
               and{' '}
-              <a href="#privacy" className="text-btn-primary hover:underline font-medium">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLegalModal('privacy');
+                }}
+                className="text-btn-primary hover:underline font-medium cursor-pointer"
+              >
                 Privacy Policy
-              </a>
+              </button>
               .
             </span>
           </label>
@@ -241,6 +256,59 @@ export const RegisterPage = () => {
           </Link>
         </p>
       </div>
+
+      {/* Interactive Terms & Privacy Modal */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-lg bg-surface-card rounded-2xl shadow-2xl border border-border-subtle overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-surface-container/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px]">
+                    {legalModal === 'terms' ? 'gavel' : 'policy'}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-text-primary font-['Plus_Jakarta_Sans']">
+                  {legalModal === 'terms' ? 'Terms of Service' : 'Privacy & Security Policy'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="w-8 h-8 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-text-secondary leading-relaxed">
+              {legalModal === 'terms' ? (
+                <>
+                  <p className="font-semibold text-text-primary">Live Workspace Enterprise Terms of Service</p>
+                  <p>1. By registering, you are authorized to collaborate across designated projects, task boards, and incident management queues within your organization.</p>
+                  <p>2. Users must maintain credential confidentiality. Multi-factor authentication is recommended for Administrator and Owner accounts.</p>
+                  <p>3. Enterprise data stored in PostgreSQL is maintained with strict isolation and automatic backup snapshots.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-text-primary">Live Workspace Privacy Policy</p>
+                  <p>1. We strictly encrypt all user credentials via 12-round bcrypt hashes and secure sessions using cryptographic JWTs.</p>
+                  <p>2. Personal data is never shared with third parties. Telemetry is collected solely for SLA calculation and MTTR analytics.</p>
+                  <p>3. All API communications operate under TLS 1.3 encryption with AES-256 data storage.</p>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-3 bg-surface-container/40 border-t border-border-subtle flex justify-end">
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="px-5 py-2 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Close & Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

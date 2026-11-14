@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   X,
   Copy,
@@ -17,6 +18,7 @@ import {
 import { membersService } from '../../../services/membersService';
 
 export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData }) => {
+  const navigate = useNavigate();
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -204,14 +206,27 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData }) => {
                   <h4 className="text-xs font-bold text-[#141529] dark:text-white uppercase tracking-wider">
                     Current Projects ({member?.projects?.length || 2})
                   </h4>
-                  <button className="text-xs text-[#6040F0] font-bold hover:underline">+ Assign</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate('/workspace/projects');
+                    }}
+                    className="text-xs text-[#6040F0] font-bold hover:underline cursor-pointer"
+                  >
+                    + Assign
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {member?.projects && member.projects.length > 0 ? (
                     member.projects.map((p) => (
                       <span
                         key={p.id}
-                        className="px-3 py-1 bg-white dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41] rounded-lg text-[#141529] dark:text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                        onClick={() => {
+                          onClose();
+                          navigate(`/workspace/projects/${p.id}/overview`);
+                        }}
+                        className="px-3 py-1 bg-white dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41] rounded-lg text-[#141529] dark:text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs hover:border-[#6040F0] cursor-pointer transition-colors"
                       >
                         <span className="w-2 h-2 rounded-full bg-[#6040F0]"></span>
                         {p.name}

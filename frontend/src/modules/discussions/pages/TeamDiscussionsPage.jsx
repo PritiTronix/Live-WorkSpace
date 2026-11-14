@@ -405,7 +405,11 @@ export const TeamDiscussionsPage = () => {
                     <div className="flex items-center gap-space-md">
                       <button
                         type="button"
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container text-btn-primary hover:bg-surface-container-high font-label-md text-label-md transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/workspace/discussions/${disc.id}`);
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container text-btn-primary hover:bg-surface-container-high font-label-md text-label-md transition-colors cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">forum</span>
                         <span>{commentsCount} {commentsCount === 1 ? 'Reply' : 'Replies'}</span>

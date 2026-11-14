@@ -5,6 +5,7 @@ import { DEFAULT_USER } from '../../../services/api';
 export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
+  const [rotation, setRotation] = useState(0);
 
   if (!isOpen || !file) return null;
 
@@ -74,8 +75,9 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
           </button>
           <button
             type="button"
-            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-container rounded"
-            title="Rotate"
+            onClick={() => setRotation((r) => (r + 90) % 360)}
+            className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-container rounded cursor-pointer"
+            title="Rotate 90°"
           >
             <span className="material-symbols-outlined text-base">rotate_right</span>
           </button>
@@ -104,7 +106,7 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
 
           <div className="border border-border-subtle rounded-xl bg-canvas-lavender/30 p-4 shadow-inner relative overflow-hidden flex flex-col items-center justify-center min-h-[220px]">
             <div
-              style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center' }}
+              style={{ transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`, transformOrigin: 'center' }}
               className="w-full flex flex-col items-center justify-center text-center transition-transform duration-150"
             >
               <div className={`w-16 h-16 rounded-xl ${iconMeta.bg} flex items-center justify-center ${iconMeta.color} mb-3 shadow-sm`}>

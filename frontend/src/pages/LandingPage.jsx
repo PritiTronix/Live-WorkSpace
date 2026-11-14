@@ -4,6 +4,7 @@ import { DEFAULT_USER } from '../services/api';
 
 export const LandingPage = () => {
   const [countdown, setCountdown] = useState(42 * 60 + 18); // 42m 18s
+  const [legalModal, setLegalModal] = useState(null); // 'terms' | 'privacy' | null
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -78,7 +79,7 @@ export const LandingPage = () => {
       <main className="w-full pt-16 bg-canvas-main min-h-screen">
         <div className="flex flex-col w-full">
           {/* HERO SECTION */}
-          <section className="relative w-full overflow-hidden px-6 lg:px-12 pt-10 pb-20 max-w-7xl mx-auto">
+          <section id="demo" className="relative w-full overflow-hidden px-6 lg:px-12 pt-10 pb-20 max-w-7xl mx-auto">
             {/* Ambient subtle background glow */}
             <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-gradient-to-b from-primary-fixed/40 via-surface-container-low/20 to-transparent blur-3xl pointer-events-none -z-10 rounded-full"></div>
 
@@ -565,8 +566,9 @@ export const LandingPage = () => {
             </div>
           </section>
 
-          {/* 3-STEP TIMELINE WORKFLOW */}
+          {/* 3-STEP TIMELINE WORKFLOW & SOLUTIONS */}
           <section className="w-full py-24 px-6 lg:px-12 max-w-7xl mx-auto space-y-16" id="workflow">
+            <div id="solutions" className="-mt-20 pt-20"></div>
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <span className="font-label-md text-label-md text-btn-primary uppercase tracking-widest font-bold">
                 Standardized Ops Rhythm
@@ -679,6 +681,218 @@ export const LandingPage = () => {
             </div>
           </section>
 
+          {/* PRICING SECTION */}
+          <section className="w-full py-20 px-6 lg:px-12 max-w-7xl mx-auto space-y-12" id="pricing">
+            <div className="text-center max-w-2xl mx-auto space-y-3">
+              <span className="font-label-md text-label-md text-btn-primary uppercase tracking-widest font-bold">
+                Transparent Pricing
+              </span>
+              <h2 className="font-headline-xl text-headline-xl text-text-primary tracking-tight">
+                Predictable plans for teams of any scale.
+              </h2>
+              <p className="font-body-lg text-body-lg text-text-secondary">
+                No hidden per-ticket surcharges. Full dual-timer SLA automation and immutable audit logging included.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Starter */}
+              <div className="bg-surface-card p-8 rounded-2xl border border-border-subtle shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 className="font-headline-md text-headline-md text-text-primary font-bold">Starter</h3>
+                  <p className="font-body-sm text-body-sm text-text-secondary mt-1">For growing engineering squads.</p>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold text-text-primary">$0</span>
+                    <span className="text-xs text-text-muted">/ forever free</span>
+                  </div>
+                  <ul className="mt-6 space-y-3 text-xs text-text-secondary">
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Up to 10 active projects</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Standard SLA response timers</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>30-day activity audit history</span>
+                    </li>
+                  </ul>
+                </div>
+                <Link
+                  to="/auth/register"
+                  className="mt-8 w-full py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-bold text-center text-xs transition-colors block"
+                >
+                  Get Started Free
+                </Link>
+              </div>
+
+              {/* Professional */}
+              <div className="bg-surface-card p-8 rounded-2xl border-2 border-btn-primary shadow-lg flex flex-col justify-between relative">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-btn-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full shadow-sm">
+                  Most Popular
+                </span>
+                <div>
+                  <h3 className="font-headline-md text-headline-md text-text-primary font-bold">Pro Scale</h3>
+                  <p className="font-body-sm text-body-sm text-text-secondary mt-1">For production ops & multi-squad teams.</p>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold text-btn-primary">$49</span>
+                    <span className="text-xs text-text-muted">/ member / month</span>
+                  </div>
+                  <ul className="mt-6 space-y-3 text-xs text-text-secondary">
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Unlimited projects, boards & tickets</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Dual-timer SLA warning countdown engine</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>1-year immutable audit ledger</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Priority on-call paging & WebSocket sync</span>
+                    </li>
+                  </ul>
+                </div>
+                <Link
+                  to="/auth/register"
+                  className="mt-8 w-full py-2.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-bold text-center text-xs transition-colors shadow-sm block"
+                >
+                  Start 14-Day Pro Trial
+                </Link>
+              </div>
+
+              {/* Enterprise */}
+              <div className="bg-surface-card p-8 rounded-2xl border border-border-subtle shadow-sm flex flex-col justify-between">
+                <div>
+                  <h3 className="font-headline-md text-headline-md text-text-primary font-bold">Enterprise</h3>
+                  <p className="font-body-sm text-body-sm text-text-secondary mt-1">For mission-critical regulated organizations.</p>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-extrabold text-text-primary">Custom</span>
+                    <span className="text-xs text-text-muted">/ dedicated cluster</span>
+                  </div>
+                  <ul className="mt-6 space-y-3 text-xs text-text-secondary">
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Custom contractual SLA guarantees</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Dedicated Neon PostgreSQL compute branch</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>Single Sign-On (SAML / Okta / Azure AD)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm text-status-resolved">check</span>
+                      <span>24/7 dedicated SRE incident coordinator</span>
+                    </li>
+                  </ul>
+                </div>
+                <Link
+                  to="/auth/login"
+                  className="mt-8 w-full py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-text-primary font-bold text-center text-xs transition-colors block"
+                >
+                  Contact Enterprise Sales
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* SECURITY & COMPLIANCE SECTION */}
+          <section className="w-full bg-surface-card py-20 px-6 lg:px-12 border-y border-border-subtle" id="security">
+            <div className="max-w-7xl mx-auto space-y-12">
+              <div className="text-center max-w-2xl mx-auto space-y-3">
+                <span className="font-label-md text-label-md text-btn-primary uppercase tracking-widest font-bold">
+                  Enterprise Security
+                </span>
+                <h2 className="font-headline-xl text-headline-xl text-text-primary tracking-tight">
+                  Zero Trust Architecture from Storage to Edge.
+                </h2>
+                <p className="font-body-lg text-body-lg text-text-secondary">
+                  Engineered with end-to-end TLS 1.3, AES-256 database encryption, and cryptographic JWT sessions.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="p-6 rounded-xl bg-canvas-main border border-border-subtle space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">shield</span>
+                  </div>
+                  <h4 className="font-headline-sm text-headline-sm text-text-primary font-bold">SOC2 & ISO 27001</h4>
+                  <p className="font-body-sm text-body-sm text-text-secondary">
+                    Audited compliance controls guaranteeing data integrity and tenant isolation.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-xl bg-canvas-main border border-border-subtle space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">key</span>
+                  </div>
+                  <h4 className="font-headline-sm text-headline-sm text-text-primary font-bold">Industrial RBAC</h4>
+                  <p className="font-body-sm text-body-sm text-text-secondary">
+                    Role inheritance hierarchy from Owner down to Viewer with strict server-side validation.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-xl bg-canvas-main border border-border-subtle space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">database</span>
+                  </div>
+                  <h4 className="font-headline-sm text-headline-sm text-text-primary font-bold">PostgreSQL Isolation</h4>
+                  <p className="font-body-sm text-body-sm text-text-secondary">
+                    Multi-tenant data scoping enforced via parameterized queries on Neon Cloud PostgreSQL.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-xl bg-canvas-main border border-border-subtle space-y-3">
+                  <div className="w-10 h-10 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[22px]">speed</span>
+                  </div>
+                  <h4 className="font-headline-sm text-headline-sm text-text-primary font-bold">DDoS & Rate Limiting</h4>
+                  <p className="font-body-sm text-body-sm text-text-secondary">
+                    Proxy-aware multi-user rate limiting protecting all public authentication and API endpoints.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ABOUT SECTION */}
+          <section className="w-full py-20 px-6 lg:px-12 max-w-7xl mx-auto space-y-8" id="about">
+            <div className="max-w-3xl mx-auto text-center space-y-4">
+              <span className="font-label-md text-label-md text-btn-primary uppercase tracking-widest font-bold">
+                About Live Workspace
+              </span>
+              <h2 className="font-headline-xl text-headline-xl text-text-primary tracking-tight">
+                Built by Engineers, for Mission-Critical Engineering Teams.
+              </h2>
+              <p className="font-body-md text-body-md text-text-secondary leading-relaxed">
+                Live Workspace was conceived by founders Bhavesh Burad and Shubhaam Tronix to eliminate the friction between sprint execution, defect tracking, and high-stakes SLA compliance. We provide engineering organizations with an all-in-one operational ecosystem designed for uncompromised reliability.
+              </p>
+              <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  to="/workspace/dashboard"
+                  className="px-6 py-2.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-semibold text-xs transition-colors shadow-sm"
+                >
+                  Explore Platform Live
+                </Link>
+                <a
+                  href="mailto:contact@tronix365.cloud"
+                  className="px-6 py-2.5 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary border border-border-subtle font-semibold text-xs transition-colors"
+                >
+                  Contact Founders
+                </a>
+              </div>
+            </div>
+          </section>
+
           {/* HIGH-IMPACT FINAL CONVERSION CTA */}
           <section className="w-full pb-20 px-6 lg:px-12 max-w-7xl mx-auto">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-card via-canvas-lavender to-surface-container p-10 md:p-16 shadow-lg flex flex-col items-center text-center border border-border-subtle">
@@ -748,19 +962,19 @@ export const LandingPage = () => {
               <div>
                 <p className="font-label-md text-label-md text-text-primary font-bold uppercase mb-3">Resources</p>
                 <ul className="space-y-2 font-body-sm text-body-sm text-text-secondary">
-                  <li><a href="#docs" className="hover:text-primary transition-colors">Documentation</a></li>
-                  <li><a href="#api" className="hover:text-primary transition-colors">API Reference</a></li>
-                  <li><a href="#guides" className="hover:text-primary transition-colors">Incident Guides</a></li>
-                  <li><a href="#status" className="hover:text-primary transition-colors">System Status</a></li>
+                  <li><Link to="/workspace/design-system/modals" className="hover:text-primary transition-colors">Documentation</Link></li>
+                  <li><Link to="/workspace/design-system/modals" className="hover:text-primary transition-colors">API Reference</Link></li>
+                  <li><Link to="/workspace/rca" className="hover:text-primary transition-colors">Incident Guides</Link></li>
+                  <li><Link to="/workspace/dashboard" className="hover:text-primary transition-colors">System Status (Live)</Link></li>
                 </ul>
               </div>
               <div>
                 <p className="font-label-md text-label-md text-text-primary font-bold uppercase mb-3">Company</p>
                 <ul className="space-y-2 font-body-sm text-body-sm text-text-secondary">
                   <li><a href="#about" className="hover:text-primary transition-colors">About</a></li>
-                  <li><a href="#careers" className="hover:text-primary transition-colors">Careers</a></li>
-                  <li><a href="#privacy" className="hover:text-primary transition-colors">Privacy</a></li>
-                  <li><a href="#terms" className="hover:text-primary transition-colors">Terms of Service</a></li>
+                  <li><a href="mailto:careers@tronix365.cloud?subject=Engineering%20Careers%20Application" className="hover:text-primary transition-colors">Careers</a></li>
+                  <li><button type="button" onClick={() => setLegalModal('privacy')} className="hover:text-primary transition-colors text-left cursor-pointer">Privacy Policy</button></li>
+                  <li><button type="button" onClick={() => setLegalModal('terms')} className="hover:text-primary transition-colors text-left cursor-pointer">Terms of Service</button></li>
                 </ul>
               </div>
             </div>
@@ -774,6 +988,61 @@ export const LandingPage = () => {
             </div>
           </footer>
         </div>
+
+      {/* Interactive Terms & Privacy Modal */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-2xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between bg-surface-container/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-btn-primary/10 text-btn-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[20px]">
+                    {legalModal === 'terms' ? 'gavel' : 'policy'}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-text-primary font-['Plus_Jakarta_Sans']">
+                  {legalModal === 'terms' ? 'Terms of Service' : 'Privacy & Security Policy'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="w-8 h-8 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-text-secondary leading-relaxed">
+              {legalModal === 'terms' ? (
+                <>
+                  <p className="font-semibold text-text-primary">Last Updated: March 2026 • Live Workspace Enterprise SLA Agreement</p>
+                  <p>1. By accessing or using the Live Workspace platform operated by Tronix365 Cloud, you agree to comply with and be bound by these enterprise Terms of Service.</p>
+                  <p>2. Authorized users are granted role-based access to workspace resources including projects, task boards, defect tickets, SLA timers, and team discussions in accordance with their designated role level.</p>
+                  <p>3. Enterprise organizations retain complete ownership and intellectual property rights over all uploaded attachments, tickets, post-mortem RCA documentation, and operational telemetry stored in Neon PostgreSQL.</p>
+                  <p>4. Availability guarantees and service level agreements (SLAs) are enforced pursuant to your subscription plan. Contractual dual-timer tracking operates 24/7 with multi-region compute failover.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-text-primary">Last Updated: March 2026 • Live Workspace Privacy & Data Governance</p>
+                  <p>1. Tronix365 Cloud prioritizes the confidentiality, integrity, and availability of your engineering data across all services.</p>
+                  <p>2. All network transmissions are strictly encrypted via TLS 1.3 with Perfect Forward Secrecy. Data at rest is encrypted utilizing AES-256 keys on Neon Cloud PostgreSQL.</p>
+                  <p>3. Authentication utilizes tamper-resistant cryptographic JWT tokens with short-lived access periods and rotating refresh tokens.</p>
+                  <p>4. We do not sell, rent, or monetize your project records, code metadata, or team communications to any third parties.</p>
+                </>
+              )}
+            </div>
+            <div className="px-6 py-3 bg-surface-container/40 border-t border-border-subtle flex justify-end">
+              <button
+                type="button"
+                onClick={() => setLegalModal(null)}
+                className="px-5 py-2 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-semibold text-xs transition-colors cursor-pointer"
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );

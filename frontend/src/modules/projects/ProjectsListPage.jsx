@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { projectsService } from '../../services/projectsService';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
 import CreateProjectModal from './CreateProjectModal';
@@ -10,6 +11,7 @@ import ManageMembersModal from './ManageMembersModal';
  * Live Workspace Projects Listing Page at /workspace/projects
  */
 export const ProjectsListPage = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -703,14 +705,22 @@ export const ProjectsListPage = () => {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
             type="button"
-            className="h-9 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5"
+            onClick={() => navigate('/workspace/analytics')}
+            className="h-9 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-text-primary font-label-md text-label-md transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">insights</span>
             <span>View Velocity Report</span>
           </button>
           <button
             type="button"
-            className="h-9 px-4 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md transition-colors shadow-sm flex items-center gap-1.5"
+            onClick={() => {
+              if (projects && projects.length > 0) {
+                navigate(`/workspace/projects/${projects[0].id}/timeline`);
+              } else {
+                navigate('/workspace/tasks');
+              }
+            }}
+            className="h-9 px-4 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">calendar_month</span>
             <span>Milestones Roadmap</span>

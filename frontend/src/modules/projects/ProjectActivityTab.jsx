@@ -47,6 +47,23 @@ export const ProjectActivityTab = () => {
     fetchActivities();
   }, [id, activeCategory, selectedActor]);
 
+  const handleExportAuditLog = () => {
+    try {
+      const exportData = JSON.stringify(activities, null, 2);
+      const blob = new Blob([exportData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `project-${id}-activity-audit-log.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const getActionBadge = (action) => {
     switch (action) {
       case 'status_change':
@@ -91,7 +108,8 @@ export const ProjectActivityTab = () => {
           </div>
           <button
             type="button"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-canvas-main hover:bg-canvas-lavender border border-border-subtle text-text-primary font-label-md text-label-md transition-colors"
+            onClick={handleExportAuditLog}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-canvas-main hover:bg-canvas-lavender border border-border-subtle text-text-primary font-label-md text-label-md transition-colors cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
             <span>Export Audit Log</span>

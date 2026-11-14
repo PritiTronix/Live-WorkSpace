@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService, DEFAULT_USER } from '../../services/api';
 import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
 import LogoutModal from '../../modules/auth/components/LogoutModal';
+import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
 
 export const GlobalTopBar = ({
   onOpenSearch,
@@ -18,6 +19,7 @@ export const GlobalTopBar = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [presence, setPresence] = useState('ONLINE');
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const profileRef = useRef(null);
@@ -173,8 +175,10 @@ export const GlobalTopBar = ({
           {/* Documentation Icon */}
           <button
             aria-label="Documentation"
-            className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors"
+            onClick={() => navigate('/workspace/design-system/modals')}
+            className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
             type="button"
+            title="Design System & Documentation"
           >
             <span className="material-symbols-outlined text-[20px]">menu_book</span>
           </button>
@@ -279,10 +283,17 @@ export const GlobalTopBar = ({
                   <span className="material-symbols-outlined text-[18px]">tune</span>
                   <span>Notification Preferences</span>
                 </button>
-                <a href="#shortcuts" className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    setIsShortcutsOpen(true);
+                  }}
+                  className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors text-left cursor-pointer"
+                >
                   <span className="material-symbols-outlined text-[18px]">keyboard</span>
                   <span>Keyboard Shortcuts</span>
-                </a>
+                </button>
                 <div className="pt-1 border-t border-border-subtle">
                   <button
                     type="button"
@@ -290,7 +301,7 @@ export const GlobalTopBar = ({
                       setIsProfileOpen(false);
                       setIsLogoutModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-error hover:bg-error-container/30 transition-colors text-left"
+                    className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-error hover:bg-error-container/30 transition-colors text-left cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[18px]">logout</span>
                     <span>Sign Out</span>
@@ -305,6 +316,12 @@ export const GlobalTopBar = ({
             isOpen={isLogoutModalOpen}
             onClose={() => setIsLogoutModalOpen(false)}
             currentUser={user}
+          />
+
+          {/* Keyboard Shortcuts Cheatsheet Modal */}
+          <KeyboardShortcutsModal
+            isOpen={isShortcutsOpen}
+            onClose={() => setIsShortcutsOpen(false)}
           />
         </div>
       </div>

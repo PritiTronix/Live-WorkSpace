@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { dashboardService, connectDashboardWebSocket } from '../../../services/api';
 
 export const DashboardOverviewPage = () => {
+  const navigate = useNavigate();
+  const [selectedPill, setSelectedPill] = useState('All Teams');
   const [metrics, setMetrics] = useState({
     total_projects: 14,
     total_tasks: 248,
@@ -122,14 +125,19 @@ export const DashboardOverviewPage = () => {
       {/* Filter Dropdown Pills */}
       <div className="flex gap-2.5 overflow-x-auto pb-1">
         {['All Teams', 'Platform Engineering', 'SRE Incident Response', 'Today', 'This Sprint', 'Q4 2025'].map(
-          (pill, index) => (
+          (pill) => (
             <button
-              key={index}
-              className="flex h-8 shrink-0 items-center justify-center gap-x-1.5 rounded-lg bg-[#eae8f3] hover:bg-[#dedbe8] pl-3.5 pr-2 transition-colors cursor-pointer"
+              key={pill}
+              onClick={() => setSelectedPill(pill)}
+              className={`flex h-8 shrink-0 items-center justify-center gap-x-1.5 rounded-lg pl-3.5 pr-2 transition-colors cursor-pointer ${
+                selectedPill === pill
+                  ? 'bg-btn-primary text-white shadow-sm font-semibold'
+                  : 'bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b] font-medium'
+              }`}
               type="button"
             >
-              <span className="text-[#110e1b] text-xs font-medium leading-normal">{pill}</span>
-              <span className="material-symbols-outlined text-[16px] text-[#110e1b]">expand_more</span>
+              <span className="text-xs leading-normal">{pill}</span>
+              <span className="material-symbols-outlined text-[16px]">expand_more</span>
             </button>
           )
         )}
@@ -137,8 +145,16 @@ export const DashboardOverviewPage = () => {
 
       {/* Row 1: Primary 4 Metric Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">Total Projects</span>
+        <div
+          onClick={() => navigate('/workspace/projects')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>Total Projects</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.total_projects}
           </span>
@@ -147,24 +163,48 @@ export const DashboardOverviewPage = () => {
           </span>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">Total Tasks</span>
+        <div
+          onClick={() => navigate('/workspace/tasks')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>Total Tasks</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.total_tasks}
           </span>
           <span className="text-[#5d4f96] text-xs font-medium leading-normal">84% completion</span>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">My Tasks</span>
+        <div
+          onClick={() => navigate('/workspace/tasks/my-tasks')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>My Tasks</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.my_tasks}
           </span>
           <span className="text-[#5d4f96] text-xs font-medium leading-normal">4 due today</span>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">Open Tickets</span>
+        <div
+          onClick={() => navigate('/workspace/tickets')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>Open Tickets</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.open_tickets}
           </span>
@@ -174,24 +214,48 @@ export const DashboardOverviewPage = () => {
 
       {/* Row 2: Secondary 3 Operational Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">Work in Progress</span>
+        <div
+          onClick={() => navigate('/workspace/tasks')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>Work in Progress</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.work_in_progress}
           </span>
           <span className="text-[#5d4f96] text-xs font-medium leading-normal">4 squads active</span>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">On Hold</span>
+        <div
+          onClick={() => navigate('/workspace/tickets')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
+            <span>On Hold</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.on_hold}
           </span>
           <span className="text-[#5d4f96] text-xs font-medium leading-normal">Vendor pending</span>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm">
-          <span className="text-[#110e1b] text-sm font-medium leading-normal">SLA Breached</span>
+        <div
+          onClick={() => navigate('/workspace/tickets/critical')}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-severity-blocker/50 hover:shadow-md transition-all cursor-pointer group"
+          role="button"
+          tabIndex={0}
+        >
+          <span className="text-severity-blocker text-sm font-semibold leading-normal flex items-center justify-between">
+            <span>SLA Breached</span>
+            <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+          </span>
           <span className="text-severity-blocker tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.sla_breached}
           </span>
@@ -669,9 +733,9 @@ export const DashboardOverviewPage = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <a href={`#ticket-${ticket.id}`} className="inline-flex items-center text-primary font-bold hover:underline">
+                      <Link to={`/workspace/tickets/${ticket.id}`} className="inline-flex items-center text-primary font-bold hover:underline">
                         View Ticket →
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -689,7 +753,11 @@ export const DashboardOverviewPage = () => {
               </span>
               <h3 className="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Recent Activity Timeline</h3>
             </div>
-            <button className="text-xs text-primary font-semibold hover:underline" type="button">
+            <button
+              onClick={() => navigate('/workspace/audit-logs')}
+              className="text-xs text-primary font-semibold hover:underline cursor-pointer"
+              type="button"
+            >
               View All Logs
             </button>
           </div>

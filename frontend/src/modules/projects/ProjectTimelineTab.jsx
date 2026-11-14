@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
+import CreateTaskModal from '../tasks/components/CreateTaskModal';
 
 /**
  * Screen 42: Project Timeline Tab
@@ -15,25 +16,25 @@ export const ProjectTimelineTab = () => {
   const [viewMode, setViewMode] = useState('gantt'); // 'gantt' or 'list'
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all');
 
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const data = await projectsService.getTasks(id);
+      setTasks(data || []);
+    } catch (err) {
+      console.error('Failed to load timeline tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-    const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        const data = await projectsService.getTasks(id);
-        if (isMounted) setTasks(data);
-      } catch (err) {
-        console.error('Failed to load timeline tasks:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
     fetchTasks();
-    return () => { isMounted = false; };
   }, [id]);
 
   // Grouped Epics based on Screen 42
@@ -154,7 +155,8 @@ export const ProjectTimelineTab = () => {
 
           <button
             type="button"
-            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md shadow-sm transition-all"
+            onClick={() => setIsCreateTaskOpen(true)}
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md shadow-sm transition-all cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Add Milestone</span>
@@ -303,6 +305,20 @@ export const ProjectTimelineTab = () => {
           </div>
         </div>
       </div>
+
+      {/* Quick Add Milestone / Task Modal */}
+      <CreateTaskModal
+        isOpen={isCreateTaskOpen}
+        onClose={() => setIsCreateTaskOpen(false)}
+        onCreateTask={async (payload) => {
+          try {
+            await projectsService.createTask(id, { ...payload, project_id: id });
+            fetchTasks();
+          } catch (err) {
+            console.error('Failed to create task:', err);
+          }
+        }}
+      />
     </div>
   );
 };

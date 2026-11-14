@@ -333,10 +333,14 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
               Press <kbd className="px-1 bg-surface-card text-text-primary rounded font-mono border border-border-subtle">Esc</kbd> to dismiss this menu
             </span>
           </span>
-          <a href="#shortcuts" className="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1 font-semibold">
-            <span>Customize Shortcuts</span>
+          <button
+            type="button"
+            onClick={() => onActionSelect && onActionSelect('OPEN_SHORTCUTS')}
+            className="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+          >
+            <span>Keyboard Shortcuts</span>
             <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>

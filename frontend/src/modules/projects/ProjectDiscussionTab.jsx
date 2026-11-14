@@ -56,6 +56,24 @@ export const ProjectDiscussionTab = () => {
     fetchDiscussions();
   }, [id, activeCategory]);
 
+  const handleToggleReaction = async (discussionId, emoji) => {
+    try {
+      if (projectsService.reactDiscussion) {
+        await projectsService.reactDiscussion(id, discussionId, emoji);
+      }
+      fetchDiscussions();
+    } catch (_) {
+      setDiscussions((prev) =>
+        prev.map((d) => {
+          if (d.id !== discussionId) return d;
+          const current = { ...(d.reactions || {}) };
+          current[emoji] = (current[emoji] || 0) + 1;
+          return { ...d, reactions: current };
+        })
+      );
+    }
+  };
+
   const handleCreateDiscussion = async (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newContent.trim()) return;
@@ -227,7 +245,9 @@ export const ProjectDiscussionTab = () => {
                       <button
                         key={emoji}
                         type="button"
-                        className="px-2.5 py-1 rounded-lg bg-canvas-main hover:bg-canvas-lavender text-text-primary font-body-sm text-body-sm flex items-center gap-1.5 border border-border-subtle"
+                        onClick={() => handleToggleReaction(d.id, emoji)}
+                        className="px-2.5 py-1 rounded-lg bg-canvas-main hover:bg-canvas-lavender text-text-primary font-body-sm text-body-sm flex items-center gap-1.5 border border-border-subtle cursor-pointer active:scale-95 transition-all"
+                        title={`React with ${emoji}`}
                       >
                         <span>{emoji}</span>
                         <span className="font-bold text-[12px]">{count}</span>

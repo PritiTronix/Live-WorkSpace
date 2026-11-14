@@ -548,13 +548,29 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                     <div className="flex items-center gap-1 text-text-secondary">
                       <button
                         type="button"
-                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender"
+                        onClick={() => {
+                          try {
+                            const d = new Date(targetDate);
+                            d.setMonth(d.getMonth() - 1);
+                            setTargetDate(d.toISOString().split('T')[0]);
+                          } catch (_) {}
+                        }}
+                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender cursor-pointer"
+                        title="Previous Month"
                       >
                         <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                       </button>
                       <button
                         type="button"
-                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender"
+                        onClick={() => {
+                          try {
+                            const d = new Date(targetDate);
+                            d.setMonth(d.getMonth() + 1);
+                            setTargetDate(d.toISOString().split('T')[0]);
+                          } catch (_) {}
+                        }}
+                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender cursor-pointer"
+                        title="Next Month"
                       >
                         <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                       </button>
