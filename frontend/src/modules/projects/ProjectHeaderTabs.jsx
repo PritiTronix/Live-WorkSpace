@@ -44,14 +44,14 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
   return (
     <>
       {/* Master Project Workspace Header Banner */}
-      <section className="relative bg-surface-card rounded-xl shadow-sm p-space-lg mb-space-lg overflow-hidden border border-border-subtle/50">
+      <section className="relative bg-surface-card rounded-xl shadow-sm p-4 sm:p-space-lg mb-space-lg overflow-hidden border border-border-subtle/50">
         {/* Ambient Lavender Backdrop Subtle Bloom */}
         <div className="absolute -right-20 -top-24 w-96 h-96 bg-primary-fixed/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-1/3 -bottom-32 w-80 h-80 bg-canvas-lavender rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col gap-space-lg">
+        <div className="relative z-10 flex flex-col gap-space-md sm:gap-space-lg">
           {/* Upper Tier: Avatar + Title + Badges + Header Actions */}
-          <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-space-lg">
+          <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-space-md sm:gap-space-lg">
             {/* Left Wing: Icon, Title, Description */}
             <div className="flex items-start gap-space-md max-w-4xl">
               {/* Project Avatar Badge with glowing purple treatment */}
@@ -213,7 +213,7 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
           </div>
 
           {/* Lower Tier: Operational Metadata Metrics Bar */}
-          <div className="bg-canvas-main/80 rounded-xl p-space-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg items-center border border-border-subtle/50">
+          <div className="bg-canvas-main/80 rounded-xl p-3 sm:p-space-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-space-lg items-center border border-border-subtle/50">
             {/* Metric 1: Project Leadership & Lead Architect */}
             <div className="flex items-center gap-space-md min-w-0">
               <div className="relative flex-shrink-0">

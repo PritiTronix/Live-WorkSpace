@@ -171,16 +171,16 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   return (
     <div
       id="modal-container"
-      className="fixed inset-0 z-50 flex items-center justify-center p-space-md overflow-y-auto bg-on-background/40 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-space-md overflow-y-auto bg-on-background/40 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative w-full max-w-[700px] my-auto bg-surface-card rounded-xl shadow-2xl flex flex-col max-h-[942px] overflow-hidden border border-border-subtle animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-[700px] my-auto bg-surface-card rounded-xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-border-subtle animate-in zoom-in-95 duration-200"
       >
         {/* Modal Header */}
-        <div className="px-space-xl pt-space-lg pb-space-md flex items-start justify-between bg-surface-card z-10 shrink-0 border-b border-surface-container">
+        <div className="px-4 sm:px-space-xl pt-4 sm:pt-space-lg pb-3 sm:pb-space-md flex items-start justify-between bg-surface-card z-10 shrink-0 border-b border-surface-container">
           <div className="space-y-1 pr-space-md text-left">
             <div className="flex items-center gap-space-xs">
               <span className="w-2 h-2 rounded-full bg-btn-primary"></span>

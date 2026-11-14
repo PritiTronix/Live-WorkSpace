@@ -175,11 +175,11 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
   const hasResults = totalResultsCount > 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#141529]/40 backdrop-blur-sm flex items-start justify-center pt-8 px-space-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-[#141529]/40 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:pt-8 overflow-y-auto">
       {/* COMMAND PALETTE CONTAINER */}
       <div
         ref={containerRef}
-        className="relative w-full max-w-4xl bg-surface-card rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[90vh]"
+        className="relative w-full max-w-4xl bg-surface-card rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]"
       >
         {/* TOP AMBIENT HIGHLIGHT */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-container via-primary to-primary-light"></div>

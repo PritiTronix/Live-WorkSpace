@@ -63,13 +63,13 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
-      <div className="relative bg-surface-card w-full max-w-2xl rounded-2xl shadow-2xl border border-border-subtle overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+      <div className="relative bg-surface-card w-full max-w-2xl rounded-2xl shadow-2xl border border-border-subtle overflow-hidden my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Modal Top Accent Banner */}
         <div className="h-1.5 bg-gradient-to-r from-btn-primary via-primary-light to-secondary-container" />
 
         {/* Header */}
-        <div className="p-space-lg flex items-start justify-between pb-space-md border-b border-border-subtle">
+        <div className="p-4 sm:p-space-lg flex items-start justify-between pb-space-md border-b border-border-subtle">
           <div className="flex items-center gap-space-sm">
             <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-[22px]">forum</span>

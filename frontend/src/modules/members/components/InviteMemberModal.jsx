@@ -79,10 +79,10 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141529]/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-[560px] bg-white dark:bg-[#1a1b32] rounded-2xl shadow-2xl border border-[#E5E5EF] dark:border-[#2e2f41] overflow-hidden max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#141529]/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-[560px] bg-white dark:bg-[#1a1b32] rounded-2xl shadow-2xl border border-[#E5E5EF] dark:border-[#2e2f41] overflow-hidden max-h-[92vh] flex flex-col my-auto">
         {/* Modal Header */}
-        <div className="px-6 py-5 bg-white dark:bg-[#1a1b32] flex items-center justify-between border-b border-[#E5E5EF] dark:border-[#2e2f41]">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 bg-white dark:bg-[#1a1b32] flex items-center justify-between border-b border-[#E5E5EF] dark:border-[#2e2f41]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#eeecff] dark:bg-[#2e2f41] flex items-center justify-center text-[#6040F0]">
               <UserPlus className="w-5 h-5" />

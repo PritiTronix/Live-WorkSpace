@@ -103,8 +103,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle p-space-xl flex flex-col gap-space-lg animate-in fade-in zoom-in-95 duration-150 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+      <div className="w-full max-w-2xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle p-4 sm:p-6 md:p-space-xl flex flex-col gap-space-md sm:gap-space-lg animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-space-sm border-b border-border-subtle/60">
           <div>

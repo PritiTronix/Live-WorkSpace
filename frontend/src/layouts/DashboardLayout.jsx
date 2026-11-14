@@ -25,7 +25,12 @@ import CreateDiscussionModal from '../modules/discussions/components/CreateDiscu
 export const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768 && window.innerWidth < 1180;
+    }
+    return false;
+  });
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
@@ -36,6 +41,30 @@ export const DashboardLayout = () => {
   const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false);
   const [isCreateDiscussionModalOpen, setIsCreateDiscussionModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
+  useEffect(() => {
+    let lastWidth = window.innerWidth;
+    const handleResize = () => {
+      const currentWidth = window.innerWidth;
+      // Crossing from desktop into tablet -> collapse sidebar
+      if (currentWidth >= 768 && currentWidth < 1180 && lastWidth >= 1180) {
+        setIsSidebarCollapsed(true);
+      }
+      // Crossing from tablet into desktop -> expand sidebar
+      else if (currentWidth >= 1180 && lastWidth < 1180) {
+        setIsSidebarCollapsed(false);
+      }
+      // Close mobile drawer if resized to tablet/desktop
+      if (currentWidth >= 768) {
+        setIsMobileSidebarOpen(false);
+      }
+      lastWidth = currentWidth;
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch live unread count on mount and location change
   useEffect(() => {
@@ -197,12 +226,12 @@ export const DashboardLayout = () => {
         </div>
 
         {/* Content Viewport */}
-        <main className="flex-1 pt-14 md:pt-20 px-4 md:px-6 lg:px-8 py-6 min-h-screen overflow-y-auto pb-20 md:pb-6">
+        <main className="flex-1 pt-16 md:pt-20 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 min-h-screen overflow-y-auto pb-24 md:pb-8 w-full max-w-full">
           <Outlet />
         </main>
 
         {/* ── Mobile Bottom Navigation Bar ── */}
-        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-card border-t border-border-subtle flex items-center justify-around px-2 z-40 md:hidden shadow-[0_-2px_8px_rgba(20,21,41,0.06)]">
+        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-card/95 backdrop-blur-md border-t border-border-subtle flex items-center justify-around px-2 z-40 md:hidden shadow-[0_-2px_12px_rgba(20,21,41,0.08)] pb-[env(safe-area-inset-bottom)]">
           <MobileNavItem to="/workspace/dashboard" icon="home" label="Home" />
           <MobileNavItem to="/workspace/tasks" icon="task_alt" label="Tasks" />
           <MobileNavItem to="/workspace/tickets" icon="confirmation_number" label="Tickets" badge={3} />

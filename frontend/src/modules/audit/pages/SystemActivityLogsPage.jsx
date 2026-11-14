@@ -203,7 +203,7 @@ export const SystemActivityLogsPage = () => {
       </div>
 
       {/* ── 2. Four KPI Cards (Truthful database metrics F-04) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* 24h Event Volume */}
         <div className="bg-surface-card p-4 rounded-xl border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-text-secondary mb-1">

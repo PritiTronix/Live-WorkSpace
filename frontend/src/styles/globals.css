@@ -26,14 +26,79 @@
   --status-closed: #9C9CA9;
 }
 
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
   background-color: var(--color-canvas-main);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Touch & Mobile Accessibility */
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* iOS input auto-zoom prevention: minimum 16px font on small screens */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Responsive Custom Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d5d0e6;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #b8b0d4;
+}
+
+/* Hide scrollbar utility for clean mobile horizontal carousels & pills */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area support for mobile devices with notches / home indicators */
+.safe-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-pt {
+  padding-top: max(1rem, env(safe-area-inset-top));
 }

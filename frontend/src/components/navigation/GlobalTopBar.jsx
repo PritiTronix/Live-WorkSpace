@@ -63,21 +63,21 @@ export const GlobalTopBar = ({
   };
 
   return (
-    <header className={`fixed top-0 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 border-b border-border-subtle shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-space-lg flex items-center justify-between transition-all duration-200 ${
+    <header className={`fixed top-0 right-0 h-16 bg-surface-card/90 backdrop-blur-xl z-40 border-b border-border-subtle shadow-[0_1px_8px_rgba(20,21,41,0.04)] px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-200 ${
       isCollapsed ? 'left-20' : 'left-72'
     }`}>
       {/* 1. Left Region: Breadcrumb Navigation */}
-      <div className="flex items-center gap-space-sm min-w-0">
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 font-label-md text-label-md whitespace-nowrap">
+      <div className="flex items-center gap-2 min-w-0 max-w-[160px] sm:max-w-xs md:max-w-sm lg:max-w-none">
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 font-label-md text-label-md overflow-hidden text-ellipsis whitespace-nowrap">
           {activeBreadcrumbs.map((crumb, idx) => (
             <React.Fragment key={idx}>
               {idx > 0 && <span className="text-text-muted">/</span>}
               <span
-                className={
+                className={`truncate max-w-[110px] sm:max-w-[160px] md:max-w-none ${
                   idx === activeBreadcrumbs.length - 1
                     ? 'font-headline-sm text-headline-sm text-text-primary'
                     : 'text-text-muted hover:text-text-primary cursor-pointer transition-colors'
-                }
+                }`}
               >
                 {crumb}
               </span>
@@ -87,7 +87,7 @@ export const GlobalTopBar = ({
       </div>
 
       {/* 2. Center Region: Global Search Trigger */}
-      <div className="flex-1 max-w-lg mx-space-xl hidden md:block">
+      <div className="flex-1 max-w-xs xl:max-w-md mx-2 lg:mx-6 hidden md:block">
         <div
           onClick={onOpenSearch}
           onMouseEnter={() => setIsSearchHovered(true)}
@@ -112,7 +112,7 @@ export const GlobalTopBar = ({
       </div>
 
       {/* 3. Right Region: CTA, Notification Bell & Profile */}
-      <div className="flex items-center gap-space-md">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         {/* Quick Create Action Button */}
         <button
           id="create-action-btn"

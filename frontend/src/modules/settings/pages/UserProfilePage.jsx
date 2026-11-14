@@ -64,7 +64,7 @@ export const UserProfilePage = () => {
   };
 
   return (
-    <div className="w-full bg-[#F9F9FB] dark:bg-[#141529] min-h-screen py-6 px-6 lg:px-10 font-body text-[#141529] dark:text-[#eeecff]">
+    <div className="w-full bg-[#F9F9FB] dark:bg-[#141529] min-h-screen py-4 sm:py-6 px-3 sm:px-6 lg:px-8 font-body text-[#141529] dark:text-[#eeecff]">
       <div className="max-w-7xl mx-auto flex flex-col space-y-8 pb-16">
         {/* Top Context Header Area */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

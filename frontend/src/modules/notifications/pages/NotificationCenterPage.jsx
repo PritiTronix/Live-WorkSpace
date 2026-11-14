@@ -50,7 +50,7 @@ export const NotificationCenterPage = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1 p-1 bg-surface-card rounded-xl border border-border-subtle shadow-sm w-fit">
+      <div className="flex items-center gap-1 p-1 bg-surface-card rounded-xl border border-border-subtle shadow-sm w-full sm:w-fit overflow-x-auto no-scrollbar">
         {FILTERS.map((f) => {
           const isActive = activeFilter === f.id;
           const count = f.id === 'unread' ? unreadCount : null;

@@ -75,10 +75,10 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="relative bg-surface-card w-full max-w-[520px] rounded-xl shadow-2xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div className="relative bg-surface-card w-full max-w-[520px] rounded-2xl shadow-2xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-canvas-lavender/40">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border-subtle bg-canvas-lavender/40">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-xl">cloud_upload</span>
