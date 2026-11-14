@@ -2,7 +2,7 @@
 
 Seeds canonical enterprise data and provisions administrator credentials:
 - Owner: bhaveshburad729@gmail.com (Password: bhavesh729)
-- Admin: shubhaam.tronix365@gmail.com (Password: bhavesh729)
+- Admin: shubhaam.tronix365@gmail.com (Password: shubham)
 
 Usage:
     python -m backend.scripts.seed_database [--force-update-users]
@@ -23,7 +23,7 @@ logger = logging.getLogger("seeder")
 
 
 async def update_or_create_primary_users():
-    """Ensures bhaveshburad729@gmail.com and shubhaam.tronix365@gmail.com exist with password bhavesh729."""
+    """Ensures bhaveshburad729@gmail.com (bhavesh729) and shubhaam.tronix365@gmail.com (shubham) exist."""
     password_hash = get_password_hash("bhavesh729")
 
     async with AsyncSessionLocal() as db:
@@ -70,35 +70,36 @@ async def update_or_create_primary_users():
             db.add(u1)
             logger.info("Created user usr_01 -> bhaveshburad729@gmail.com (Password: bhavesh729)")
 
-        # 2. Shubham (Admin)
+        # 2. Shubhaam Tronix (Admin / Co-Founder)
+        shubham_password_hash = get_password_hash("shubham")
         usr2_res = await db.execute(select(User).where(User.id == "usr_02"))
         u2 = usr2_res.scalars().first()
         if u2:
-            u2.full_name = "Shubham"
+            u2.full_name = "Shubhaam Tronix"
             u2.email = "shubhaam.tronix365@gmail.com"
-            u2.hashed_password = password_hash
+            u2.hashed_password = shubham_password_hash
             u2.role = "admin"
-            u2.title = "Co-Founder & Platform Lead"
+            u2.title = "Admin / Co-Founder"
             u2.department = "Platform & Reliability"
             u2.email_verified = True
             u2.is_active = True
-            logger.info("Updated existing user usr_02 -> shubhaam.tronix365@gmail.com (Password: bhavesh729)")
+            logger.info("Updated existing user usr_02 -> shubhaam.tronix365@gmail.com (Password: shubham)")
         else:
             u2 = User(
                 id="usr_02",
                 organization_id=org.id,
                 email="shubhaam.tronix365@gmail.com",
-                hashed_password=password_hash,
-                full_name="Shubham",
+                hashed_password=shubham_password_hash,
+                full_name="Shubhaam Tronix",
                 role="admin",
-                title="Co-Founder & Platform Lead",
+                title="Admin / Co-Founder",
                 department="Platform & Reliability",
                 avatar_url="https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W",
                 is_active=True,
                 email_verified=True,
             )
             db.add(u2)
-            logger.info("Created user usr_02 -> shubhaam.tronix365@gmail.com (Password: bhavesh729)")
+            logger.info("Created user usr_02 -> shubhaam.tronix365@gmail.com (Password: shubham)")
 
         # Update secondary team users to have known password bhavesh729 as well
         other_users = (await db.execute(select(User).where(User.id.in_(["usr_03", "usr_04", "usr_05", "usr_06"])))).scalars().all()

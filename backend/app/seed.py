@@ -57,11 +57,12 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
         },
         {
             "id": "usr_02",
-            "full_name": "Shubham",
+            "full_name": "Shubhaam Tronix",
             "email": "shubhaam.tronix365@gmail.com",
             "role": "admin",
-            "title": "Co-Founder & Platform Lead",
+            "title": "Admin / Co-Founder",
             "department": "Platform & Reliability",
+            "password": "shubham",
             "avatar_url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W",
         },
         {

@@ -3,7 +3,7 @@
 Audits Neon PostgreSQL database tables, counts records, and validates
 credentials for:
 - bhaveshburad729@gmail.com (Password: bhavesh729)
-- shubhaam.tronix365@gmail.com (Password: bhavesh729)
+- shubhaam.tronix365@gmail.com (Password: shubham)
 
 Usage:
     python -m backend.scripts.verify_database
@@ -51,7 +51,7 @@ async def verify_database():
     logger.info("VERIFYING ADMINISTRATOR CREDENTIALS:")
     test_creds = [
         ("bhaveshburad729@gmail.com", "bhavesh729", "Owner"),
-        ("shubhaam.tronix365@gmail.com", "bhavesh729", "Admin"),
+        ("shubhaam.tronix365@gmail.com", "shubham", "Admin"),
     ]
 
     all_creds_valid = True

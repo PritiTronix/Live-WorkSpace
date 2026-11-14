@@ -299,8 +299,8 @@ npm run dev
 ```
 - Client Application: `http://localhost:5173`
 - **Default Administrator Credentials:**
-  - **Owner:** `bhaveshburad729@gmail.com` | **Password:** `bhavesh729`
-  - **Admin:** `shubhaam.tronix365@gmail.com` | **Password:** `bhavesh729`
+  - **Owner / Founder:** `bhaveshburad729@gmail.com` | **Password:** `bhavesh729` (Bhavesh Burad)
+  - **Admin / Co-Founder:** `shubhaam.tronix365@gmail.com` | **Password:** `shubham` (Shubhaam Tronix)
 
 ### 3. Database Management Scripts (Migrations, Seeding, Cleaning & Reset)
 Industrial-grade automation scripts located in `backend/scripts/`:
