@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { projectsService } from '../../services/projectsService';
 
 const PRESET_ICONS = [
@@ -22,6 +23,8 @@ const PRESET_COLORS = [
  * Pixel-accurate modal dialog for creating a workspace project with real API persistence
  */
 export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
+  const triggerRef = useRef(null);
+  const modalRef = useRef(null);
   const [name, setName] = useState('Platform Revamp 2.0');
   const [key, setKey] = useState('PLTFRM');
   const [description, setDescription] = useState(
@@ -43,6 +46,40 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [calendarDay, setCalendarDay] = useState(15);
+
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('input, select, textarea')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Fetch users on open
   useEffect(() => {
@@ -149,7 +186,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const leadUser = users.find((u) => u.id === leadId) || users[0] || {
     id: 'usr_01',
@@ -168,16 +205,23 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
         u.department?.toLowerCase().includes(memberSearchQuery.toLowerCase()))
   );
 
-  return (
+  const modalContent = (
     <div
       id="modal-container"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-space-md overflow-y-auto bg-on-background/40 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative w-full max-w-[700px] my-auto bg-surface-card rounded-xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-border-subtle animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-[700px] my-auto bg-surface-card rounded-xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden border border-border-subtle animate-in zoom-in-95 duration-200 outline-none"
       >
         {/* Modal Header */}
         <div className="px-4 sm:px-space-xl pt-4 sm:pt-space-lg pb-3 sm:pb-space-md flex items-start justify-between bg-surface-card z-10 shrink-0 border-b border-surface-container">
@@ -793,6 +837,8 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default CreateProjectModal;

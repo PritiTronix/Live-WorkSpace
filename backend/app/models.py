@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 from backend.app.database import Base
 
@@ -39,7 +39,7 @@ class User(Base):
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False)
+    onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
     verification_token_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     verification_token_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     reset_token_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

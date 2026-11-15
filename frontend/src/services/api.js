@@ -56,6 +56,7 @@ export const DEFAULT_USER = {
   role: 'owner',
   department: 'Executive & Architecture',
   presence: 'ONLINE',
+  onboarding_completed: true,
   avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg',
 };
 
@@ -120,14 +121,25 @@ export const authService = {
   },
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get('/users/me');
-      if (response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      let response;
+      try {
+        response = await apiClient.get('/auth/me');
+      } catch {
+        response = await apiClient.get('/users/me');
       }
-      return response.data;
+      if (response?.data) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+        return response.data;
+      }
+      return authService.getCurrentUserSync();
     } catch {
       return authService.getCurrentUserSync();
     }
+  },
+  completeOnboarding: async () => {
+    const response = await apiClient.post('/auth/onboarding/complete');
+    await authService.getCurrentUser();
+    return response.data;
   },
   updatePresence: async (presence) => {
     try {

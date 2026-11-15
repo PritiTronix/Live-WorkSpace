@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { dashboardService, connectDashboardWebSocket } from '../../../services/api';
+import { dashboardService, connectDashboardWebSocket, authService } from '../../../services/api';
+import WelcomeModal from '../components/WelcomeModal';
 
 export const DashboardOverviewPage = () => {
   const navigate = useNavigate();
@@ -65,8 +66,20 @@ export const DashboardOverviewPage = () => {
   const [priorityTickets, setPriorityTickets] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('ALL');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   useEffect(() => {
+    // Check onboarding status from database
+    authService.getCurrentUser().then((userData) => {
+      if (userData) {
+        setCurrentUser(userData);
+        if (userData.onboarding_completed === false) {
+          setShowWelcomeModal(true);
+        }
+      }
+    });
+
     // Fetch initial state from service
     dashboardService.getMetrics().then(setMetrics);
     dashboardService.getTasksBreakdown().then(setTasksBreakdown);
@@ -93,6 +106,19 @@ export const DashboardOverviewPage = () => {
     };
   }, []);
 
+  const handleDismissWelcomeModal = async () => {
+    setShowWelcomeModal(false);
+    try {
+      await authService.completeOnboarding();
+      const refreshedUser = await authService.getCurrentUser();
+      if (refreshedUser) {
+        setCurrentUser(refreshedUser);
+      }
+    } catch (err) {
+      console.error('Failed to complete onboarding:', err);
+    }
+  };
+
   const filteredTickets = priorityTickets.filter((ticket) => {
     if (selectedPriorityFilter === 'ALL') return true;
     if (selectedPriorityFilter === 'BLOCKER') return ticket.severity === 'Blocker';
@@ -107,7 +133,7 @@ export const DashboardOverviewPage = () => {
       <div className="flex flex-wrap justify-between items-start gap-4">
         <div className="flex min-w-72 flex-col gap-1.5">
           <h1 className="text-text-primary text-3xl lg:text-4xl font-extrabold leading-tight tracking-[-0.033em] font-['Plus_Jakarta_Sans']">
-            Good Morning, Maya
+            Good Morning, {currentUser?.full_name?.split(' ')[0] || 'Maya'}
           </h1>
           <p className="text-[#5d4f96] text-sm lg:text-base font-normal leading-normal">
             Wednesday, Nov 26, 2025 • Live sync active • Here's what's happening across your workspace.
@@ -791,6 +817,15 @@ export const DashboardOverviewPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Screen: First Login Welcome Tour Dialog */}
+      {showWelcomeModal && (
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={handleDismissWelcomeModal}
+          userName={currentUser?.full_name || 'Team Member'}
+        />
+      )}
     </div>
   );
 };

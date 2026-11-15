@@ -1,12 +1,36 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
   const menuRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+
+    triggerRef.current = document.activeElement;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusTimer = setTimeout(() => {
+      menuRef.current?.focus();
+    }, 50);
+
+    return () => {
+      clearTimeout(focusTimer);
+      document.body.style.overflow = originalOverflow;
+      if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+        triggerRef.current.focus();
+      }
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        e.preventDefault();
+        onClose?.();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -22,20 +46,29 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
         !menuRef.current.contains(e.target) &&
         (!triggerBtn || !triggerBtn.contains(e.target))
       ) {
-        onClose();
+        onClose?.();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-[#141529]/20 backdrop-blur-xs flex items-start justify-end pt-18 pr-12 animate-in fade-in duration-150">
+  const menuContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Quick Create Menu"
+      className="fixed inset-0 z-[80] bg-[#141529]/20 backdrop-blur-xs flex items-start justify-end pt-18 pr-4 sm:pr-12 animate-in fade-in duration-150"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
       <div
         ref={menuRef}
-        className="w-full max-w-xl bg-surface-card rounded-2xl shadow-2xl overflow-hidden border border-border-subtle z-50"
+        tabIndex={-1}
+        className="w-full max-w-xl bg-surface-card rounded-2xl shadow-2xl overflow-hidden border border-border-subtle z-[85] focus:outline-none"
       >
         {/* Header */}
         <div className="px-space-lg py-space-md bg-canvas-lavender/60 flex items-center justify-between border-b border-border-subtle/40">
@@ -345,6 +378,8 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
       </div>
     </div>
   );
+
+  return createPortal(menuContent, document.body);
 };
 
 export default GlobalPlusMenu;

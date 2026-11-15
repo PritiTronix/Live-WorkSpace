@@ -87,6 +87,13 @@ class TokenRefreshRequest(BaseSchema):
     refresh_token: str
 
 
+class OnboardingCompleteResponse(BaseSchema):
+    success: bool = True
+    message: str = "Onboarding marked as completed"
+    onboarding_completed: bool = True
+    user: UserRead
+
+
 # --- Organization Schemas ---
 class OrganizationBase(BaseSchema):
     name: str

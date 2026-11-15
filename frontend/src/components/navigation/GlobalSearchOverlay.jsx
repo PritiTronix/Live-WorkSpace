@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { searchService } from '../../services/api';
 
 export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
   const navigate = useNavigate();
+  const triggerRef = useRef(null);
   const [query, setQuery] = useState('gateway-timeout');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedTicket, setSelectedTicket] = useState('TKT-1025');
@@ -17,6 +19,10 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
 
   useEffect(() => {
     if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
       searchService.getRecentSearches().then((res) => {
         if (Array.isArray(res) && res.length > 0) {
           setRecentSearches(res);
@@ -26,24 +32,28 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }, 50);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
     }
   }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
-        if (query) {
-          setQuery('');
-        } else {
-          onClose();
-        }
+        e.preventDefault();
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, query]);
+  }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   // Static items faithfully matching Stitch screen
   const tickets = [
@@ -176,8 +186,16 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
 
   const hasResults = totalResultsCount > 0;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-[#141529]/40 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:pt-8 overflow-y-auto">
+  const overlayContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Global Search"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      className="fixed inset-0 z-50 bg-[#141529]/40 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:pt-8 overflow-y-auto"
+    >
       {/* COMMAND PALETTE CONTAINER */}
       <div
         ref={containerRef}
@@ -744,6 +762,8 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
       </div>
     </div>
   );
+
+  return createPortal(overlayContent, document.body);
 };
 
 export default GlobalSearchOverlay;

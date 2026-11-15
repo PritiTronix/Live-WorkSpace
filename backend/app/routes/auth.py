@@ -11,7 +11,7 @@ from backend.app.core.config import settings
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
 from backend.app.models import User, Organization
-from backend.app.schemas import UserCreate, UserRead, Token, TokenRefreshRequest
+from backend.app.schemas import UserCreate, UserRead, Token, TokenRefreshRequest, OnboardingCompleteResponse
 from backend.app.core.security import (
     get_password_hash,
     verify_password,
@@ -91,6 +91,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
         is_active=True,
         email_verified=False,
+        onboarding_completed=False,
         organization_id=org.id,
         created_at=now,
     )
@@ -185,10 +186,25 @@ async def refresh_access_token(payload: TokenRefreshRequest, db: AsyncSession = 
 
 @router.get("/me", response_model=UserRead)
 async def get_current_authenticated_user(current_user: User = Depends(get_current_active_user)):
-    """Retrieve verified profile of currently authenticated user session."""
+    """Retrieve verified profile of currently authenticated user session including onboarding status."""
     return current_user
 
 
+@router.post("/onboarding/complete", response_model=OnboardingCompleteResponse)
+async def complete_onboarding(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark onboarding tour completed for the currently authenticated user in database."""
+    current_user.onboarding_completed = True
+    await db.commit()
+    await db.refresh(current_user)
+    return OnboardingCompleteResponse(
+        success=True,
+        message="Onboarding marked as completed",
+        onboarding_completed=True,
+        user=UserRead.model_validate(current_user),
+    )
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 

@@ -6,4 +6,5 @@ export { ResetPasswordPage } from './pages/ResetPasswordPage';
 export { VerifyEmailPage } from './pages/VerifyEmailPage';
 export { JoinOrgPage } from './pages/JoinOrgPage';
 export { LogoutModal } from './components/LogoutModal';
+export { WelcomeModal } from './components/WelcomeModal';
 

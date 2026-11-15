@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import ticketsService from '../../../services/ticketsService';
 import projectsService from '../../../services/projectsService';
 
@@ -12,6 +13,8 @@ import projectsService from '../../../services/projectsService';
  * Full state reset on open and close.
  */
 export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
+  const triggerRef = useRef(null);
+  const modalRef = useRef(null);
   // Empty default state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -40,9 +43,13 @@ export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
     setSubmitting(false);
   };
 
-  // Reset form whenever modal opens or closes
+  // Reset form whenever modal opens or closes & focus management
   useEffect(() => {
     if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
       resetForm();
 
       // Load real dropdown data
@@ -59,12 +66,37 @@ export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
         }
       };
       loadOptions();
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('input, select, textarea')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
     } else {
       resetForm();
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleClose = () => {
     resetForm();
@@ -102,9 +134,19 @@ export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle p-4 sm:p-6 md:p-space-xl flex flex-col gap-space-md sm:gap-space-lg animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] overflow-y-auto">
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create Ticket"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#141529]/50 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-150"
+    >
+      <div
+        ref={modalRef}
+        className="w-full max-w-2xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle p-4 sm:p-6 md:p-space-xl flex flex-col gap-space-md sm:gap-space-lg animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[92vh] overflow-y-auto focus:outline-none">
         {/* Header */}
         <div className="flex items-center justify-between pb-space-sm border-b border-border-subtle/60">
           <div>
@@ -286,6 +328,8 @@ export const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default CreateTicketModal;
