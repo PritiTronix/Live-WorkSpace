@@ -17,6 +17,8 @@ class UserBase(BaseSchema):
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+    email_verified: bool = False
+    onboarding_completed: bool = False
 
 
 class UserCreate(BaseSchema):
