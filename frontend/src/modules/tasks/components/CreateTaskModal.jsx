@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   TASK_STATUS_OPTIONS,
   TASK_STATUS_LABEL,
@@ -22,6 +23,7 @@ export const CreateTaskModal = ({
   onCreateTask,
 }) => {
   const modalRef = useRef(null);
+  const triggerRef = useRef(null);
 
   // All fields start strictly EMPTY
   const [title, setTitle] = useState('');
@@ -34,9 +36,13 @@ export const CreateTaskModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Reset form to empty on open/close
+  // Reset form to empty on open/close & focus management
   useEffect(() => {
     if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
       setTitle('');
       setDescription('');
       setStatus('');
@@ -46,6 +52,18 @@ export const CreateTaskModal = ({
       setDueDate('');
       setErrorMessage('');
       setIsSubmitting(false);
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('input, select, textarea, button')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
     }
   }, [isOpen]);
 
@@ -60,7 +78,7 @@ export const CreateTaskModal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,8 +112,16 @@ export const CreateTaskModal = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create Task"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#141529]/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+    >
       <div
         ref={modalRef}
         className="w-full max-w-xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle overflow-hidden z-50 animate-in zoom-in-95 duration-150"
@@ -282,6 +308,8 @@ export const CreateTaskModal = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default CreateTaskModal;

@@ -2,34 +2,91 @@
  * NotificationDropdown (Prompt 16)
  * Popover panel anchored to the bell icon in GlobalTopBar.
  * Shows up to 5 recent notifications with mark-read actions and a link to the full center.
+ * Rendered through a React portal into document.body to avoid header clipping.
  */
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import NotificationItem from './NotificationItem';
 import useNotifications from '../hooks/useNotifications';
 
-export const NotificationDropdown = ({ isOpen, onClose }) => {
+export const NotificationDropdown = ({ isOpen, onClose, triggerRef: triggerRefProp }) => {
   const { notifications, unreadCount, loading, markRead, markAllRead } = useNotifications();
+  const dropdownRef = useRef(null);
+  const triggerRef = useRef(null);
+  const [positionStyle, setPositionStyle] = useState({ top: 68, right: 24 });
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+
+    triggerRef.current = triggerRefProp?.current || document.activeElement;
+
+    // Calculate position anchored to bell icon
+    const trigger = triggerRefProp?.current || document.getElementById('notif-bell-btn') || triggerRef.current;
+    if (trigger && typeof trigger.getBoundingClientRect === 'function') {
+      const rect = trigger.getBoundingClientRect();
+      setPositionStyle({
+        top: Math.round(rect.bottom + 8),
+        right: Math.max(16, Math.round(window.innerWidth - rect.right)),
+      });
+    }
+
+    const timer = setTimeout(() => {
+      const focusable = dropdownRef.current?.querySelector('button, [href], [tabindex]:not([tabindex="-1"])');
+      if (focusable) {
+        focusable.focus();
+      } else {
+        dropdownRef.current?.focus?.();
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      const targetTrigger = triggerRefProp?.current || triggerRef.current || document.getElementById('notif-bell-btn');
+      if (targetTrigger && document.body.contains(targetTrigger) && typeof targetTrigger.focus === 'function') {
+        targetTrigger.focus();
+      }
+    };
+  }, [isOpen, triggerRefProp]);
+
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const preview = notifications.slice(0, 5);
   const hasNotifications = preview.length > 0;
 
-  return (
-    <>
-      {/* Backdrop */}
+  const dropdownContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Notifications"
+      className="fixed inset-0 z-50 pointer-events-none"
+    >
+      {/* Full-screen Backdrop */}
       <div
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-40 bg-transparent pointer-events-auto"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Panel */}
       <div
-        className="absolute right-0 top-14 w-96 bg-surface-card rounded-2xl shadow-2xl border border-border-subtle z-50 overflow-hidden"
-        role="dialog"
-        aria-label="Notifications"
+        ref={dropdownRef}
+        tabIndex={-1}
+        style={{ top: `${positionStyle.top}px`, right: `${positionStyle.right}px` }}
+        className="fixed w-96 max-w-[calc(100vw-2rem)] bg-surface-card rounded-2xl shadow-2xl border border-border-subtle z-50 overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
@@ -105,8 +162,10 @@ export const NotificationDropdown = ({ isOpen, onClose }) => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
+
+  return createPortal(dropdownContent, document.body);
 };
 
 export default NotificationDropdown;

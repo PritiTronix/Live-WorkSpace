@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService, DEFAULT_USER } from '../../services/api';
+import { authService } from '../../services/api';
 import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
 import LogoutModal from '../../modules/auth/components/LogoutModal';
 
@@ -14,13 +14,14 @@ export const GlobalTopBar = ({
   isCollapsed = false,
 }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(() => authService.getCurrentUserSync());
+  const [user, setUser] = useState(() => authService.getCurrentUserSync() || { full_name: 'Team Member', role: 'Operations', avatar_url: '' });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [presence, setPresence] = useState('ONLINE');
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const profileRef = useRef(null);
+  const profileTriggerRef = useRef(null);
   const notifRef = useRef(null);
 
   useEffect(() => {
@@ -45,6 +46,18 @@ export const GlobalTopBar = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Esc key listener for profile popover
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isProfileOpen) {
+        setIsProfileOpen(false);
+        profileTriggerRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isProfileOpen]);
 
   const handlePresenceChange = async (newPresence) => {
     setPresence(newPresence);
@@ -132,6 +145,7 @@ export const GlobalTopBar = ({
           <div ref={notifRef} className="relative">
             {slaBreachCount > 0 ? (
               <button
+                id="notif-bell-btn"
                 aria-label="Active Breach Notifications"
                 onClick={() => setIsNotifOpen((prev) => !prev)}
                 className={`relative w-10 h-10 rounded-lg bg-error-container text-severity-blocker flex items-center justify-center shadow-sm hover:bg-error-container/80 transition-colors ${isNotifOpen ? 'ring-2 ring-severity-blocker' : ''}`}
@@ -149,6 +163,7 @@ export const GlobalTopBar = ({
               </button>
             ) : (
               <button
+                id="notif-bell-btn"
                 aria-label="Notifications"
                 onClick={() => setIsNotifOpen((prev) => !prev)}
                 className={`relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors ${isNotifOpen ? 'bg-canvas-lavender text-primary' : ''}`}
@@ -167,6 +182,7 @@ export const GlobalTopBar = ({
             <NotificationDropdown
               isOpen={isNotifOpen}
               onClose={() => setIsNotifOpen(false)}
+              triggerRef={notifRef}
             />
           </div>
 
@@ -183,7 +199,20 @@ export const GlobalTopBar = ({
         {/* User Profile Context & Dropdown Trigger */}
         <div ref={profileRef} className="relative">
           <div
+            id="user-profile-trigger"
+            ref={profileTriggerRef}
+            tabIndex={0}
+            role="button"
+            aria-label="User profile menu"
+            aria-haspopup="true"
+            aria-expanded={isProfileOpen}
             onClick={() => setIsProfileOpen(!isProfileOpen)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsProfileOpen((prev) => !prev);
+              }
+            }}
             className={`flex items-center gap-space-sm pl-space-xs cursor-pointer group rounded-lg p-1 transition-all ${
               isProfileOpen ? 'bg-canvas-lavender ring-2 ring-primary' : 'hover:bg-canvas-lavender'
             }`}
@@ -305,6 +334,7 @@ export const GlobalTopBar = ({
             isOpen={isLogoutModalOpen}
             onClose={() => setIsLogoutModalOpen(false)}
             currentUser={user}
+            triggerRef={profileTriggerRef}
           />
         </div>
       </div>

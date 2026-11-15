@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { discussionsService } from '../../../services/discussionsService';
 
 export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) => {
+  const triggerRef = useRef(null);
+  const modalRef = useRef(null);
   const [discussionType, setDiscussionType] = useState('discussion'); // announcement, discussion, question
   const [audienceScope, setAudienceScope] = useState('All Engineering & SRE');
   const [title, setTitle] = useState('');
@@ -12,7 +15,41 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!isOpen) return null;
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('input, textarea, select')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files || []);
@@ -62,8 +99,15 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto">
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs overflow-y-auto"
+    >
       <div className="relative bg-surface-card w-full max-w-2xl rounded-2xl shadow-2xl border border-border-subtle overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
         {/* Modal Top Accent Banner */}
         <div className="h-1.5 bg-gradient-to-r from-btn-primary via-primary-light to-secondary-container" />
@@ -365,6 +409,8 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default CreateDiscussionModal;

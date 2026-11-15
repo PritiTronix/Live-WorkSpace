@@ -16,6 +16,7 @@ export const ConfirmationDialog = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   isLoading = false,
+  triggerRef,
   children,
 }) => {
   const variantConfig = {
@@ -78,6 +79,7 @@ export const ConfirmationDialog = ({
       size="sm"
       footer={footer}
       showCloseButton={!isLoading}
+      triggerRef={triggerRef}
     >
       <div className="flex flex-col items-center text-center">
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${variantConfig.iconBg}`}>

@@ -1,14 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { filesService } from '../../../services/filesService';
 
 export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = [] }) => {
+  const triggerRef = useRef(null);
+  const modalRef = useRef(null);
   const [queue, setQueue] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [relatedTicket, setRelatedTicket] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  if (!isOpen) return null;
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('button, input, select, textarea')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleFileSelection = (e) => {
     const files = Array.from(e.target.files || []);
@@ -74,8 +111,15 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+    >
       <div className="relative bg-surface-card w-full max-w-[520px] rounded-xl shadow-2xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-canvas-lavender/40">
@@ -250,6 +294,8 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default FileUploadModal;

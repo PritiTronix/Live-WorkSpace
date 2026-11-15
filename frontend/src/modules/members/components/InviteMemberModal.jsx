@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, UserPlus, Mail, Shield, CheckCircle2, AlertCircle, Send, FolderGit2 } from 'lucide-react';
 import { membersService } from '../../../services/membersService';
 import { projectsService } from '../../../services/projectsService';
 
 export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
+  const triggerRef = useRef(null);
+  const modalRef = useRef(null);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('employee');
   const [selectedProjects, setSelectedProjects] = useState([]);
@@ -12,6 +15,40 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (isOpen) {
+      triggerRef.current = document.activeElement;
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const timer = setTimeout(() => {
+        modalRef.current?.querySelector('input, select, textarea')?.focus();
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = originalOverflow;
+        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
+          triggerRef.current.focus();
+        }
+      };
+    }
+  }, [isOpen]);
+
+  // Esc key listener
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,7 +73,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -78,9 +115,21 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141529]/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-[560px] bg-white dark:bg-[#1a1b32] rounded-2xl shadow-2xl border border-[#E5E5EF] dark:border-[#2e2f41] overflow-hidden max-h-[92vh] flex flex-col">
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Invite Team Member"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#141529]/50 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto"
+    >
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        className="relative w-full max-w-[560px] bg-white dark:bg-[#1a1b32] rounded-2xl shadow-2xl border border-[#E5E5EF] dark:border-[#2e2f41] overflow-hidden max-h-[92vh] flex flex-col focus:outline-none"
+      >
         {/* Modal Header */}
         <div className="px-6 py-5 bg-white dark:bg-[#1a1b32] flex items-center justify-between border-b border-[#E5E5EF] dark:border-[#2e2f41]">
           <div className="flex items-center gap-3">
@@ -350,6 +399,8 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default InviteMemberModal;

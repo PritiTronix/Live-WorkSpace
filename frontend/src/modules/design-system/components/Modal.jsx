@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 /**
  * Reusable Base Modal Component (Prompt 81 / Screen 22)
  * Features:
- * - Backdrop blur overlay
+ * - Rendered through React portal into document.body
+ * - Backdrop blur full-screen overlay (fixed, inset 0, high z-index)
+ * - Centered dialog layout
  * - Escape key listener & outside-click dismissal
+ * - Focus moves into dialog on open and returns to trigger on close
  * - Responsive size variants: sm (400px), md (520px), lg (680px), xl (860px)
  * - Accessible dialog role and focus trap handling
  */
@@ -21,11 +25,54 @@ export const Modal = ({
   showCloseButton = true,
   closeOnBackdrop = true,
   closeOnEscape = true,
+  triggerRef: triggerRefProp,
 }) => {
+  const modalRef = useRef(null);
+  const triggerRef = useRef(null);
+
+  // Focus management & body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+
+    triggerRef.current = triggerRefProp?.current || document.activeElement;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Move focus into the dialog
+    const focusTimer = setTimeout(() => {
+      if (!modalRef.current) return;
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      } else {
+        modalRef.current.focus?.();
+      }
+    }, 50);
+
+    return () => {
+      clearTimeout(focusTimer);
+      document.body.style.overflow = originalOverflow;
+      const targetTrigger = triggerRefProp?.current || triggerRef.current;
+      if (targetTrigger && document.body.contains(targetTrigger) && typeof targetTrigger.focus === 'function') {
+        targetTrigger.focus();
+      } else {
+        const fallback =
+          document.getElementById('user-profile-trigger') ||
+          document.getElementById('create-action-btn') ||
+          document.getElementById('notif-bell-btn');
+        fallback?.focus?.();
+      }
+    };
+  }, [isOpen, triggerRefProp]);
+
+  // Escape key listener
   useEffect(() => {
     if (!isOpen || !closeOnEscape) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
+        e.preventDefault();
         onClose?.();
       }
     };
@@ -33,7 +80,7 @@ export const Modal = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeOnEscape, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const sizeClasses = {
     sm: 'max-w-sm',
@@ -42,21 +89,29 @@ export const Modal = ({
     xl: 'max-w-4xl',
   }[size] || 'max-w-lg';
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (closeOnBackdrop && e.target === e.currentTarget) {
+          onClose?.();
+        }
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
     >
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-[#141529]/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
         onClick={closeOnBackdrop ? onClose : undefined}
+        aria-hidden="true"
       />
 
       {/* Modal Surface */}
       <div
-        className={`relative w-full ${sizeClasses} bg-white rounded-2xl shadow-2xl border border-border-subtle overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200`}
+        ref={modalRef}
+        tabIndex={-1}
+        className={`relative w-full ${sizeClasses} bg-white rounded-2xl shadow-2xl border border-border-subtle overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-200 outline-none`}
       >
         {/* Header */}
         {(title || showCloseButton) && (
@@ -108,6 +163,8 @@ export const Modal = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal;

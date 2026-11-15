@@ -13,6 +13,7 @@ export const LogoutModal = ({
   isOpen,
   onClose,
   currentUser = DEFAULT_USER,
+  triggerRef,
 }) => {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -57,6 +58,7 @@ export const LogoutModal = ({
       size="sm"
       footer={footer}
       showCloseButton={!isLoggingOut}
+      triggerRef={triggerRef}
     >
       <div className="flex flex-col items-center text-center">
         {/* Warning Icon Badge */}
