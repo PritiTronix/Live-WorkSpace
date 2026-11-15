@@ -16,6 +16,7 @@ class UserBase(BaseSchema):
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+    onboarding_completed: bool = False
 
 
 class UserCreate(BaseSchema):
@@ -65,6 +66,13 @@ class ReactionRequest(BaseSchema):
 class Token(BaseSchema):
     access_token: str
     token_type: str = "bearer"
+
+
+class OnboardingCompleteResponse(BaseSchema):
+    success: bool = True
+    message: str = "Onboarding marked as completed"
+    onboarding_completed: bool = True
+    user: UserRead
 
 
 # --- Organization Schemas ---

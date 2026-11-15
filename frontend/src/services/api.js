@@ -29,6 +29,7 @@ export const DEFAULT_USER = {
   role: 'SRE Lead',
   department: 'Platform & Reliability',
   presence: 'ONLINE',
+  onboarding_completed: true,
   avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrAtOdrqsfXwMC1ggrSafmjA3tRiDOW6nsEXFzXsENjtoM3FWwKbLJA1BlzO43CGB9bykeRE8VGswBaHL8HX-wkA95x3YEk8Ido2sEJcvrr_WEWIIuLU9bOpJslSnCE2ZSZRXsXWqYDmuU8pTNCkkoaTZCzOhLNNQ2NT6sZn8vHrb0A-JPplRuViYPfX-t01H6IZLWAE4pWnivGDAtKKzl6WhvmKwlqcCaUb4gPTna',
 };
 
@@ -73,14 +74,25 @@ export const authService = {
   },
   getCurrentUser: async () => {
     try {
-      const response = await apiClient.get('/users/me');
-      if (response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      let response;
+      try {
+        response = await apiClient.get('/auth/me');
+      } catch {
+        response = await apiClient.get('/users/me');
       }
-      return response.data;
+      if (response?.data) {
+        localStorage.setItem('user', JSON.stringify(response.data));
+        return response.data;
+      }
+      return authService.getCurrentUserSync();
     } catch {
       return authService.getCurrentUserSync();
     }
+  },
+  completeOnboarding: async () => {
+    const response = await apiClient.post('/auth/onboarding/complete');
+    await authService.getCurrentUser();
+    return response.data;
   },
   updatePresence: async (presence) => {
     try {
