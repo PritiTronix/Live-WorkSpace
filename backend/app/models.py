@@ -20,6 +20,7 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    plan: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="Standard")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     users: Mapped[list["User"]] = relationship(back_populates="organization", cascade="all, delete-orphan")

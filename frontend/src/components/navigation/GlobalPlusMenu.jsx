@@ -246,7 +246,7 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
                   <span className="material-symbols-outlined text-[14px] text-severity-critical">
                     admin_panel_settings
                   </span>
-                  <span>Requires Admin Privileges - Acme Technologies</span>
+                  <span>Requires Admin Privileges</span>
                 </div>
               </div>
 

@@ -32,6 +32,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { settingsService } from '../../../services/settingsService';
+import { authService } from '../../../services/api';
 
 export const SlaConfigPage = ({ initialTab = 'sla' }) => {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
 
   useEffect(() => {
     // Sync tab with pathname if matching
@@ -427,11 +429,11 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
                   </p>
                   <button
                     type="button"
-                    onClick={() => triggerToast('10 Observed 2025 Engineering Holidays Active (SLA clock pauses during observed dates)')}
+                    onClick={() => triggerToast('Observed Engineering Holidays Active (SLA clock pauses during observed dates)')}
                     className="w-full py-2 bg-[#F5F4FC] dark:bg-[#242542] hover:bg-[#eeecff] dark:hover:bg-[#2e2f41] text-[#6040F0] text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4" />
-                    <span>Manage Holidays (2025)</span>
+                    <span>Manage Holidays</span>
                   </button>
                 </div>
                 <p className="text-xs text-[#9C9CA9]">Next upcoming: Memorial Day (May 26)</p>
@@ -1010,7 +1012,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
               </div>
               <div className="min-w-0">
                 <span className="text-sm font-semibold text-[#141529] dark:text-white block truncate">
-                  alex.rivera@tronix365.io
+                  {currentUser?.email || 'admin@workspace.internal'}
                 </span>
                 <span className="text-xs text-[#9C9CA9]">Primary Mail Delivery</span>
               </div>

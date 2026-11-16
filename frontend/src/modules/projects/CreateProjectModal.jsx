@@ -25,21 +25,23 @@ const PRESET_COLORS = [
 export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   const triggerRef = useRef(null);
   const modalRef = useRef(null);
-  const [name, setName] = useState('Platform Revamp 2.0');
-  const [key, setKey] = useState('PLTFRM');
-  const [description, setDescription] = useState(
-    'Unified redesign of enterprise ticketing pipeline, real-time SLA monitors, and cross-team incident triage hub.'
-  );
+  const [name, setName] = useState('');
+  const [key, setKey] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('rocket_launch');
   const [selectedColor, setSelectedColor] = useState('bg-btn-primary');
-  const [leadId, setLeadId] = useState('usr_01');
+  const [leadId, setLeadId] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [timelinePreset, setTimelinePreset] = useState('1 Quarter');
-  const [startDate, setStartDate] = useState('2025-12-01');
-  const [targetDate, setTargetDate] = useState('2026-03-15');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [targetDate, setTargetDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 3);
+    return d.toISOString().slice(0, 10);
+  });
   const [visibility, setVisibility] = useState('org');
   const [status, setStatus] = useState('Active');
   const [slaTier, setSlaTier] = useState('Standard SaaS Tier 1');
@@ -288,7 +290,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                     type="text"
                     maxLength={50}
                     className="w-full h-10 px-3.5 pr-10 rounded-lg bg-canvas-main font-body-md text-body-md text-text-primary placeholder:text-text-muted shadow-sm focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-primary/20 transition-all border border-border-subtle"
-                    placeholder="e.g., Platform Revamp 2.0"
+                    placeholder="e.g., Cloud Infrastructure Migration"
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
                     required
@@ -480,7 +482,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                   <div className="absolute left-0 right-0 top-full mt-1 bg-surface-card rounded-lg shadow-xl p-space-sm space-y-1 z-30 border border-border-subtle max-h-48 overflow-y-auto">
                     <div className="flex items-center justify-between px-space-xs pb-1 font-label-sm text-label-sm text-text-muted">
                       <span>Suggested Teammates</span>
-                      <span>Tronix365 Org</span>
+                      <span>Organization</span>
                     </div>
                     {suggestedUsers.slice(0, 5).map((user) => (
                       <div
@@ -721,7 +723,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                     <span className="font-label-md text-label-md text-text-primary font-bold">Organization-wide</span>
                   </div>
                   <span className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                    All active members of Acme Technologies can view, comment, and participate in project tasks.
+                    All active members of your organization can view, comment, and participate in project tasks.
                   </span>
                 </div>
               </label>

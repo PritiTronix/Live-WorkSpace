@@ -59,6 +59,10 @@ class UnreadCountResponse(BaseModel):
     unread_count: int
 
 
+class InboxCountResponse(BaseModel):
+    inbox_count: int
+
+
 class MarkReadRequest(BaseModel):
     notification_id: str
 
@@ -161,6 +165,23 @@ async def get_unread_count(
     res = await db.execute(unread_q)
     count = res.scalar() or 0
     return UnreadCountResponse(unread_count=count)
+
+
+@router.get("/inbox-count", response_model=InboxCountResponse, summary="Inbox badge count")
+async def get_inbox_count(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Returns unread actionable notification count (assigned tickets, mentions, comments) for the user."""
+    inbox_q = select(func.count(Notification.id)).where(
+        Notification.user_id == current_user.id,
+        Notification.organization_id == current_user.organization_id,
+        Notification.is_read.is_(False),
+        Notification.type.in_(["ticket_assigned", "mention", "comment"])
+    )
+    res = await db.execute(inbox_q)
+    count = res.scalar() or 0
+    return InboxCountResponse(inbox_count=count)
 
 
 @router.patch("/{notification_id}/read", summary="Mark a notification as read")

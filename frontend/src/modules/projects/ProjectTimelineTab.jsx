@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
 import CreateTaskModal from '../tasks/components/CreateTaskModal';
@@ -20,6 +20,19 @@ export const ProjectTimelineTab = () => {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const dateRangeLabel = useMemo(() => {
+    if (project?.start_date && project?.target_date) {
+      const s = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(project.start_date));
+      const e = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(project.target_date));
+      return `${s} - ${e}`;
+    }
+    const now = new Date();
+    const plus30 = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
+    const s = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(now);
+    const e = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(plus30);
+    return `${s} - ${e}`;
+  }, [project?.start_date, project?.target_date]);
 
   const fetchTasks = async () => {
     try {
@@ -124,7 +137,7 @@ export const ProjectTimelineTab = () => {
           {/* Date Range Display */}
           <div className="flex items-center gap-2 text-text-secondary font-label-md text-label-md bg-canvas-main px-3 py-1.5 rounded-lg border border-border-subtle">
             <span className="material-symbols-outlined text-[16px] text-text-muted">calendar_month</span>
-            <span>Nov 10, 2025 - Dec 28, 2025</span>
+            <span>{dateRangeLabel}</span>
             <span className="px-1.5 py-0.2 rounded bg-primary-fixed text-primary font-bold text-[10px]">Sprint 4-6</span>
           </div>
 

@@ -2,6 +2,7 @@ import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -180,6 +181,148 @@ async def list_team_members(
         .order_by(User.full_name)
     )
     return res.scalars().all()
+
+
+class TeamSummaryResponse(BaseModel):
+    total_members: int
+    active_count: int
+    inactive_count: int
+    pending_invitations_count: int
+    department_counts: Dict[str, int]
+    role_counts: Dict[str, int]
+    average_workload: Optional[float] = None
+    workload_status: Optional[str] = None
+
+
+class UserInvitationItem(BaseModel):
+    id: str
+    email: str
+    role: str
+    status: str
+    created_at: datetime
+    expires_at: datetime
+
+
+@router.get("/summary", response_model=TeamSummaryResponse)
+async def get_team_members_summary(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Calculated workforce summary scoped to user's organization."""
+    if not current_user.organization_id:
+        return TeamSummaryResponse(
+            total_members=1,
+            active_count=1,
+            inactive_count=0,
+            pending_invitations_count=0,
+            department_counts={current_user.department or "General": 1},
+            role_counts={current_user.role or "member": 1},
+            average_workload=None,
+            workload_status=None,
+        )
+
+    # All users in org
+    res = await db.execute(
+        select(User).where(User.organization_id == current_user.organization_id)
+    )
+    users = res.scalars().all()
+
+    total = len(users)
+    active = sum(1 for u in users if u.is_active)
+    inactive = total - active
+
+    # Pending invitations
+    inv_res = await db.execute(
+        select(UserInvitation).where(
+            UserInvitation.organization_id == current_user.organization_id,
+            UserInvitation.status == "pending"
+        )
+    )
+    invitations = inv_res.scalars().all()
+    pending_invs = len(invitations)
+
+    # Department breakdown
+    dept_counts: Dict[str, int] = {}
+    for u in users:
+        dept = u.department or "Engineering"
+        dept_counts[dept] = dept_counts.get(dept, 0) + 1
+
+    # Role breakdown
+    role_counts: Dict[str, int] = {}
+    for u in users:
+        r = u.role or "member"
+        role_counts[r] = role_counts.get(r, 0) + 1
+
+    # Real workload calculation across members from assigned active tickets and tasks
+    # Active tickets per user
+    tk_res = await db.execute(
+        select(Ticket.assignee_id)
+        .join(Project, Ticket.project_id == Project.id)
+        .where(
+            Project.organization_id == current_user.organization_id,
+            Ticket.status.notin_(["closed", "resolved"]),
+            Ticket.assignee_id.isnot(None)
+        )
+    )
+    active_tk_assignees = tk_res.scalars().all()
+
+    task_res = await db.execute(
+        select(Task.assignee_id).where(
+            Task.organization_id == current_user.organization_id,
+            Task.status.notin_(["done", "cancelled"]),
+            Task.assignee_id.isnot(None)
+        )
+    )
+    active_task_assignees = task_res.scalars().all()
+
+    total_active_items = len(active_tk_assignees) + len(active_task_assignees)
+    if total > 0 and total_active_items > 0:
+        avg_items_per_user = total_active_items / total
+        avg_workload = min(100.0, max(15.0, round(avg_items_per_user * 18.0, 1)))
+        status_label = "Optimal" if avg_workload < 80 else "High"
+    else:
+        avg_workload = None
+        status_label = None
+
+    return TeamSummaryResponse(
+        total_members=total,
+        active_count=active,
+        inactive_count=inactive,
+        pending_invitations_count=pending_invs,
+        department_counts=dept_counts,
+        role_counts=role_counts,
+        average_workload=avg_workload,
+        workload_status=status_label,
+    )
+
+
+@router.get("/invitations", response_model=List[UserInvitationItem])
+async def list_pending_invitations(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List pending invitations for the caller's organization."""
+    if not current_user.organization_id:
+        return []
+
+    res = await db.execute(
+        select(UserInvitation).where(
+            UserInvitation.organization_id == current_user.organization_id,
+            UserInvitation.status == "pending"
+        ).order_by(UserInvitation.created_at.desc())
+    )
+    invs = res.scalars().all()
+    return [
+        UserInvitationItem(
+            id=i.id,
+            email=i.email,
+            role=i.role,
+            status=i.status,
+            created_at=i.created_at,
+            expires_at=i.expires_at,
+        )
+        for i in invs
+    ]
 
 
 @router.get("/{user_id}")

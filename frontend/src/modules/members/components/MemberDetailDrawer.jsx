@@ -121,7 +121,7 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData }) => {
               </span>
               <div className="flex items-center justify-between mt-1">
                 <span className="text-xs font-semibold text-[#141529] dark:text-white truncate">
-                  {member?.email || 'aarav.mehta@tronix365.internal'}
+                  {member?.email || ''}
                 </span>
                 <button
                   onClick={handleCopyEmail}
@@ -233,16 +233,7 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData }) => {
                       </span>
                     ))
                   ) : (
-                    <>
-                      <span className="px-3 py-1 bg-white dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41] rounded-lg text-[#141529] dark:text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs">
-                        <span className="w-2 h-2 rounded-full bg-[#6040F0]"></span>
-                        Platform Revamp 2.0
-                      </span>
-                      <span className="px-3 py-1 bg-white dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41] rounded-lg text-[#141529] dark:text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs">
-                        <span className="w-2 h-2 rounded-full bg-[#3888F8]"></span>
-                        Auth Gateway
-                      </span>
-                    </>
+                    <span className="text-xs text-[#9C9CA9]">No projects assigned</span>
                   )}
                 </div>
               </div>

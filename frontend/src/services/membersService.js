@@ -11,6 +11,24 @@ export const membersService = {
     return response.data;
   },
 
+  getSummary: async () => {
+    try {
+      const response = await apiClient.get('/users/summary');
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  listInvitations: async () => {
+    try {
+      const response = await apiClient.get('/users/invitations');
+      return response.data || [];
+    } catch {
+      return [];
+    }
+  },
+
   inviteMember: async (data, projectId = null) => {
     if (projectId) {
       const response = await apiClient.post(`/projects/${projectId}/members`, data);

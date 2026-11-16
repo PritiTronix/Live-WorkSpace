@@ -98,11 +98,13 @@ class OnboardingCompleteResponse(BaseSchema):
 class OrganizationBase(BaseSchema):
     name: str
     slug: str
+    plan: Optional[str] = "Standard"
 
 
 class OrganizationRead(OrganizationBase):
     id: str
     created_at: datetime
+    plan: Optional[str] = "Standard"
 
 
 # --- Project Member & Invitation Schemas ---

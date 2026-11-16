@@ -1,23 +1,17 @@
 /**
- * Sidebar — Batch 2 extended version
- * Covers all states from "Sidebar Component States (Prompt 12)" and
- * "Sidebar Component States (Cleaned)":
- *   - Expanded (w-72) and Collapsed (w-20)
- *   - Active nav item highlight (bg-canvas-lavender + primary text)
- *   - Hover state (hover:bg-canvas-lavender)
- *   - Tooltip on collapsed items (shown via title / aria-label)
- *   - Badge/counter on nav items (Notifications, Inbox)
- *   - Nested sub-navigation for Tickets section
- *   - Org switcher in expanded mode
- *   - User card at bottom
- *   - Mobile mode: full-width, close button replaces collapse toggle
- *
- * "(Cleaned)" is used as source of truth; "(Prompt 12)" adds the nested
- * Tickets sub-nav rows which are incorporated here.
+ * Sidebar
+ * Real-time, per-user organization switcher, live badges, and dynamic user card.
  */
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { DEFAULT_USER, authService } from '../../services/api';
+import { authService, organizationService } from '../../services/api';
+
+const getInitials = (str) => {
+  if (!str) return 'W';
+  const parts = str.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return str.slice(0, 2).toUpperCase();
+};
 
 /** Single nav link with optional badge and tooltip for collapsed state */
 const NavItem = ({ to, icon, label, badge, isCollapsed, end = false }) => (
@@ -117,16 +111,41 @@ export const Sidebar = ({
   isCollapsed,
   onToggleCollapse,
   unreadNotifications = 0,
+  inboxCount = 0,
+  priorityIssuesCount = 0,
   isMobile = false,
 }) => {
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
+  const [organizations, setOrganizations] = useState([]);
+  const [currentOrg, setCurrentOrg] = useState(null);
+  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     authService.getCurrentUser().then((user) => {
       if (mounted && user) setCurrentUser(user);
     });
-    return () => { mounted = false; };
+
+    organizationService.list().then((orgs) => {
+      if (mounted && orgs && orgs.length > 0) {
+        setOrganizations(orgs);
+        setCurrentOrg(orgs[0]);
+      }
+    });
+
+    organizationService.getCurrent().then((workspace) => {
+      if (mounted && workspace?.name) {
+        setCurrentOrg((prev) => ({
+          ...prev,
+          name: workspace.name,
+          plan: prev?.plan || 'Standard',
+        }));
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
@@ -140,14 +159,16 @@ export const Sidebar = ({
         <div className="flex items-center justify-between pb-space-sm">
           <div className="flex items-center gap-space-sm">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm font-bold shadow-sm flex-shrink-0">
-              LW
+              {getInitials(currentOrg?.name || 'Live Workspace')}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
                 <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">
                   Live Workspace
                 </span>
-                <span className="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud</span>
+                <span className="font-label-sm text-label-sm text-text-muted truncate max-w-[130px]">
+                  {currentOrg?.name || 'Workspace'}
+                </span>
               </div>
             )}
           </div>
@@ -163,19 +184,55 @@ export const Sidebar = ({
           </button>
         </div>
 
-        {/* Org Switcher */}
+        {/* Org Switcher (Real Organization Data Only) */}
         {!isCollapsed && (
-          <div className="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between border border-border-subtle cursor-pointer hover:bg-canvas-lavender transition-colors">
-            <div className="flex items-center gap-space-sm">
-              <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold">
-                AT
-              </span>
-              <div className="flex flex-col text-left">
-                <span className="font-label-md text-label-md text-text-primary truncate max-w-[120px]">Acme Tech</span>
-                <span className="font-label-sm text-label-sm text-primary">Enterprise Pro</span>
+          <div className="relative">
+            <div
+              onClick={() => organizations.length > 1 && setIsOrgDropdownOpen((p) => !p)}
+              className={`mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between border border-border-subtle transition-colors ${
+                organizations.length > 1 ? 'cursor-pointer hover:bg-canvas-lavender' : ''
+              }`}
+            >
+              <div className="flex items-center gap-space-sm min-w-0">
+                <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
+                  {getInitials(currentOrg?.name || 'Workspace')}
+                </span>
+                <div className="flex flex-col text-left min-w-0">
+                  <span className="font-label-md text-label-md text-text-primary truncate max-w-[130px]">
+                    {currentOrg?.name || 'Workspace'}
+                  </span>
+                  <span className="font-label-sm text-label-sm text-primary capitalize">
+                    {currentOrg?.plan || 'Standard'}
+                  </span>
+                </div>
               </div>
+              {organizations.length > 1 && (
+                <span className="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span>
+              )}
             </div>
-            <span className="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span>
+
+            {isOrgDropdownOpen && organizations.length > 1 && (
+              <div className="absolute top-full left-0 right-0 z-50 bg-surface-card border border-border-subtle rounded-lg shadow-lg p-1 space-y-1 mt-1">
+                {organizations.map((org) => (
+                  <div
+                    key={org.id}
+                    onClick={() => {
+                      setCurrentOrg(org);
+                      setIsOrgDropdownOpen(false);
+                    }}
+                    className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-canvas-lavender cursor-pointer text-xs"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="w-5 h-5 rounded bg-canvas-lavender flex items-center justify-center text-primary font-bold text-[10px] flex-shrink-0">
+                        {getInitials(org.name)}
+                      </span>
+                      <span className="font-semibold text-text-primary truncate">{org.name}</span>
+                    </div>
+                    <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan || 'Standard'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -204,14 +261,14 @@ export const Sidebar = ({
                 to="/workspace/notifications"
                 icon="notifications"
                 label="Notifications"
-                badge={unreadNotifications}
+                badge={unreadNotifications > 0 ? unreadNotifications : null}
                 isCollapsed={isCollapsed}
               />
               <NavItem
                 to="/workspace/inbox"
                 icon="inbox"
                 label="Inbox"
-                badge={3}
+                badge={inboxCount > 0 ? inboxCount : null}
                 isCollapsed={isCollapsed}
               />
             </div>
@@ -267,7 +324,7 @@ export const Sidebar = ({
                   <span className="material-symbols-outlined text-[18px]">warning</span>
                   {!isCollapsed && <span className="font-label-md text-label-md">Priority Issues</span>}
                 </div>
-                <span className="w-2 h-2 rounded-full bg-severity-blocker" />
+                {priorityIssuesCount > 0 && <span className="w-2 h-2 rounded-full bg-severity-blocker" />}
               </NavLink>
               <NavItem to="/workspace/sla" icon="timer" label="SLA Overview" isCollapsed={isCollapsed} />
               <NavItem to="/workspace/audit-logs" icon="history" label="Activity Logs" isCollapsed={isCollapsed} />
@@ -304,21 +361,27 @@ export const Sidebar = ({
             to="/workspace/settings/profile"
             className="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer border border-border-subtle"
           >
-            <div className="flex items-center gap-space-sm">
-              <div className="relative">
-                <img
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                  src={currentUser?.avatar_url || DEFAULT_USER.avatar_url}
-                />
+            <div className="flex items-center gap-space-sm min-w-0">
+              <div className="relative flex-shrink-0">
+                {currentUser?.avatar_url ? (
+                  <img
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    src={currentUser.avatar_url}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center">
+                    {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
               </div>
-              <div className="flex flex-col text-left">
-                <span className="font-label-md text-label-md text-text-primary leading-tight">
-                  {currentUser?.full_name || DEFAULT_USER.full_name}
+              <div className="flex flex-col text-left min-w-0">
+                <span className="font-label-md text-label-md text-text-primary leading-tight truncate">
+                  {currentUser?.full_name || 'Team Member'}
                 </span>
-                <span className="font-body-sm text-body-sm text-text-secondary leading-tight capitalize">
-                  {currentUser?.role || DEFAULT_USER.role}
+                <span className="font-body-sm text-body-sm text-text-secondary leading-tight capitalize truncate">
+                  {currentUser?.role || 'member'}
                 </span>
               </div>
             </div>
@@ -330,12 +393,21 @@ export const Sidebar = ({
         {isCollapsed && (
           <div className="flex justify-center pt-space-sm">
             <NavLink to="/workspace/settings/profile" className="relative">
-              <img
-                alt="Profile"
-                className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                src={currentUser?.avatar_url || DEFAULT_USER.avatar_url}
-                title={`${currentUser?.full_name || DEFAULT_USER.full_name} — ${currentUser?.role || DEFAULT_USER.role}`}
-              />
+              {currentUser?.avatar_url ? (
+                <img
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                  src={currentUser.avatar_url}
+                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
+                />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
+                >
+                  {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
             </NavLink>
           </div>

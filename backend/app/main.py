@@ -20,6 +20,13 @@ async def lifespan(app: FastAPI):
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            try:
+                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'Standard'"))
+            except Exception:
+                try:
+                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50) DEFAULT 'Standard'"))
+                except Exception:
+                    pass
         async with AsyncSessionLocal() as session:
             await seed_initial_data_if_empty(session)
             await session.commit()

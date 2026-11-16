@@ -246,7 +246,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) =>
                   <div className="flex flex-col">
                     <span className="text-[#9C9CA9] text-[11px]">Corporate Email</span>
                     <span className="text-[#5C5C70] dark:text-[#cabeff] font-semibold mt-0.5">
-                      {user?.email || 'alex.rivera@tronix365.internal'}
+                      {user?.email || ''}
                     </span>
                   </div>
                   <Lock className="w-4 h-4 text-[#9C9CA9]" title="Managed by Org Admin" />

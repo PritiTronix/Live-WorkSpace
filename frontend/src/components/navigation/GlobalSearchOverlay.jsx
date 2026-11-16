@@ -121,7 +121,7 @@ export const GlobalSearchOverlay = ({ isOpen, onClose, onSelectResult }) => {
   const projects = [
     {
       id: 'PRJ-101',
-      title: 'Platform Revamp 2.0',
+      title: 'Workspace Project',
       badge: 'On Track',
       badgeColor: 'bg-[rgba(40,192,120,0.14)] text-status-resolved',
       desc: 'Lead: Maya Shah • SRE & Platform Squad • Q4 Milestone',
