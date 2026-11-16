@@ -133,11 +133,11 @@ class Ticket(Base):
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     project: Mapped["Project"] = relationship(back_populates="tickets")
-    assignee: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assignee_id])
-    reporter: Mapped[Optional["User"]] = relationship("User", foreign_keys=[reporter_id])
-    comments: Mapped[list["TicketComment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
-    attachments: Mapped[list["TicketAttachment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
-    activities: Mapped[list["TicketActivity"]] = relationship(back_populates="ticket", cascade="all, delete-orphan")
+    assignee: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assignee_id], lazy="selectin")
+    reporter: Mapped[Optional["User"]] = relationship("User", foreign_keys=[reporter_id], lazy="selectin")
+    comments: Mapped[list["TicketComment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan", lazy="selectin")
+    attachments: Mapped[list["TicketAttachment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan", lazy="selectin")
+    activities: Mapped[list["TicketActivity"]] = relationship(back_populates="ticket", cascade="all, delete-orphan", lazy="selectin")
 
 
 class TicketComment(Base):

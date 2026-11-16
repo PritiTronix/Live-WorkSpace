@@ -14,7 +14,7 @@ from fastapi import (
     File,
     status,
 )
-from sqlalchemy import select, and_, desc, func
+from sqlalchemy import select, and_, desc, func, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -244,6 +244,9 @@ async def get_ticket_board(
             selectinload(Ticket.assignee),
             selectinload(Ticket.reporter),
             selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
         )
         .join(Ticket.project)
         .where(Project.organization_id == current_user.organization_id)
@@ -291,6 +294,9 @@ async def get_ticket_priority(
             selectinload(Ticket.assignee),
             selectinload(Ticket.reporter),
             selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
         )
         .join(Ticket.project)
         .where(Project.organization_id == current_user.organization_id)
@@ -532,7 +538,7 @@ async def get_ticket_details(
             selectinload(Ticket.comments).selectinload(TicketComment.author),
             selectinload(Ticket.attachments).selectinload(TicketAttachment.uploader),
             selectinload(Ticket.activities).selectinload(TicketActivity.actor),
-        ).where(Ticket.id == ticket_id)
+        ).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -549,7 +555,7 @@ async def update_ticket(
 ):
     """Update ticket fields with activity tracking and workspace broadcast."""
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -672,7 +678,7 @@ async def delete_ticket(
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a ticket with workspace-scoped broadcast."""
-    res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id))
+    res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id)))
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -698,23 +704,22 @@ async def add_ticket_comment(
     db: AsyncSession = Depends(get_db)
 ):
     """Add comment / triage note to ticket with workspace-scoped broadcast."""
-    t_res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id))
+    t_res = await db.execute(select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id)))
     ticket = t_res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     now = datetime.now(timezone.utc)
     comment = TicketComment(
-        ticket_id=ticket_id,
+        ticket_id=ticket.id,
         author_id=current_user.id,
         content=comment_in.content.strip(),
-        is_internal=comment_in.is_internal,
         created_at=now,
     )
     db.add(comment)
 
     act = TicketActivity(
-        ticket_id=ticket_id,
+        ticket_id=ticket.id,
         actor_id=current_user.id,
         action="comment_added",
         old_value=None,
@@ -758,7 +763,7 @@ async def upload_ticket_attachment(
     - Broadcasts event to workspace channel.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -869,7 +874,7 @@ async def download_ticket_attachment(
     checks file existence on disk, and securely streams binary via FileResponse.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -933,7 +938,7 @@ async def change_ticket_status(
     Enforces valid state transition matrix and mandatory reasons.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -1018,7 +1023,7 @@ async def change_ticket_severity(
     Validates canonical lowercase severities and logs operational reason in activity.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -1091,7 +1096,7 @@ async def reassign_ticket(
     of the ticket's project/organization.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -1168,7 +1173,7 @@ async def change_ticket_deadline(
     Validates deadline update and logs operational justification.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -1236,7 +1241,7 @@ async def reopen_ticket(
     Protects RCA columns from overwrite.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
@@ -1310,7 +1315,7 @@ async def close_ticket(
     Protects RCA columns from overwrite.
     """
     res = await db.execute(
-        select(Ticket).options(selectinload(Ticket.project)).where(Ticket.id == ticket_id)
+        select(Ticket).options(selectinload(Ticket.project)).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:

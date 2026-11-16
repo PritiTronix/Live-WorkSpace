@@ -25,21 +25,23 @@ const PRESET_COLORS = [
 export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   const triggerRef = useRef(null);
   const modalRef = useRef(null);
-  const [name, setName] = useState('Platform Revamp 2.0');
-  const [key, setKey] = useState('PLTFRM');
-  const [description, setDescription] = useState(
-    'Unified redesign of enterprise ticketing pipeline, real-time SLA monitors, and cross-team incident triage hub.'
-  );
+  const [name, setName] = useState('');
+  const [key, setKey] = useState('');
+  const [description, setDescription] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('rocket_launch');
   const [selectedColor, setSelectedColor] = useState('bg-btn-primary');
-  const [leadId, setLeadId] = useState('usr_01');
+  const [leadId, setLeadId] = useState('');
   const [users, setUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [timelinePreset, setTimelinePreset] = useState('1 Quarter');
-  const [startDate, setStartDate] = useState('2025-12-01');
-  const [targetDate, setTargetDate] = useState('2026-03-15');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [targetDate, setTargetDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 3);
+    return d.toISOString().split('T')[0];
+  });
   const [visibility, setVisibility] = useState('org');
   const [status, setStatus] = useState('Active');
   const [slaTier, setSlaTier] = useState('Standard SaaS Tier 1');
@@ -89,12 +91,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
         .then((fetchedUsers) => {
           setUsers(fetchedUsers);
           if (fetchedUsers && fetchedUsers.length > 0) {
-            // Default selected members: Maya Shah (usr_01), David Kim (usr_02), Sarah Taylor (usr_03), Priya Nair (usr_04)
-            const initialAllocated = fetchedUsers.filter((u) =>
-              ['usr_01', 'usr_02', 'usr_03', 'usr_04'].includes(u.id)
-            );
-            setSelectedMembers(initialAllocated.length > 0 ? initialAllocated : [fetchedUsers[0]]);
-            setLeadId(fetchedUsers[0].id);
+            setLeadId((prev) => prev || fetchedUsers[0].id);
           }
         })
         .catch((err) => {
