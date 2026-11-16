@@ -427,3 +427,4 @@ export { discussionsService } from './discussionsService';
 export { filesService } from './filesService';
 export { membersService } from './membersService';
 export { settingsService } from './settingsService';
+export { ticketsService, createTicketsWebSocket } from './ticketsService';

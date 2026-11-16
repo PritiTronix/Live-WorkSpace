@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ticketsService } from '../../../services/ticketsService';
+import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
+import { authService } from '../../../services/api';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES, TICKET_SEVERITIES } from '../constants/ticketConstants';
 
 export const TicketDetailsPage = () => {
@@ -46,16 +47,19 @@ export const TicketDetailsPage = () => {
 
   // WebSocket Live Updates
   useEffect(() => {
-    const ws = ticketsService.createTicketsWebSocket('org_01', (event) => {
+    const user = authService.getCurrentUserSync();
+    const orgId = user?.organization_id || localStorage.getItem('organization_id') || localStorage.getItem('active_workspace_id') || '';
+    const cleanup = createTicketsWebSocket(orgId, (event) => {
+      const eventType = event?.type || event?.event;
       if (
-        (event.type === 'ticket_updated' && event.ticket?.id === id) ||
-        (event.type === 'ticket_comment_added' && event.ticket_id === id)
+        ((eventType === 'ticket_updated' || eventType === 'ticket_status_changed') && (event.ticket?.id === id || event.ticket_id === id)) ||
+        (eventType === 'ticket_comment_added' && (event.ticket_id === id || event.ticket?.id === id))
       ) {
         fetchTicket();
       }
     });
     return () => {
-      if (ws) ws.close();
+      if (typeof cleanup === 'function') cleanup();
     };
   }, [id, fetchTicket]);
 

@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ticketsService } from '../../../services/ticketsService';
+import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
+import { authService } from '../../../services/api';
 import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_SEVERITIES } from '../constants/ticketConstants';
+import ErrorState from '../../design-system/components/ErrorState';
 
+/**
+ * Screen 63: Ticket Priority View (Prompt 39)
+ * Visual Reference: Stitch Screen 63 (`976689d50e2c45f9945df80699e88b99`)
+ * Route: `/workspace/tickets/priority`
+ */
 export const TicketPriorityPage = () => {
   const navigate = useNavigate();
   const [groupedTickets, setGroupedTickets] = useState({
@@ -15,28 +22,48 @@ export const TicketPriorityPage = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isNetworkFailure, setIsNetworkFailure] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // Filter toolbar state
   const [searchQuery, setSearchQuery] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [autoTriageActive, setAutoTriageActive] = useState(true);
   const [silenced, setSilenced] = useState(false);
 
-  // Load Priority Data
-  const fetchPriority = useCallback(async () => {
+  // Load Priority Data scoped to user's authenticated organization
+  const fetchPriority = useCallback(async (isRetry = false) => {
     try {
-      setLoading(true);
+      if (isRetry) {
+        setIsRetrying(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
+      setIsNetworkFailure(false);
+
       const data = await ticketsService.getPriority();
       setGroupedTickets({
-        blocker: data.blocker || [],
-        critical: data.critical || [],
-        major: data.major || [],
-        minor: data.minor || [],
+        blocker: data?.blocker || [],
+        critical: data?.critical || [],
+        major: data?.major || [],
+        minor: data?.minor || [],
       });
     } catch (err) {
       console.error('Failed to load priority tickets:', err);
-      setError('Unable to load priority view. Please try again.');
+      const is503OrNetwork = !err.response || err.response?.status === 503 || err.code === 'ERR_NETWORK';
+      setIsNetworkFailure(is503OrNetwork);
+      if (is503OrNetwork) {
+        setError('Service temporarily unavailable (503 / Network connection issue). Please retry.');
+      } else {
+        setError(err.response?.data?.detail || err.message || 'Unable to load priority view. Please try again.');
+      }
     } finally {
       setLoading(false);
+      setIsRetrying(false);
     }
   }, []);
 
@@ -44,47 +71,105 @@ export const TicketPriorityPage = () => {
     fetchPriority();
   }, [fetchPriority]);
 
-  // WebSocket Live Real-Time Updates
+  // WebSocket Live Real-Time Updates dynamically scoped to authenticated organization
   useEffect(() => {
-    const ws = ticketsService.createTicketsWebSocket('org_01', (event) => {
-      if (['ticket_created', 'ticket_updated', 'ticket_deleted', 'ticket_comment_added'].includes(event.type)) {
-        fetchPriority();
+    let isMounted = true;
+    let cleanup = null;
+
+    const connectWs = async () => {
+      try {
+        const user = await authService.getCurrentUser().catch(() => authService.getCurrentUserSync());
+        const orgId = user?.organization_id || localStorage.getItem('organization_id') || localStorage.getItem('active_workspace_id') || '';
+
+        if (!isMounted) return;
+
+        cleanup = createTicketsWebSocket(orgId, (event) => {
+          const eventType = event?.type || event?.event;
+          if (
+            [
+              'ticket_created',
+              'ticket_updated',
+              'ticket_deleted',
+              'ticket_comment_added',
+              'ticket_status_changed',
+              'ticket_severity_changed',
+            ].includes(eventType)
+          ) {
+            fetchPriority();
+          }
+        });
+      } catch (wsErr) {
+        console.warn('Real-time priority WebSocket connection failed:', wsErr);
       }
-    });
+    };
+
+    connectWs();
+
     return () => {
-      if (ws) ws.close();
+      isMounted = false;
+      if (typeof cleanup === 'function') {
+        cleanup();
+      }
     };
   }, [fetchPriority]);
 
   // Calculate Breaches & Stats
   const now = new Date();
   const breachedCount = useMemo(() => {
-    return Object.values(groupedTickets).flat().filter(ticket => {
-      if (['resolved', 'closed'].includes(ticket.status)) return false;
-      return ticket.deadline && new Date(ticket.deadline) < now;
-    }).length;
+    return Object.values(groupedTickets)
+      .flat()
+      .filter((ticket) => {
+        if (!ticket || ['resolved', 'closed'].includes(ticket.status)) return false;
+        return ticket.deadline && new Date(ticket.deadline) < now;
+      }).length;
   }, [groupedTickets, now]);
 
   const blockerCount = groupedTickets.blocker?.length || 0;
 
-  // Filtered tickets by search
+  // Filtered tickets by search, severityFilter, and statusFilter
   const filteredGroupedTickets = useMemo(() => {
-    if (!searchQuery.trim()) return groupedTickets;
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
     const result = {};
-    for (const [severity, list] of Object.entries(groupedTickets)) {
-      result[severity] = list.filter(t =>
-        (t.ticket_number && t.ticket_number.toLowerCase().includes(query)) ||
-        (t.title && t.title.toLowerCase().includes(query)) ||
-        (t.description && t.description.toLowerCase().includes(query))
-      );
-    }
-    return result;
-  }, [groupedTickets, searchQuery]);
 
-  // Quick ticket created handler
+    for (const severity of TICKET_SEVERITIES) {
+      if (severityFilter !== 'all' && severityFilter !== severity) {
+        result[severity] = [];
+        continue;
+      }
+
+      let list = groupedTickets[severity] || [];
+
+      if (statusFilter !== 'all') {
+        list = list.filter((t) => (t.status || '').toLowerCase() === statusFilter.toLowerCase());
+      }
+
+      if (query) {
+        list = list.filter(
+          (t) =>
+            (t.ticket_number && t.ticket_number.toLowerCase().includes(query)) ||
+            (t.title && t.title.toLowerCase().includes(query)) ||
+            (t.description && t.description.toLowerCase().includes(query))
+        );
+      }
+
+      result[severity] = list;
+    }
+
+    return result;
+  }, [groupedTickets, searchQuery, severityFilter, statusFilter]);
+
+  const totalVisibleTickets = useMemo(() => {
+    return Object.values(filteredGroupedTickets).reduce((acc, list) => acc + (list?.length || 0), 0);
+  }, [filteredGroupedTickets]);
+
   const handleTicketCreated = () => {
     fetchPriority();
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSeverityFilter('all');
+    setStatusFilter('all');
   };
 
   return (
@@ -94,6 +179,10 @@ export const TicketPriorityPage = () => {
         <TicketViewSwitcher
           search={searchQuery}
           onSearchChange={setSearchQuery}
+          severityFilter={severityFilter}
+          onSeverityChange={setSeverityFilter}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
           onOpenCreateModal={() => setIsCreateModalOpen(true)}
         />
 
@@ -126,6 +215,17 @@ export const TicketPriorityPage = () => {
               <span className="material-symbols-outlined text-base">swap_vert</span>
               <span>SLA Breached First</span>
             </div>
+
+            {(searchQuery || severityFilter !== 'all' || statusFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-2.5 py-1.5 text-text-secondary hover:text-text-primary text-xs font-label-sm flex items-center gap-1 rounded-md hover:bg-canvas-lavender transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">filter_alt_off</span>
+                <span>Reset Filters</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-space-sm">
@@ -140,9 +240,7 @@ export const TicketPriorityPage = () => {
           <div className="bg-gradient-to-r from-surface-card via-canvas-lavender to-surface-card rounded-xl p-space-md shadow-sm border border-severity-blocker/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-space-md">
             <div className="flex items-center gap-space-md">
               <div className="w-10 h-10 rounded-xl bg-error-container text-severity-blocker flex items-center justify-center shrink-0 shadow-sm">
-                <span className="material-symbols-outlined text-2xl">
-                  emergency_home
-                </span>
+                <span className="material-symbols-outlined text-2xl">emergency_home</span>
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -170,7 +268,7 @@ export const TicketPriorityPage = () => {
               <button
                 type="button"
                 onClick={() => {
-                  const firstBlocker = groupedTickets.blocker[0];
+                  const firstBlocker = groupedTickets.blocker?.[0];
                   if (firstBlocker) navigate(`/workspace/tickets/${firstBlocker.id}`);
                 }}
                 className="h-9 px-3 bg-severity-blocker text-on-error font-label-sm text-label-sm rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-1"
@@ -190,24 +288,61 @@ export const TicketPriorityPage = () => {
           </div>
         )}
 
-        {/* Error State */}
+        {/* Error State with Retry Button */}
         {error && !loading && (
-          <div className="p-space-lg bg-surface-card rounded-xl text-center space-y-3 border border-border-subtle">
-            <span className="material-symbols-outlined text-4xl text-severity-blocker">error</span>
-            <p className="font-body-md text-body-md text-text-primary">{error}</p>
-            <button
-              onClick={fetchPriority}
-              className="px-4 py-2 bg-btn-primary text-on-primary font-label-md text-label-md rounded-lg shadow-sm"
-            >
-              Retry
-            </button>
+          <div className="my-6">
+            <ErrorState
+              variant={isNetworkFailure ? 'network' : '500'}
+              title={isNetworkFailure ? 'Connection Issue' : 'Unable to Load Priority View'}
+              description={error}
+              actionText="Retry Now"
+              onRetry={() => fetchPriority(true)}
+              isRetrying={isRetrying}
+            />
           </div>
         )}
 
         {/* Priority Swimlanes */}
-        {!loading && !error && (
+        {!loading && !error && totalVisibleTickets === 0 && (
+          <div className="p-12 bg-surface-card rounded-2xl border border-dashed border-border-subtle text-center flex flex-col items-center justify-center my-8">
+            <div className="w-14 h-14 rounded-2xl bg-canvas-lavender text-btn-primary flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl">task_alt</span>
+            </div>
+            <h3 className="font-headline-md text-headline-md text-text-primary mb-2">No Priority Tickets</h3>
+            <p className="font-body-md text-body-md text-text-secondary max-w-md mb-6">
+              {searchQuery || severityFilter !== 'all' || statusFilter !== 'all'
+                ? 'No tickets match the selected filters. Try clearing your filters.'
+                : 'There are currently no tickets in the priority swimlanes for your workspace.'}
+            </p>
+            <div className="flex items-center gap-3">
+              {(searchQuery || severityFilter !== 'all' || statusFilter !== 'all') && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="px-4 py-2 rounded-lg border border-border-subtle bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-md text-label-md transition-colors"
+                >
+                  Clear Filters
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-5 py-2.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md shadow-sm transition-all flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">add</span>
+                <span>Create Ticket</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && totalVisibleTickets > 0 && (
           <div className="flex flex-col gap-space-xl">
             {TICKET_SEVERITIES.map((severityKey) => {
+              if (severityFilter !== 'all' && severityFilter !== severityKey) {
+                return null;
+              }
+
               const config = SEVERITY_CONFIG[severityKey];
               const tickets = filteredGroupedTickets[severityKey] || [];
 
@@ -257,10 +392,10 @@ export const TicketPriorityPage = () => {
                                   onClick={() => navigate(`/workspace/tickets/${ticket.id}`)}
                                   className={`font-mono font-bold text-label-md ${config.textBadge} cursor-pointer hover:underline`}
                                 >
-                                  {ticket.ticket_number}
+                                  {ticket.ticket_number || ticket.id}
                                 </span>
                                 <span className="font-label-sm text-label-sm text-text-muted mt-0.5 truncate max-w-28">
-                                  {ticket.project?.title || 'Core Ops'}
+                                  {ticket.project?.name || ticket.project?.title || 'General'}
                                 </span>
                               </div>
 

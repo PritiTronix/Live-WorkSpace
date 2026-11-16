@@ -105,6 +105,8 @@ export const ticketsService = {
     const baseUrl = apiClient.defaults.baseURL || '/api/v1';
     return `${baseUrl}/tickets/${ticketId}/attachments/${attachmentId}/download`;
   },
+
+  createTicketsWebSocket: (workspaceId, onEvent) => createTicketsWebSocket(workspaceId, onEvent),
 };
 
 /**
@@ -112,7 +114,25 @@ export const ticketsService = {
  */
 export const createTicketsWebSocket = (workspaceId, onEvent) => {
   const token = localStorage.getItem('access_token') || '';
-  const resolvedWorkspaceId = workspaceId || localStorage.getItem('active_workspace_id') || localStorage.getItem('organization_id') || 'org_01';
+
+  // Dynamically resolve organization / workspace without hardcoding
+  let userOrgId = null;
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const parsed = JSON.parse(userStr);
+      userOrgId = parsed?.organization_id || parsed?.workspace_id;
+    }
+  } catch {}
+
+  const resolvedWorkspaceId =
+    (workspaceId && workspaceId !== 'org_01' ? workspaceId : null) ||
+    userOrgId ||
+    localStorage.getItem('organization_id') ||
+    localStorage.getItem('active_workspace_id') ||
+    workspaceId ||
+    'org_01';
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const query = token ? `?token=${encodeURIComponent(token)}` : '';
   // Point to backend websocket URL (default port 8000 in local dev)
@@ -148,14 +168,20 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
 
   connect();
 
-  return () => {
+  const cleanup = () => {
     if (retryTimer) clearTimeout(retryTimer);
     if (ws) {
       ws.onclose = null;
       ws.close();
     }
   };
+
+  // Provide both functional cleanup and .close() compatibility
+  cleanup.close = cleanup;
+  return cleanup;
 };
+
+ticketsService.createTicketsWebSocket = createTicketsWebSocket;
 
 export default ticketsService;
 

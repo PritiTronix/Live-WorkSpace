@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
@@ -42,6 +42,8 @@ import { RcaManagementPage } from '../modules/rca';
 import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
 import CompleteProfilePage from '../modules/users/CompleteProfilePage';
 import ProtectedRoute from './ProtectedRoute';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import NotFoundPage from '../components/common/NotFoundPage';
 import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
 
 /**
@@ -116,14 +118,22 @@ export const AppRoutes = () => {
         <Route path="tasks/my-tasks" element={<MyTasksPage />} />
         <Route path="tasks/my" element={<MyTasksPage />} />
 
-        {/* Ticket Management Routes (Screens 61-65, 69) */}
-        <Route path="tickets" element={<TicketsDashboardPage />} />
-        <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
-        <Route path="tickets/board" element={<TicketBoardPage />} />
-        <Route path="tickets/priority" element={<TicketPriorityPage />} />
-        <Route path="tickets/critical" element={<PriorityIssuesPage />} />
-        <Route path="tickets/:id" element={<TicketDetailsPage />} />
-        <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
+        {/* Ticket Management Routes with Error Boundary (Screens 61-65, 69) */}
+        <Route
+          element={
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          }
+        >
+          <Route path="tickets" element={<TicketsDashboardPage />} />
+          <Route path="tickets/all" element={<Navigate to="/workspace/tickets" replace />} />
+          <Route path="tickets/board" element={<TicketBoardPage />} />
+          <Route path="tickets/priority" element={<TicketPriorityPage />} />
+          <Route path="tickets/critical" element={<PriorityIssuesPage />} />
+          <Route path="tickets/:id" element={<TicketDetailsPage />} />
+          <Route path="monitoring/priority" element={<Navigate to="/workspace/tickets/critical" replace />} />
+        </Route>
 
         {/* SLA Governance & Engine Configuration (Screen 49 / Prompt 76-78) */}
         <Route path="sla" element={<SlaConfigPage initialTab="sla" />} />
@@ -168,10 +178,13 @@ export const AppRoutes = () => {
         <Route path="settings/profile" element={<UserProfilePage />} />
         <Route path="settings/*" element={<SlaConfigPage />} />
         <Route path="profile" element={<Navigate to="/workspace/settings/profile" replace />} />
+
+        {/* Workspace Shell Catch-All 404 Handler */}
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Catch-all 404 handler redirects to workspace */}
-      <Route path="*" element={<Navigate to="/workspace/dashboard" replace />} />
+      {/* Global Catch-all 404 handler outside workspace */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
