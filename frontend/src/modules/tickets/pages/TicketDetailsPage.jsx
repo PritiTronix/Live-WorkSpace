@@ -24,6 +24,7 @@ export const TicketDetailsPage = () => {
 
   // Upload attachment trigger
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [attachmentError, setAttachmentError] = useState(null);
 
   // Fetch Ticket Data
   const fetchTicket = useCallback(async () => {
@@ -134,11 +135,12 @@ export const TicketDetailsPage = () => {
       if (!file) return;
       try {
         setUploadingAttachment(true);
+        setAttachmentError(null);
         await ticketsService.addAttachment(id, file);
         fetchTicket();
       } catch (err) {
         console.error('Failed to attach file:', err);
-        alert(err.response?.data?.detail || 'Failed to upload attachment.');
+        setAttachmentError(err.response?.data?.detail || 'Failed to upload attachment.');
       } finally {
         setUploadingAttachment(false);
       }
@@ -748,6 +750,15 @@ export const TicketDetailsPage = () => {
                   ))
                 )}
               </div>
+
+              {attachmentError && (
+                <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                  <span>{attachmentError}</span>
+                  <button type="button" onClick={() => setAttachmentError(null)} className="text-red-500 hover:text-red-700">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
 
               <button
                 type="button"

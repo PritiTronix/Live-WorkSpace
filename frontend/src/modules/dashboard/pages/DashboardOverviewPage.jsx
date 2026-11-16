@@ -70,6 +70,63 @@ export const DashboardOverviewPage = () => {
   const [selectedPriorityFilter, setSelectedPriorityFilter] = useState('ALL');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
+  // Export summary state
+  const [isExporting, setIsExporting] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [exportToast, setExportToast] = useState(null);
+  const exportMenuRef = React.useRef(null);
+
+  // Close export menu on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    if (isExportMenuOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isExportMenuOpen]);
+
+  // Handle Export Summary
+  const handleExport = async (format) => {
+    setIsExportMenuOpen(false);
+    setIsExporting(true);
+    setExportToast(null);
+
+    const params = {};
+    if (selectedPill.type === 'project') {
+      params.project_id = selectedPill.value;
+    } else if (selectedPill.type === 'department') {
+      params.department = selectedPill.value;
+    } else if (selectedPill.type === 'period') {
+      params.period = selectedPill.value;
+    }
+
+    try {
+      await dashboardService.exportSummary(params, format);
+      setExportToast({
+        type: 'success',
+        message: `Workspace summary (${format.toUpperCase()}) downloaded successfully.`,
+      });
+      setTimeout(() => setExportToast(null), 5000);
+    } catch (err) {
+      console.error('Export failed:', err);
+      const isRetryable = !err.response || [401, 503, 504].includes(err.response.status);
+      setExportToast({
+        type: 'error',
+        message: err.response?.data?.detail || 'Failed to export workspace summary.',
+        canRetry: isRetryable,
+        retryFormat: format,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Helper to fetch data with current filter
   const fetchDashboardData = useCallback(async (filterObj = selectedPill) => {
     const params = {};
@@ -187,9 +244,15 @@ export const DashboardOverviewPage = () => {
   // Compose dynamic filter chips: All Teams, DB teams, DB projects, Dynamic Date Ranges
   const filterPills = [
     { id: 'all', type: 'all', label: 'All Teams' },
-    ...filterOptions.teams.map((t) => ({ id: `dept_${t}`, type: 'department', value: t, label: t })),
-    ...filterOptions.projects.map((p) => ({ id: `proj_${p.id}`, type: 'project', value: p.id, label: p.name })),
-    ...filterOptions.date_ranges.map((d) => ({ id: `period_${d.id}`, type: 'period', value: d.id, label: d.label })),
+    ...(filterOptions?.teams?.length
+      ? filterOptions.teams.map((t) => ({ id: `dept_${t}`, type: 'department', value: t, label: t }))
+      : []),
+    ...(filterOptions?.projects?.length
+      ? filterOptions.projects.map((p) => ({ id: `proj_${p.id}`, type: 'project', value: p.id, label: p.name }))
+      : []),
+    ...(filterOptions?.date_ranges?.length
+      ? filterOptions.date_ranges.map((d) => ({ id: `period_${d.id}`, type: 'period', value: d.id, label: d.label }))
+      : []),
   ];
 
   // Dynamic ticket severity percentages
@@ -237,13 +300,50 @@ export const DashboardOverviewPage = () => {
             <span>Here's what's happening across your workspace.</span>
           </p>
         </div>
-        <button
-          onClick={() => alert('Exporting workspace summary PDF/CSV...')}
-          className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b] text-sm font-bold leading-normal tracking-[0.015em] transition-colors"
-          type="button"
-        >
-          <span className="truncate">Export Summary</span>
-        </button>
+        <div className="relative" ref={exportMenuRef}>
+          <button
+            onClick={() => setIsExportMenuOpen((prev) => !prev)}
+            disabled={isExporting}
+            className={`flex min-w-[84px] cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-lg h-10 px-4 bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b] text-sm font-bold leading-normal tracking-[0.015em] transition-colors ${
+              isExporting ? 'opacity-60 cursor-not-allowed' : ''
+            }`}
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={isExportMenuOpen}
+          >
+            {isExporting ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
+                <span className="truncate">Generating...</span>
+              </>
+            ) : (
+              <>
+                <span className="truncate">Export Summary</span>
+                <span className="material-symbols-outlined text-sm">expand_more</span>
+              </>
+            )}
+          </button>
+          {isExportMenuOpen && (
+            <div className="absolute right-0 mt-1.5 w-48 rounded-xl bg-surface-card border border-[#d5d0e6] shadow-xl py-1.5 z-40">
+              <button
+                type="button"
+                onClick={() => handleExport('csv')}
+                className="w-full text-left px-4 py-2.5 text-xs text-[#110e1b] hover:bg-[#eae8f3] flex items-center gap-2 font-semibold transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base text-[#5d4f96]">table_view</span>
+                <span>Download CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport('pdf')}
+                className="w-full text-left px-4 py-2.5 text-xs text-[#110e1b] hover:bg-[#eae8f3] flex items-center gap-2 font-semibold transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base text-[#5d4f96]">picture_as_pdf</span>
+                <span>Download PDF</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filter Dropdown Pills */}
@@ -408,22 +508,41 @@ export const DashboardOverviewPage = () => {
         {/* SLA Breached */}
         <div
           onClick={() => navigate('/workspace/tickets/critical')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-severity-blocker/50 hover:shadow-md transition-all cursor-pointer group"
+          className={`flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm transition-all cursor-pointer group ${
+            metrics.sla_breached > 0 ? 'hover:border-severity-blocker/50 hover:shadow-md' : 'hover:border-primary/50 hover:shadow-md'
+          }`}
           role="button"
           tabIndex={0}
         >
-          <span className="text-severity-blocker text-sm font-semibold leading-normal flex items-center justify-between">
+          <span
+            className={`text-sm font-semibold leading-normal flex items-center justify-between ${
+              metrics.sla_breached > 0 ? 'text-severity-blocker' : 'text-[#110e1b] group-hover:text-primary transition-colors'
+            }`}
+          >
             <span>SLA Breached</span>
             <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
           </span>
-          <span className="text-severity-blocker tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
+          <span
+            className={`tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans'] ${
+              metrics.sla_breached > 0 ? 'text-severity-blocker' : 'text-[#110e1b]'
+            }`}
+          >
             {metrics.sla_breached}
           </span>
-          <span className="text-severity-blocker text-xs font-semibold leading-normal">
-            {metrics.sla_compliance_rate !== null && metrics.sla_compliance_rate !== undefined
-              ? `${metrics.sla_compliance_rate}% SLA`
-              : '—'}
-          </span>
+          {metrics.sla_breached > 0 ? (
+            <span className="text-severity-blocker text-xs font-semibold leading-normal">
+              {metrics.sla_compliance_rate !== null && metrics.sla_compliance_rate !== undefined
+                ? `${metrics.sla_compliance_rate}% SLA`
+                : 'breached'}
+            </span>
+          ) : metrics.sla_compliance_rate !== null && metrics.sla_compliance_rate !== undefined ? (
+            <span className="text-status-resolved text-xs font-semibold leading-normal flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              <span>{metrics.sla_compliance_rate}% SLA</span>
+            </span>
+          ) : (
+            <span className="text-[#5d4f96] text-xs font-medium leading-normal">—</span>
+          )}
         </div>
       </div>
 
@@ -978,6 +1097,38 @@ export const DashboardOverviewPage = () => {
           onClose={handleDismissWelcomeModal}
           userName={currentUser?.full_name || 'Team Member'}
         />
+      )}
+
+      {/* Export Toast Notification */}
+      {exportToast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-sm font-medium ${
+            exportToast.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-900'
+              : 'bg-red-50 border-red-200 text-red-900'
+          }`}
+        >
+          <span className="material-symbols-outlined text-lg">
+            {exportToast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          <span>{exportToast.message}</span>
+          {exportToast.canRetry && (
+            <button
+              type="button"
+              onClick={() => handleExport(exportToast.retryFormat)}
+              className="ml-2 underline font-bold hover:opacity-80 cursor-pointer"
+            >
+              Retry
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setExportToast(null)}
+            className="ml-1 text-text-muted hover:text-text-primary p-0.5 rounded cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
       )}
     </div>
   );

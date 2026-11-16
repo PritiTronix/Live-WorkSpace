@@ -11,6 +11,7 @@ export const DiscussionThreadPage = () => {
   const [error, setError] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isPostingReply, setIsPostingReply] = useState(false);
+  const [replyError, setReplyError] = useState(null);
   const [reactions, setReactions] = useState({});
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export const DiscussionThreadPage = () => {
 
     try {
       setIsPostingReply(true);
+      setReplyError(null);
       const newComment = await discussionsService.addComment(id, { content: replyText.trim() });
       setDiscussion((prev) => ({
         ...prev,
@@ -68,7 +70,7 @@ export const DiscussionThreadPage = () => {
       }));
       setReplyText('');
     } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to post reply');
+      setReplyError(err?.response?.data?.detail || 'Failed to post reply');
     } finally {
       setIsPostingReply(false);
     }
@@ -375,6 +377,14 @@ export const DiscussionThreadPage = () => {
             placeholder="Share insights, propose mitigations, or drop questions..."
             className="w-full p-3.5 bg-canvas-main border border-border-subtle rounded-xl font-body-md text-body-md text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card resize-none"
           />
+          {replyError && (
+            <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+              <span>{replyError}</span>
+              <button type="button" onClick={() => setReplyError(null)} className="text-red-500 hover:text-red-700">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between pt-1">
             <span className="font-body-sm text-body-sm text-text-muted">
               Press Enter or click Post to send to thread

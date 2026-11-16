@@ -5,19 +5,37 @@ strictly scoped to current user's organization.
 """
 from __future__ import annotations
 
+import csv
+import io
 import json
+import time
+from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status, Response, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select, func, desc, or_, and_, distinct
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    KeepTogether,
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfgen import canvas
+
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
-from backend.app.models import Project, Task, Ticket, ProjectActivity, User
+from backend.app.models import Project, Task, Ticket, ProjectActivity, User, Organization
 from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
@@ -163,12 +181,20 @@ async def get_dashboard_filters(
     org_id = current_user.organization_id
     now = datetime.now(timezone.utc)
 
-    # 1. Real departments in organization
+    # 1. Real departments in organization - deduplicated and case-normalized
     dept_res = await db.execute(
-        select(distinct(User.department))
+        select(User.department)
         .where(User.organization_id == org_id, User.department.isnot(None))
     )
-    depts = [d for d in dept_res.scalars().all() if d and d.strip()]
+    raw_depts = [d.strip() for d in dept_res.scalars().all() if d and d.strip()]
+    seen_depts = set()
+    depts = []
+    for d in raw_depts:
+        norm = d.lower()
+        if norm not in seen_depts:
+            seen_depts.add(norm)
+            depts.append(d.title())
+    depts.sort()
 
     # 2. Real active projects
     proj_res = await db.execute(
@@ -181,12 +207,13 @@ async def get_dashboard_filters(
         for row in proj_res.all()
     ]
 
-    # 3. Dynamic date ranges computed from today's date
+    # 3. Dynamic date ranges computed from today's date (no fake sprint)
     quarter = ((now.month - 1) // 3) + 1
     year = now.year
     date_ranges = [
         {"id": "today", "label": "Today"},
-        {"id": "this_sprint", "label": "This Sprint"},
+        {"id": "this_week", "label": "This Week"},
+        {"id": "this_month", "label": "This Month"},
         {"id": "this_quarter", "label": f"Q{quarter} {year}"},
     ]
 
@@ -204,13 +231,17 @@ async def get_dashboard_filters(
 @router.get("/metrics", response_model=DashboardMetrics, summary="Get summary metrics for home dashboard")
 async def get_dashboard_metrics(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
     period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Aggregate total projects, tasks, user tasks, and ticket health from database."""
     org_id = current_user.organization_id
+    eff_project_id = project_id or project
+    eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -219,8 +250,8 @@ async def get_dashboard_metrics(
 
     # Projects count
     proj_q = select(func.count(Project.id)).where(Project.organization_id == org_id, Project.is_archived.is_(False))
-    if project_id:
-        proj_q = proj_q.where(Project.id == project_id)
+    if eff_project_id:
+        proj_q = proj_q.where(Project.id == eff_project_id)
     proj_res = await db.execute(proj_q)
     total_projects = proj_res.scalar() or 0
 
@@ -230,19 +261,19 @@ async def get_dashboard_metrics(
         Project.is_archived.is_(False),
         Project.created_at >= month_start
     )
-    if project_id:
-        proj_month_q = proj_month_q.where(Project.id == project_id)
+    if eff_project_id:
+        proj_month_q = proj_month_q.where(Project.id == eff_project_id)
     p_month_res = await db.execute(proj_month_q)
     projects_this_month = p_month_res.scalar() or 0
 
     # Tasks count
     tasks_q = select(Task).where(Task.organization_id == org_id)
-    if project_id:
-        tasks_q = tasks_q.where(Task.project_id == project_id)
+    if eff_project_id:
+        tasks_q = tasks_q.where(Task.project_id == eff_project_id)
     if period_start:
         tasks_q = tasks_q.where(Task.created_at >= period_start)
-    if department:
-        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     task_res = await db.execute(tasks_q)
     tasks = task_res.scalars().all()
@@ -264,12 +295,12 @@ async def get_dashboard_metrics(
 
     # Tickets scoped to organization
     tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == org_id)
-    if project_id:
-        tickets_q = tickets_q.where(Ticket.project_id == project_id)
+    if eff_project_id:
+        tickets_q = tickets_q.where(Ticket.project_id == eff_project_id)
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
-    if department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
@@ -337,22 +368,26 @@ async def get_dashboard_metrics(
 @router.get("/tasks-breakdown", response_model=TasksBreakdown, summary="Get task breakdown by status")
 async def get_tasks_breakdown(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
     period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Breakdown tasks by status and calculate real completion rate."""
+    eff_project_id = project_id or project
+    eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
 
     tasks_q = select(Task.status).where(Task.organization_id == current_user.organization_id)
-    if project_id:
-        tasks_q = tasks_q.where(Task.project_id == project_id)
+    if eff_project_id:
+        tasks_q = tasks_q.where(Task.project_id == eff_project_id)
     if period_start:
         tasks_q = tasks_q.where(Task.created_at >= period_start)
-    if department:
-        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     t_res = await db.execute(tasks_q)
     statuses = [(s or "").lower() for s in t_res.scalars().all() if s]
@@ -378,12 +413,16 @@ async def get_tasks_breakdown(
 @router.get("/tickets-severity", response_model=TicketsSeverity, summary="Get ticket counts by severity")
 async def get_tickets_severity(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
     period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Active tickets grouped by severity with recent breach violations."""
+    eff_project_id = project_id or project
+    eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
     twenty_four_hours_ago = now - timedelta(hours=24)
@@ -396,12 +435,12 @@ async def get_tickets_severity(
             Ticket.status.notin_(["resolved", "closed"]),
         )
     )
-    if project_id:
-        tickets_q = tickets_q.where(Ticket.project_id == project_id)
+    if eff_project_id:
+        tickets_q = tickets_q.where(Ticket.project_id == eff_project_id)
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
-    if department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     res = await db.execute(tickets_q)
     active_tickets = res.scalars().all()
@@ -434,22 +473,26 @@ async def get_tickets_severity(
 @router.get("/sla-performance", response_model=SlaPerformance, summary="Get SLA adherence velocity and rolling days")
 async def get_sla_performance(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
     period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Calculate SLA adherence rate and real rolling resolution volume."""
+    eff_project_id = project_id or project
+    eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
 
     tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == current_user.organization_id)
-    if project_id:
-        tickets_q = tickets_q.where(Ticket.project_id == project_id)
+    if eff_project_id:
+        tickets_q = tickets_q.where(Ticket.project_id == eff_project_id)
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
-    if department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     res = await db.execute(tickets_q)
     tickets = res.scalars().all()
@@ -632,12 +675,16 @@ async def get_team_workload(
 @router.get("/priority-tickets", response_model=List[PriorityTicketItem], summary="Get priority tickets requiring attention")
 async def get_priority_tickets(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
     period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Top active blocker and critical tickets scoped to organization."""
+    eff_project_id = project_id or project
+    eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
 
@@ -651,12 +698,12 @@ async def get_priority_tickets(
             Ticket.severity.in_(["blocker", "critical", "major"]),
         )
     )
-    if project_id:
-        query = query.where(Ticket.project_id == project_id)
+    if eff_project_id:
+        query = query.where(Ticket.project_id == eff_project_id)
     if period_start:
         query = query.where(Ticket.created_at >= period_start)
-    if department:
-        query = query.join(User, Ticket.assignee_id == User.id).where(User.department == department)
+    if eff_department:
+        query = query.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
 
     res = await db.execute(query.order_by(desc(Ticket.created_at)).limit(5))
     tickets = res.scalars().all()
@@ -757,6 +804,625 @@ async def get_activity_timeline(
             )
         )
     return items
+
+
+# ---------------------------------------------------------------------------
+# Workspace Summary Export (CSV & PDF)
+# ---------------------------------------------------------------------------
+
+_EXPORT_RATE_LIMITS: Dict[str, List[float]] = defaultdict(list)
+_EXPORT_RATE_LIMIT = 15  # 15 requests per 60s per user
+_EXPORT_WINDOW = 60.0
+
+
+def sanitize_csv_cell(value: Any) -> str:
+    """Neutralize formula injection by prefixing trigger characters with an apostrophe."""
+    if value is None:
+        return ""
+    val_str = str(value)
+    if val_str and val_str[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return f"'{val_str}"
+    return val_str
+
+
+class NumberedCanvas(canvas.Canvas):
+    """Two-pass canvas for dynamic total page count (Page X of Y) and running header/footer."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_decorations(num_pages)
+            super().showPage()
+        super().save()
+
+    def draw_page_decorations(self, page_count):
+        self.saveState()
+        self.setFont("Helvetica", 8)
+        self.setFillColor(colors.HexColor("#71717A"))
+        if self._pageNumber > 1:
+            self.drawString(54, 750, "Live Workspace — Executive Summary Report")
+            self.setStrokeColor(colors.HexColor("#E4E4E7"))
+            self.setLineWidth(0.5)
+            self.line(54, 744, 558, 744)
+
+        self.setStrokeColor(colors.HexColor("#E4E4E7"))
+        self.setLineWidth(0.5)
+        self.line(54, 45, 558, 45)
+        self.drawString(54, 32, "Confidential — Live Workspace Internal Use Only")
+        page_str = f"Page {self._pageNumber} of {page_count}"
+        self.drawRightString(558, 32, page_str)
+        self.restoreState()
+
+
+@router.get("/export", summary="Export workspace summary report as CSV or PDF")
+async def export_workspace_summary(
+    format: str = Query(..., pattern=r"^(?i)(csv|pdf)$"),
+    project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
+    period: Optional[str] = Query(None),
+    tz: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Generate an executive operational summary export in CSV or PDF format.
+    Strictly scoped to current authenticated user's organization.
+    """
+    # 1. Rate limiting
+    now_ts = time.time()
+    user_reqs = [t for t in _EXPORT_RATE_LIMITS[current_user.id] if now_ts - t < _EXPORT_WINDOW]
+    if len(user_reqs) >= _EXPORT_RATE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Export rate limit exceeded. Please wait a moment before trying again."
+        )
+    user_reqs.append(now_ts)
+    _EXPORT_RATE_LIMITS[current_user.id] = user_reqs
+
+    # 2. Timezone resolution
+    user_tz = timezone.utc
+    if tz:
+        try:
+            user_tz = ZoneInfo(tz)
+        except Exception:
+            user_tz = timezone.utc
+
+    now_utc = datetime.now(timezone.utc)
+    now_local = now_utc.astimezone(user_tz)
+    formatted_time = now_local.strftime("%Y-%m-%d %H:%M:%S %Z")
+    safe_date = now_local.strftime("%Y-%m-%d")
+
+    # 3. Organization & user scoping
+    org_id = current_user.organization_id
+    org = await db.get(Organization, org_id)
+    workspace_name = org.name if org and org.name else "Live Workspace"
+    generator_name = current_user.full_name or current_user.email or "Workspace User"
+
+    eff_project_id = project_id or project
+    eff_department = department or team
+    period_start = _get_period_start(period, now_utc)
+
+    filter_desc = []
+    if eff_project_id:
+        proj_obj = await db.get(Project, eff_project_id)
+        filter_desc.append(f"Project: {proj_obj.name if proj_obj else eff_project_id}")
+    if eff_department:
+        filter_desc.append(f"Department: {eff_department}")
+    if period:
+        filter_desc.append(f"Period: {period}")
+    active_filters_str = ", ".join(filter_desc) if filter_desc else "All Data (No filters applied)"
+
+    # 4. Aggregations (SAME queries and figures as dashboard)
+    # Projects
+    proj_q = select(Project).where(Project.organization_id == org_id, Project.is_archived.is_(False))
+    if eff_project_id:
+        proj_q = proj_q.where(Project.id == eff_project_id)
+    proj_res = await db.execute(proj_q.order_by(Project.name.asc()))
+    active_projects = proj_res.scalars().all()
+    total_projects = len(active_projects)
+
+    # Tasks
+    tasks_q = select(Task).where(Task.organization_id == org_id)
+    if eff_project_id:
+        tasks_q = tasks_q.where(Task.project_id == eff_project_id)
+    if period_start:
+        tasks_q = tasks_q.where(Task.created_at >= period_start)
+    if eff_department:
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
+    task_res = await db.execute(tasks_q)
+    tasks = task_res.scalars().all()
+    total_tasks = len(tasks)
+
+    # Tasks by status
+    done_tasks = sum(1 for t in tasks if (t.status or "").lower() == "done")
+    in_progress_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_progress")
+    in_review_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_review")
+    todo_tasks = sum(1 for t in tasks if (t.status or "").lower() in ("todo", "to_do"))
+    completion_rate_str = f"{round(done_tasks / total_tasks * 100.0, 1)}%" if total_tasks > 0 else "—"
+
+    # My tasks
+    my_tasks = sum(1 for t in tasks if t.assignee_id == current_user.id)
+
+    # Tickets scoped to org
+    tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == org_id)
+    if eff_project_id:
+        tickets_q = tickets_q.where(Ticket.project_id == eff_project_id)
+    if period_start:
+        tickets_q = tickets_q.where(Ticket.created_at >= period_start)
+    if eff_department:
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+    t_res = await db.execute(tickets_q)
+    tickets = t_res.scalars().all()
+
+    open_tickets = sum(1 for t in tickets if (t.status or "").lower() in ("open", "wip"))
+    wip_tickets = sum(1 for t in tickets if (t.status or "").lower() == "wip")
+    work_in_progress = wip_tickets + in_progress_tasks
+    on_hold = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
+
+    # Tickets by severity (active)
+    active_tickets = [t for t in tickets if (t.status or "").lower() not in ("resolved", "closed")]
+    blocker_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "blocker")
+    critical_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "critical")
+    major_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "major")
+    minor_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "minor")
+
+    twenty_four_hours_ago = now_utc - timedelta(hours=24)
+    violations_24h = 0
+    for t in active_tickets:
+        if t.deadline:
+            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
+            if twenty_four_hours_ago <= dl <= now_utc:
+                violations_24h += 1
+        elif (t.severity or "").lower() == "blocker":
+            violations_24h += 1
+
+    # SLA Breached and compliance
+    tickets_with_timers = [t for t in tickets if t.deadline is not None]
+    if tickets_with_timers:
+        breached_count = 0
+        for t in tickets_with_timers:
+            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
+            if (t.status or "").lower() in ("resolved", "closed"):
+                if t.updated_at:
+                    up = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
+                    if up > dl:
+                        breached_count += 1
+            else:
+                if now_utc > dl:
+                    breached_count += 1
+        compliance_rate_val = round(((len(tickets_with_timers) - breached_count) / len(tickets_with_timers)) * 100.0, 1)
+        compliance_rate_str = f"{compliance_rate_val}%"
+    else:
+        breached_count = blocker_count
+        compliance_rate_str = "—"
+
+    # Per-project breakdown
+    project_breakdown = []
+    for p in active_projects:
+        p_tasks = [t for t in tasks if t.project_id == p.id]
+        p_total_tasks = len(p_tasks)
+        p_done_tasks = sum(1 for t in p_tasks if (t.status or "").lower() == "done")
+        p_tickets = [t for t in tickets if t.project_id == p.id]
+        p_open_tickets = sum(1 for t in p_tickets if (t.status or "").lower() in ("open", "wip"))
+        project_breakdown.append({
+            "name": p.name,
+            "key": p.key,
+            "total_tasks": p_total_tasks,
+            "done_tasks": p_done_tasks,
+            "open_tickets": p_open_tickets,
+        })
+
+    # Per-assignee breakdown
+    user_q = select(User).where(User.organization_id == org_id).order_by(User.full_name.asc())
+    u_res = await db.execute(user_q)
+    org_users = u_res.scalars().all()
+
+    assignee_breakdown = []
+    for u in org_users:
+        u_tasks = [t for t in tasks if t.assignee_id == u.id]
+        u_active_tasks = sum(1 for t in u_tasks if (t.status or "").lower() not in ("done", "cancelled"))
+        u_done_tasks = sum(1 for t in u_tasks if (t.status or "").lower() == "done")
+        u_tickets = [t for t in tickets if t.assignee_id == u.id]
+        u_open_tickets = sum(1 for t in u_tickets if (t.status or "").lower() in ("open", "wip"))
+        if len(u_tasks) > 0 or len(u_tickets) > 0:
+            assignee_breakdown.append({
+                "name": u.full_name or u.email,
+                "email": u.email,
+                "department": u.department or "—",
+                "active_tasks": u_active_tasks,
+                "done_tasks": u_done_tasks,
+                "open_tickets": u_open_tickets,
+            })
+
+    is_empty_workspace = (total_projects == 0 and total_tasks == 0 and len(tickets) == 0)
+    fmt_lower = format.lower().strip()
+
+    # CSV FORMAT
+    if fmt_lower == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+        writer.writerow([sanitize_csv_cell("Workspace Summary Report")])
+        writer.writerow([sanitize_csv_cell("Workspace:"), sanitize_csv_cell(workspace_name)])
+        writer.writerow([sanitize_csv_cell("Generated At:"), sanitize_csv_cell(formatted_time)])
+        writer.writerow([sanitize_csv_cell("Generated By:"), sanitize_csv_cell(generator_name)])
+        writer.writerow([sanitize_csv_cell("Active Filters:"), sanitize_csv_cell(active_filters_str)])
+        writer.writerow([])
+
+        if is_empty_workspace:
+            writer.writerow([sanitize_csv_cell("Status"), sanitize_csv_cell("No operational data found in this workspace for the selected filters.")])
+        else:
+            # Executive Summary Figures
+            writer.writerow([sanitize_csv_cell("Executive Summary")])
+            writer.writerow([sanitize_csv_cell("Metric"), sanitize_csv_cell("Value")])
+            writer.writerow([sanitize_csv_cell("Total Projects"), sanitize_csv_cell(total_projects)])
+            writer.writerow([sanitize_csv_cell("Total Tasks"), sanitize_csv_cell(total_tasks)])
+            writer.writerow([sanitize_csv_cell("Tasks Completion Rate"), sanitize_csv_cell(completion_rate_str)])
+            writer.writerow([sanitize_csv_cell("My Assigned Tasks"), sanitize_csv_cell(my_tasks)])
+            writer.writerow([sanitize_csv_cell("Open Tickets"), sanitize_csv_cell(open_tickets)])
+            writer.writerow([sanitize_csv_cell("Work in Progress"), sanitize_csv_cell(work_in_progress)])
+            writer.writerow([sanitize_csv_cell("On Hold Tickets"), sanitize_csv_cell(on_hold)])
+            writer.writerow([sanitize_csv_cell("SLA Breached"), sanitize_csv_cell(breached_count)])
+            writer.writerow([sanitize_csv_cell("SLA Compliance Rate"), sanitize_csv_cell(compliance_rate_str)])
+            writer.writerow([])
+
+            # Tasks by Status
+            writer.writerow([sanitize_csv_cell("Tasks by Status")])
+            writer.writerow([sanitize_csv_cell("Status"), sanitize_csv_cell("Count")])
+            writer.writerow([sanitize_csv_cell("Done"), sanitize_csv_cell(done_tasks)])
+            writer.writerow([sanitize_csv_cell("In Progress"), sanitize_csv_cell(in_progress_tasks)])
+            writer.writerow([sanitize_csv_cell("In Review"), sanitize_csv_cell(in_review_tasks)])
+            writer.writerow([sanitize_csv_cell("To Do"), sanitize_csv_cell(todo_tasks)])
+            writer.writerow([])
+
+            # Tickets by Severity
+            writer.writerow([sanitize_csv_cell("Tickets by Severity (Active)")])
+            writer.writerow([sanitize_csv_cell("Severity"), sanitize_csv_cell("Count")])
+            writer.writerow([sanitize_csv_cell("Blocker"), sanitize_csv_cell(blocker_count)])
+            writer.writerow([sanitize_csv_cell("Critical"), sanitize_csv_cell(critical_count)])
+            writer.writerow([sanitize_csv_cell("Major"), sanitize_csv_cell(major_count)])
+            writer.writerow([sanitize_csv_cell("Minor"), sanitize_csv_cell(minor_count)])
+            writer.writerow([sanitize_csv_cell("Violations (Last 24h)"), sanitize_csv_cell(violations_24h)])
+            writer.writerow([])
+
+            # Per-Project Breakdown
+            if project_breakdown:
+                writer.writerow([sanitize_csv_cell("Per-Project Breakdown")])
+                writer.writerow([
+                    sanitize_csv_cell("Project Name"),
+                    sanitize_csv_cell("Key"),
+                    sanitize_csv_cell("Total Tasks"),
+                    sanitize_csv_cell("Completed Tasks"),
+                    sanitize_csv_cell("Open Tickets")
+                ])
+                for p in project_breakdown:
+                    writer.writerow([
+                        sanitize_csv_cell(p["name"]),
+                        sanitize_csv_cell(p["key"]),
+                        sanitize_csv_cell(p["total_tasks"]),
+                        sanitize_csv_cell(p["done_tasks"]),
+                        sanitize_csv_cell(p["open_tickets"])
+                    ])
+                writer.writerow([])
+
+            # Per-Assignee Breakdown
+            if assignee_breakdown:
+                writer.writerow([sanitize_csv_cell("Per-Assignee Breakdown")])
+                writer.writerow([
+                    sanitize_csv_cell("Assignee"),
+                    sanitize_csv_cell("Email"),
+                    sanitize_csv_cell("Department"),
+                    sanitize_csv_cell("Active Tasks"),
+                    sanitize_csv_cell("Completed Tasks"),
+                    sanitize_csv_cell("Open Tickets")
+                ])
+                for a in assignee_breakdown:
+                    writer.writerow([
+                        sanitize_csv_cell(a["name"]),
+                        sanitize_csv_cell(a["email"]),
+                        sanitize_csv_cell(a["department"]),
+                        sanitize_csv_cell(a["active_tasks"]),
+                        sanitize_csv_cell(a["done_tasks"]),
+                        sanitize_csv_cell(a["open_tickets"])
+                    ])
+
+        csv_content = output.getvalue()
+        output.close()
+
+        filename = f"workspace-summary-{safe_date}.csv"
+        headers = {
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "text/csv; charset=utf-8",
+        }
+        return Response(content=csv_content, media_type="text/csv", headers=headers)
+
+    # PDF FORMAT
+    pdf_buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        pdf_buffer,
+        pagesize=letter,
+        leftMargin=54,
+        rightMargin=54,
+        topMargin=54,
+        bottomMargin=54,
+    )
+    styles = getSampleStyleSheet()
+
+    # Typography styles
+    title_style = ParagraphStyle(
+        "DocTitle",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=20,
+        leading=24,
+        textColor=colors.HexColor("#18181B"),
+    )
+    section_title = ParagraphStyle(
+        "SectionTitle",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        leading=16,
+        textColor=colors.HexColor("#27272A"),
+        spaceBefore=12,
+        spaceAfter=6,
+    )
+    meta_label = ParagraphStyle(
+        "MetaLabel",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor("#52525B"),
+    )
+    meta_val = ParagraphStyle(
+        "MetaVal",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor("#18181B"),
+    )
+    cell_head = ParagraphStyle(
+        "CellHead",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor("#FFFFFF"),
+    )
+    cell_body = ParagraphStyle(
+        "CellBody",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#27272A"),
+    )
+    cell_body_bold = ParagraphStyle(
+        "CellBodyBold",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#18181B"),
+    )
+
+    story = []
+
+    # Title
+    story.append(Paragraph("Live Workspace — Executive Summary", title_style))
+    story.append(Spacer(1, 8))
+
+    # Metadata Block
+    meta_data = [
+        [Paragraph("Workspace:", meta_label), Paragraph(str(workspace_name), meta_val),
+         Paragraph("Generated At:", meta_label), Paragraph(formatted_time, meta_val)],
+        [Paragraph("Generated By:", meta_label), Paragraph(str(generator_name), meta_val),
+         Paragraph("Active Filters:", meta_label), Paragraph(active_filters_str, meta_val)],
+    ]
+    meta_table = Table(meta_data, colWidths=[80, 172, 80, 172])
+    meta_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F4F4F5")),
+        ("PADDING", (0, 0), (-1, -1), 6),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LINEBELOW", (0, 0), (-1, -1), 0.5, colors.HexColor("#E4E4E7")),
+    ]))
+    story.append(meta_table)
+    story.append(Spacer(1, 14))
+
+    if is_empty_workspace:
+        empty_box = [
+            [Paragraph("No operational data found in this workspace for the selected filters.", cell_body)]
+        ]
+        empty_table = Table(empty_box, colWidths=[504])
+        empty_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FAFAFA")),
+            ("BOX", (0, 0), (-1, -1), 1, colors.HexColor("#E4E4E7")),
+            ("PADDING", (0, 0), (-1, -1), 16),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ]))
+        story.append(empty_table)
+    else:
+        # Table of Figures: Key Operational Metrics
+        story.append(Paragraph("Key Operational Metrics", section_title))
+        summary_data = [
+            [
+                Paragraph("Metric", cell_head),
+                Paragraph("Value", cell_head),
+                Paragraph("Metric", cell_head),
+                Paragraph("Value", cell_head),
+            ],
+            [
+                Paragraph("Total Projects", cell_body_bold),
+                Paragraph(str(total_projects), cell_body),
+                Paragraph("Open Tickets", cell_body_bold),
+                Paragraph(str(open_tickets), cell_body),
+            ],
+            [
+                Paragraph("Total Tasks", cell_body_bold),
+                Paragraph(str(total_tasks), cell_body),
+                Paragraph("Work In Progress", cell_body_bold),
+                Paragraph(str(work_in_progress), cell_body),
+            ],
+            [
+                Paragraph("Tasks Completion Rate", cell_body_bold),
+                Paragraph(str(completion_rate_str), cell_body),
+                Paragraph("On Hold Tickets", cell_body_bold),
+                Paragraph(str(on_hold), cell_body),
+            ],
+            [
+                Paragraph("My Assigned Tasks", cell_body_bold),
+                Paragraph(str(my_tasks), cell_body),
+                Paragraph("SLA Breached", cell_body_bold),
+                Paragraph(str(breached_count), cell_body),
+            ],
+            [
+                Paragraph("SLA Compliance Rate", cell_body_bold),
+                Paragraph(str(compliance_rate_str), cell_body),
+                Paragraph("24h Severity Violations", cell_body_bold),
+                Paragraph(str(violations_24h), cell_body),
+            ],
+        ]
+        summary_table = Table(summary_data, colWidths=[150, 102, 150, 102])
+        summary_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4F46E5")),
+            ("PADDING", (0, 0), (-1, -1), 5),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E4E4E7")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 12))
+
+        # Status & Severity Distributions
+        story.append(Paragraph("Task Status & Ticket Severity Distributions", section_title))
+        dist_data = [
+            [
+                Paragraph("Task Status", cell_head),
+                Paragraph("Count", cell_head),
+                Paragraph("Ticket Severity (Active)", cell_head),
+                Paragraph("Count", cell_head),
+            ],
+            [
+                Paragraph("Done", cell_body),
+                Paragraph(str(done_tasks), cell_body_bold),
+                Paragraph("Blocker", cell_body),
+                Paragraph(str(blocker_count), cell_body_bold),
+            ],
+            [
+                Paragraph("In Progress", cell_body),
+                Paragraph(str(in_progress_tasks), cell_body_bold),
+                Paragraph("Critical", cell_body),
+                Paragraph(str(critical_count), cell_body_bold),
+            ],
+            [
+                Paragraph("In Review", cell_body),
+                Paragraph(str(in_review_tasks), cell_body_bold),
+                Paragraph("Major", cell_body),
+                Paragraph(str(major_count), cell_body_bold),
+            ],
+            [
+                Paragraph("To Do", cell_body),
+                Paragraph(str(todo_tasks), cell_body_bold),
+                Paragraph("Minor", cell_body),
+                Paragraph(str(minor_count), cell_body_bold),
+            ],
+        ]
+        dist_table = Table(dist_data, colWidths=[150, 102, 150, 102])
+        dist_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#312E81")),
+            ("PADDING", (0, 0), (-1, -1), 5),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E4E4E7")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+        ]))
+        story.append(dist_table)
+        story.append(Spacer(1, 12))
+
+        # Project Breakdown Table (if any)
+        if project_breakdown:
+            p_elements = [
+                Paragraph("Per-Project Operational Breakdown", section_title)
+            ]
+            proj_data = [
+                [
+                    Paragraph("Project Name", cell_head),
+                    Paragraph("Key", cell_head),
+                    Paragraph("Total Tasks", cell_head),
+                    Paragraph("Done Tasks", cell_head),
+                    Paragraph("Open Tickets", cell_head),
+                ]
+            ]
+            for p in project_breakdown:
+                proj_data.append([
+                    Paragraph(str(p["name"]), cell_body_bold),
+                    Paragraph(str(p["key"]), cell_body),
+                    Paragraph(str(p["total_tasks"]), cell_body),
+                    Paragraph(str(p["done_tasks"]), cell_body),
+                    Paragraph(str(p["open_tickets"]), cell_body),
+                ])
+            p_table = Table(proj_data, colWidths=[184, 80, 80, 80, 80])
+            p_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E293B")),
+                ("PADDING", (0, 0), (-1, -1), 5),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E4E4E7")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+            ]))
+            p_elements.append(p_table)
+            story.append(KeepTogether(p_elements))
+            story.append(Spacer(1, 12))
+
+        # Assignee Breakdown Table (if any)
+        if assignee_breakdown:
+            a_elements = [
+                Paragraph("Per-Assignee Workload Breakdown", section_title)
+            ]
+            assignee_data = [
+                [
+                    Paragraph("Assignee", cell_head),
+                    Paragraph("Department", cell_head),
+                    Paragraph("Active Tasks", cell_head),
+                    Paragraph("Done Tasks", cell_head),
+                    Paragraph("Open Tickets", cell_head),
+                ]
+            ]
+            for a in assignee_breakdown:
+                assignee_data.append([
+                    Paragraph(str(a["name"]), cell_body_bold),
+                    Paragraph(str(a["department"]), cell_body),
+                    Paragraph(str(a["active_tasks"]), cell_body),
+                    Paragraph(str(a["done_tasks"]), cell_body),
+                    Paragraph(str(a["open_tickets"]), cell_body),
+                ])
+            a_table = Table(assignee_data, colWidths=[174, 90, 80, 80, 80])
+            a_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#334155")),
+                ("PADDING", (0, 0), (-1, -1), 5),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E4E4E7")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),
+            ]))
+            a_elements.append(a_table)
+            story.append(KeepTogether(a_elements))
+
+    doc.build(story, canvasmaker=NumberedCanvas)
+    pdf_bytes = pdf_buffer.getvalue()
+    pdf_buffer.close()
+
+    filename = f"workspace-summary-{safe_date}.pdf"
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Type": "application/pdf",
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
 # ---------------------------------------------------------------------------

@@ -324,6 +324,33 @@ export const dashboardService = {
       return [];
     }
   },
+  exportSummary: async (params = {}, format = 'csv') => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const response = await apiClient.get('/dashboard/export', {
+      params: { ...params, format, tz },
+      responseType: 'blob',
+    });
+    const disposition = response.headers ? response.headers['content-disposition'] : null;
+    let filename = `workspace-summary-${new Date().toISOString().slice(0, 10)}.${format}`;
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+      if (match && match[1]) {
+        filename = match[1].trim();
+      }
+    }
+    const blob = new Blob([response.data], {
+      type: format === 'pdf' ? 'application/pdf' : 'text/csv;charset=utf-8;',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
 };
 
 // WebSocket Real-time Connection Helper
