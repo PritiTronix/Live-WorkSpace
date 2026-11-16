@@ -158,27 +158,38 @@ export const authService = {
 
 // Global Search Services
 export const searchService = {
-  search: async (query, category = 'all') => {
+  search: async (query, category = 'all', options = {}) => {
+    const { page = 1, limit = 20, signal } = options;
+    const response = await apiClient.get('/search', {
+      params: { q: query, type: category, category, page, limit },
+      signal,
+    });
+    return response.data;
+  },
+  getRecentSearches: async () => {
     try {
-      const response = await apiClient.get('/search', { params: { q: query, category } });
+      const response = await apiClient.get('/search/recent');
+      return Array.isArray(response.data) ? response.data : [];
+    } catch {
+      return [];
+    }
+  },
+  saveRecentSearch: async (query) => {
+    try {
+      const response = await apiClient.post('/search/recent', { query });
       return response.data;
     } catch {
       return null;
     }
   },
-  getRecentSearches: async () => {
+  clearRecentSearches: async (query) => {
     try {
-      const response = await apiClient.get('/search/recent');
+      const response = await apiClient.delete('/search/recent', {
+        params: query ? { query } : undefined,
+      });
       return response.data;
     } catch {
-      return ['kafka consumer lag', 'SRE on-call rotation', 'TKT-1028'];
-    }
-  },
-  saveRecentSearch: async (query) => {
-    try {
-      await apiClient.post('/search/recent', { query });
-    } catch {
-      // Silently ignore or handle in local state
+      return null;
     }
   },
 };

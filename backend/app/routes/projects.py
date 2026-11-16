@@ -286,7 +286,7 @@ async def get_project(
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
         .where(
-            Project.id == project_id,
+            or_(Project.id == project_id, Project.key == project_id),
             Project.organization_id == current_user.organization_id
         )
     )
@@ -319,7 +319,7 @@ async def get_project_overview(
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
         .where(
-            Project.id == project_id,
+            or_(Project.id == project_id, Project.key == project_id),
             Project.organization_id == current_user.organization_id
         )
     )
@@ -436,7 +436,7 @@ async def update_project(
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
         .where(
-            Project.id == project_id,
+            or_(Project.id == project_id, Project.key == project_id),
             Project.organization_id == current_user.organization_id
         )
     )
@@ -503,7 +503,7 @@ async def archive_project(
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
         .where(
-            Project.id == project_id,
+            or_(Project.id == project_id, Project.key == project_id),
             Project.organization_id == current_user.organization_id
         )
     )
@@ -540,7 +540,7 @@ async def unarchive_project(
             selectinload(Project.invitations).selectinload(ProjectInvitation.invited_by),
         )
         .where(
-            Project.id == project_id,
+            or_(Project.id == project_id, Project.key == project_id),
             Project.organization_id == current_user.organization_id
         )
     )

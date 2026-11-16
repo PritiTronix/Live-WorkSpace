@@ -14,7 +14,7 @@ from fastapi import (
     File,
     status,
 )
-from sqlalchemy import select, and_, desc, func
+from sqlalchemy import select, and_, or_, desc, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -532,7 +532,7 @@ async def get_ticket_details(
             selectinload(Ticket.comments).selectinload(TicketComment.author),
             selectinload(Ticket.attachments).selectinload(TicketAttachment.uploader),
             selectinload(Ticket.activities).selectinload(TicketActivity.actor),
-        ).where(Ticket.id == ticket_id)
+        ).where(or_(Ticket.id == ticket_id, Ticket.ticket_number == ticket_id))
     )
     ticket = res.scalars().first()
     if not ticket or not ticket.project or ticket.project.organization_id != current_user.organization_id:
