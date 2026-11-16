@@ -27,7 +27,7 @@ import ReportsAnalyticsPage from '../modules/analytics/pages/ReportsAnalyticsPag
 import SystemActivityLogsPage from '../modules/audit/pages/SystemActivityLogsPage';
 import { TeamDiscussionsPage, DiscussionThreadPage } from '../modules/discussions';
 import { CentralFilesPage } from '../modules/files';
-import { TeamMembersPage } from '../modules/members';
+import { TeamMembersPage, MemberProfilePage } from '../modules/members';
 import { SlaConfigPage, UserProfilePage } from '../modules/settings';
 import {
   LoginPage,
@@ -155,6 +155,7 @@ export const AppRoutes = () => {
 
         {/* Team Members Directory (Screen 71 & 72 / Prompts 58-60) */}
         <Route path="members" element={<TeamMembersPage />} />
+        <Route path="members/:id" element={<MemberProfilePage />} />
         <Route path="members/*" element={<TeamMembersPage />} />
 
         {/* System Activity & Audit Logs (Screens 02 & 03 / Batch 05) */}

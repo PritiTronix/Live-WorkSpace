@@ -1,16 +1,19 @@
+import logging
 import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user, get_current_user_id, require_roles
 from backend.app.core.security import verify_password, get_password_hash
-from backend.app.models import User, Ticket, Task, ProjectMember, Project, UserInvitation
-from backend.app.schemas import UserRead, UserUpdateProfile, UserChangePassword, UserInviteRequest
+from backend.app.models import User, Ticket, Task, ProjectMember, Project, UserInvitation, ProjectActivity
+from backend.app.schemas import UserRead, UserUpdateProfile, UserChangePassword, UserInviteRequest, UserUpdateRole
+
+logger = logging.getLogger("tronix.users")
 
 router = APIRouter()
 
@@ -38,6 +41,10 @@ async def update_my_profile(
         current_user.department = payload.department.strip() or None
     if payload.avatar_url is not None:
         current_user.avatar_url = payload.avatar_url.strip() or None
+    if payload.timezone is not None:
+        current_user.timezone = payload.timezone.strip() or None
+    if payload.on_call_role is not None:
+        current_user.on_call_role = payload.on_call_role.strip() or None
 
     await db.commit()
     await db.refresh(current_user)
@@ -325,13 +332,70 @@ async def list_pending_invitations(
     ]
 
 
+DEFAULT_WORKLOAD_THRESHOLD = 80
+
+
+def compute_member_workload(open_tickets_count: int, open_tasks_count: int, blockers_count: int = 0) -> Optional[int]:
+    """
+    Computes real member workload capacity percentage based on assigned active tickets and tasks:
+    - 0 active items: 0% capacity allocated.
+    - Each open task: 10 points.
+    - Each open ticket: 15 points.
+    - Each critical/blocker ticket: +10 points (incident severity penalty).
+    Bounded between 5% and 100% when active items exist. Threshold for overloaded state is 80%.
+    """
+    total_items = open_tickets_count + open_tasks_count
+    if total_items == 0:
+        return 0
+    raw_points = (open_tasks_count * 10) + (open_tickets_count * 15) + (blockers_count * 10)
+    return min(100, max(5, raw_points))
+
+
+def compute_ticket_sla_state(deadline: Optional[datetime], status: str, now: datetime) -> Dict[str, Any]:
+    """
+    Computes real-time SLA breach / time-remaining status from ticket deadline.
+    Returns status ('breached', 'breaching_soon', 'healthy', or None) and human-readable label.
+    """
+    if not deadline or (status or "").lower() in ("closed", "resolved"):
+        return {"status": None, "label": None, "remaining_minutes": None}
+
+    d = deadline if deadline.tzinfo else deadline.replace(tzinfo=timezone.utc)
+    n = now if now.tzinfo else now.replace(tzinfo=timezone.utc)
+
+    diff_seconds = (d - n).total_seconds()
+    diff_minutes = int(diff_seconds / 60)
+
+    if diff_seconds < 0:
+        return {
+            "status": "breached",
+            "label": "SLA Breached",
+            "remaining_minutes": diff_minutes,
+        }
+    elif diff_seconds <= 2 * 3600:  # within 2 hours
+        if diff_minutes < 60:
+            time_str = f"{diff_minutes}m"
+        else:
+            time_str = f"{diff_minutes // 60}h {diff_minutes % 60}m"
+        return {
+            "status": "breaching_soon",
+            "label": f"SLA Breaching in {time_str}",
+            "remaining_minutes": diff_minutes,
+        }
+    else:
+        return {
+            "status": "healthy",
+            "label": "SLA Healthy",
+            "remaining_minutes": diff_minutes,
+        }
+
+
 @router.get("/{user_id}")
 async def get_user_member_detail(
     user_id: str,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Retrieve full user profile with live workload, scoped to the caller's organization."""
+    """Retrieve full user profile with live workload and aggregations, strictly scoped to caller's organization."""
     u_res = await db.execute(
         select(User).where(
             User.id == user_id,
@@ -350,9 +414,9 @@ async def get_user_member_detail(
             Ticket.assignee_id == user_id,
             Project.organization_id == current_user.organization_id
         )
-        .order_by(Ticket.created_at.desc())
+        .order_by(Ticket.updated_at.desc())
     )
-    tickets = tk_res.scalars().all()
+    all_tickets = tk_res.scalars().all()
 
     # Fetch assigned tasks scoped to current user's organization
     ts_res = await db.execute(
@@ -363,7 +427,7 @@ async def get_user_member_detail(
         )
         .order_by(Task.created_at.desc())
     )
-    tasks = ts_res.scalars().all()
+    all_tasks = ts_res.scalars().all()
 
     # Fetch project memberships
     pm_res = await db.execute(
@@ -377,30 +441,73 @@ async def get_user_member_detail(
     )
     memberships = pm_res.scalars().all()
     projects = [
-        {"id": m.project.id, "name": m.project.name, "key": m.project.key, "role": m.role}
+        {
+            "id": m.project.id,
+            "name": m.project.name,
+            "key": m.project.key,
+            "role": m.role,
+            "status": m.project.status,
+        }
         for m in memberships if m.project
     ]
 
-    open_tickets = [t for t in tickets if t.status.lower() not in ("closed", "resolved")]
-    blockers = [t for t in open_tickets if t.severity.lower() == "blocker"]
+    now = datetime.now(timezone.utc)
 
-    workload = min(100, max(20, (len(open_tickets) * 15) + (len(tasks) * 8)))
+    # Filter tickets
+    open_tickets = [t for t in all_tickets if (t.status or "").lower() not in ("closed", "resolved")]
+    blockers = [t for t in open_tickets if (t.severity or "").lower() in ("blocker", "critical")]
+
+    # Tasks breakdown
+    open_tasks = [t for t in all_tasks if (t.status or "").lower() not in ("done", "cancelled")]
+    due_soon_cutoff = now + timedelta(days=2)
+    due_soon_count = 0
+    overdue_count = 0
+    task_counts_by_status: Dict[str, int] = {}
+
+    for t in open_tasks:
+        s = (t.status or "todo").lower()
+        task_counts_by_status[s] = task_counts_by_status.get(s, 0) + 1
+        if t.due_date:
+            due_dt = t.due_date if t.due_date.tzinfo else t.due_date.replace(tzinfo=timezone.utc)
+            if due_dt < now:
+                overdue_count += 1
+            elif due_dt <= due_soon_cutoff:
+                due_soon_count += 1
+
+    workload_val = compute_member_workload(len(open_tickets), len(open_tasks), len(blockers))
 
     return {
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name,
         "role": user.role,
-        "title": user.title or "Engineer",
-        "department": user.department or "Engineering",
+        "title": user.title,  # Real value or None, no demo fallbacks
+        "department": user.department,  # Real value or None
         "avatar_url": user.avatar_url,
         "is_active": user.is_active,
+        "timezone": user.timezone,
         "created_at": user.created_at.isoformat() if user.created_at else None,
-        "workload_percentage": workload,
+        "joined_date": user.created_at.isoformat() if user.created_at else None,
+        "last_active": user.last_active_at.isoformat() if user.last_active_at else None,
+        "last_active_at": user.last_active_at.isoformat() if user.last_active_at else None,
+        "on_call_role": user.on_call_role,
+        "workload_percentage": workload_val,
+        "workload": {
+            "percentage": workload_val,
+            "threshold": DEFAULT_WORKLOAD_THRESHOLD,
+            "is_overloaded": (workload_val > DEFAULT_WORKLOAD_THRESHOLD) if workload_val is not None else False,
+            "active_incidents": len(blockers),
+        },
         "projects": projects,
         "active_tickets_count": len(open_tickets),
         "blockers_count": len(blockers),
-        "tasks_count": len(tasks),
+        "tasks_count": len(open_tasks),
+        "tasks_summary": {
+            "total_open": len(open_tasks),
+            "counts_by_status": task_counts_by_status,
+            "due_soon": due_soon_count,
+            "overdue": overdue_count,
+        },
         "tickets": [
             {
                 "id": t.id,
@@ -410,8 +517,9 @@ async def get_user_member_detail(
                 "severity": t.severity,
                 "deadline": t.deadline.isoformat() if t.deadline else None,
                 "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+                "sla_state": compute_ticket_sla_state(t.deadline, t.status, now),
             }
-            for t in open_tickets[:5]
+            for t in open_tickets[:10]
         ],
         "tasks": [
             {
@@ -420,7 +528,109 @@ async def get_user_member_detail(
                 "title": tk.title,
                 "status": tk.status,
                 "priority": tk.priority,
+                "due_date": tk.due_date.isoformat() if tk.due_date else None,
+                "created_at": tk.created_at.isoformat() if tk.created_at else None,
             }
-            for tk in tasks[:5]
+            for tk in open_tasks[:10]
         ],
+    }
+
+
+@router.patch("/{user_id}/role")
+async def update_member_role(
+    user_id: str,
+    payload: UserUpdateRole,
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update a team member's role with strict RBAC rules:
+    - Caller must be 'owner' or 'admin'.
+    - Self-escalation is blocked (admin cannot promote themselves to owner, nor change their own role to owner).
+    - Only an 'owner' can assign the 'owner' role.
+    - Demoting the last active owner of the organization is strictly forbidden.
+    - An audit activity log entry is written.
+    """
+    new_role = (payload.role or "").strip().lower()
+    valid_roles = {"owner", "admin", "manager", "lead", "developer", "member", "viewer", "employee"}
+    if new_role not in valid_roles:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid role '{payload.role}'. Must be one of: {', '.join(sorted(valid_roles))}"
+        )
+
+    # Fetch target user in same organization
+    u_res = await db.execute(
+        select(User).where(
+            User.id == user_id,
+            User.organization_id == current_user.organization_id
+        )
+    )
+    target_user = u_res.scalars().first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found in this organization")
+
+    caller_role = (current_user.role or "").lower()
+
+    # Disallow non-owners from promoting anyone to owner
+    if new_role == "owner" and caller_role != "owner":
+        raise HTTPException(status_code=403, detail="Only workspace owners can promote members to owner")
+
+    # Disallow self-escalation / self role changes by admin
+    if current_user.id == target_user.id and caller_role != "owner":
+        raise HTTPException(status_code=403, detail="Self-escalation of roles is forbidden")
+
+    old_role = (target_user.role or "").lower()
+
+    # Prevent demoting the last owner
+    if old_role == "owner" and new_role != "owner":
+        owner_count_res = await db.execute(
+            select(func.count(User.id)).where(
+                User.organization_id == current_user.organization_id,
+                User.role == "owner",
+                User.is_active.is_(True)
+            )
+        )
+        owner_count = owner_count_res.scalar() or 0
+        if owner_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot demote the last organization owner")
+
+    target_user.role = new_role
+
+    # Audit logging
+    logger.info(
+        "AUDIT: Member role changed. Target user: %s, Old role: %s, New role: %s, Actor: %s (%s)",
+        target_user.id, old_role, new_role, current_user.id, current_user.email
+    )
+
+    # If there is a project in the organization, record ProjectActivity
+    p_res = await db.execute(
+        select(Project.id).where(Project.organization_id == current_user.organization_id).limit(1)
+    )
+    proj_id = p_res.scalars().first()
+    if proj_id:
+        act = ProjectActivity(
+            project_id=proj_id,
+            actor_id=current_user.id,
+            action="role_change",
+            category="members",
+            target_type="member",
+            target_id=target_user.id,
+            target_title=target_user.full_name,
+            details=f"Role changed from '{old_role}' to '{new_role}' by {current_user.full_name}",
+        )
+        db.add(act)
+
+    await db.commit()
+    await db.refresh(target_user)
+
+    return {
+        "success": True,
+        "message": f"Updated role to {new_role}",
+        "user": {
+            "id": target_user.id,
+            "full_name": target_user.full_name,
+            "email": target_user.email,
+            "role": target_user.role,
+        }
     }

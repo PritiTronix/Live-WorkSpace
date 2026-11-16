@@ -19,6 +19,13 @@ class UserBase(BaseSchema):
     department: Optional[str] = None
     email_verified: bool = False
     onboarding_completed: bool = False
+    timezone: Optional[str] = None
+    last_active_at: Optional[datetime] = None
+    on_call_role: Optional[str] = None
+
+
+class UserUpdateRole(BaseSchema):
+    role: str
 
 
 class UserCreate(BaseSchema):
@@ -53,6 +60,8 @@ class UserUpdateProfile(BaseSchema):
     title: Optional[str] = None
     department: Optional[str] = None
     avatar_url: Optional[str] = None
+    timezone: Optional[str] = None
+    on_call_role: Optional[str] = None
 
 
 class UserChangePassword(BaseSchema):

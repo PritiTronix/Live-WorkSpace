@@ -20,6 +20,7 @@ api_router = APIRouter()
 
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(users_router, prefix="/users", tags=["Users"])
+api_router.include_router(users_router, prefix="/members", tags=["Members"])
 api_router.include_router(orgs_router, prefix="/organizations", tags=["Organizations"])
 api_router.include_router(projects_router, prefix="/projects", tags=["Projects"])
 api_router.include_router(tasks_router, prefix="/tasks", tags=["Tasks"])

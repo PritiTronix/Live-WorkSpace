@@ -37,5 +37,18 @@ export const membersService = {
     const response = await apiClient.post('/users/invite', data);
     return response.data;
   },
+
+  updateMemberRole: async (userId, role) => {
+    const response = await apiClient.patch(`/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  assignMemberToProject: async (projectId, userId, role = 'developer') => {
+    const response = await apiClient.post(`/projects/${projectId}/members`, {
+      user_id: userId,
+      role: role,
+    });
+    return response.data;
+  },
 };
 

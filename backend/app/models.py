@@ -38,6 +38,9 @@ class User(Base):
     title: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Lead Architect, Project Manager, etc.
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    timezone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    on_call_role: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)

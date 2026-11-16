@@ -534,9 +534,11 @@ export const TeamMembersPage = () => {
                       <h2 className="text-base font-bold text-[#141529] dark:text-white tracking-tight truncate">
                         {m.full_name || 'Team Member'}
                       </h2>
-                      <p className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff] truncate">
-                        {m.title || 'Workspace Contributor'}
-                      </p>
+                      {m.title && (
+                        <p className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff] truncate">
+                          {m.title}
+                        </p>
+                      )}
                       <div className="flex items-center gap-1 text-[#9C9CA9] text-[11px] mt-0.5">
                         <Mail className="w-3 h-3 shrink-0" />
                         <span className="truncate">{m.email}</span>
@@ -544,12 +546,14 @@ export const TeamMembersPage = () => {
                     </div>
 
                     {/* Department Tag */}
-                    <div className="mb-3">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F5F4FC] dark:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-[11px] font-semibold border border-[#E5E5EF] dark:border-[#2e2f41]">
-                        <Server className="w-3 h-3 text-[#6040F0]" />
-                        <span>{m.department || 'General'}</span>
-                      </span>
-                    </div>
+                    {m.department && (
+                      <div className="mb-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F5F4FC] dark:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-[11px] font-semibold border border-[#E5E5EF] dark:border-[#2e2f41]">
+                          <Server className="w-3 h-3 text-[#6040F0]" />
+                          <span>{m.department}</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Status footer */}
@@ -620,7 +624,7 @@ export const TeamMembersPage = () => {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-[#5C5C70] dark:text-[#cabeff]">
-                        {m.department || 'General'}
+                        {m.department || '—'}
                       </td>
                       <td className="px-5 py-3.5">
                         <span
@@ -670,6 +674,10 @@ export const TeamMembersPage = () => {
         onClose={() => setIsDrawerOpen(false)}
         userId={selectedMemberId}
         memberData={selectedMemberData}
+        onMemberUpdated={() => {
+          fetchMembers();
+          triggerToast('Member role successfully updated.');
+        }}
       />
 
       {/* Toast Notification */}
