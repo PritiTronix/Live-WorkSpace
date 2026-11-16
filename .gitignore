@@ -35,6 +35,8 @@ out/
 !backend/.env.example
 *.env
 *.env.*
+env
+*.backup
 
 # Private Keys, Certificates & Credentials
 *.pem
