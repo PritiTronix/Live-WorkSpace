@@ -229,6 +229,7 @@ export const DashboardLayout = () => {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
           onOpenCreate={() => setIsPlusMenuOpen(true)}
+          onOpenShortcuts={() => setIsShortcutsOpen(true)}
           unreadNotifications={unreadCount}
           inboxCount={inboxCount}
           priorityIssuesCount={priorityIssuesCount}
@@ -268,6 +269,10 @@ export const DashboardLayout = () => {
               onOpenCreate={() => {
                 setIsMobileSidebarOpen(false);
                 setIsPlusMenuOpen(true);
+              }}
+              onOpenShortcuts={() => {
+                setIsMobileSidebarOpen(false);
+                setIsShortcutsOpen(true);
               }}
               unreadNotifications={unreadCount}
               inboxCount={inboxCount}

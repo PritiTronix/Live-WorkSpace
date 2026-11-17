@@ -188,16 +188,19 @@ export const GlobalTopBar = ({
             />
           </div>
 
-          {/* Documentation Icon */}
-          <button
-            aria-label="Documentation"
-            onClick={() => navigate('/workspace/design-system/modals')}
-            className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
-            type="button"
-            title="Design System & Documentation"
-          >
-            <span className="material-symbols-outlined text-[20px]">menu_book</span>
-          </button>
+          {/* Documentation Link (from VITE_DOCS_URL, hidden if empty) */}
+          {import.meta.env.VITE_DOCS_URL && (
+            <a
+              href={import.meta.env.VITE_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Documentation"
+              className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
+              title="Documentation"
+            >
+              <span className="material-symbols-outlined text-[20px]">menu_book</span>
+            </a>
+          )}
         </div>
 
         {/* User Profile Context & Dropdown Trigger */}

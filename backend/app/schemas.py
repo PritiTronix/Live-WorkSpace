@@ -687,3 +687,30 @@ class AuditLogExportRequest(BaseSchema):
     event_domains: Optional[List[str]] = Field(default_factory=list)
     severity: Optional[str] = "all"
 
+
+# --- Support Request Schemas ---
+class SupportRequestCreate(BaseSchema):
+    subject: str = Field(..., min_length=1, max_length=200, description="Summary of the support issue or problem")
+    category: str = Field(..., min_length=1, max_length=50, description="Support category or domain")
+    message: str = Field(..., min_length=1, max_length=5000, description="Detailed problem description or steps to reproduce")
+
+    @field_validator("subject", "category", "message")
+    @classmethod
+    def strip_and_validate_non_empty(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Field cannot be empty or contain only whitespace")
+        return stripped
+
+
+class SupportRequestResponse(BaseSchema):
+    id: str
+    user_id: str
+    organization_id: str
+    subject: str
+    category: str
+    message: str
+    status: str
+    created_at: datetime
+
+

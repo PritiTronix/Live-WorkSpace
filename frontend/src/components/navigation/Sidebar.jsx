@@ -2,9 +2,11 @@
  * Sidebar
  * Real-time, per-user organization switcher, live badges, and dynamic user card.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { authService, organizationService } from '../../services/api';
+import HelpSupportModal from '../modals/HelpSupportModal';
+import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
 
 const getInitials = (str) => {
   if (!str) return 'W';
@@ -114,11 +116,15 @@ export const Sidebar = ({
   inboxCount = 0,
   priorityIssuesCount = 0,
   isMobile = false,
+  onOpenShortcuts,
 }) => {
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
   const [organizations, setOrganizations] = useState([]);
   const [currentOrg, setCurrentOrg] = useState(null);
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
+  const helpButtonRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -345,14 +351,16 @@ export const Sidebar = ({
             <span className="material-symbols-outlined text-[18px]">settings</span>
             {!isCollapsed && <span className="font-label-md text-label-md">Settings</span>}
           </NavLink>
-          <NavLink
-            to="/workspace/design-system/modals"
-            title={isCollapsed ? 'Help & Documentation' : undefined}
-            className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
+          <button
+            ref={helpButtonRef}
+            type="button"
+            onClick={() => setIsHelpModalOpen(true)}
+            title={isCollapsed ? 'Help & Support' : undefined}
+            className="w-full flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <span className="material-symbols-outlined text-[18px]">help</span>
-            {!isCollapsed && <span className="font-label-md text-label-md">Help & Docs</span>}
-          </NavLink>
+            {!isCollapsed && <span className="font-label-md text-label-md">Help & Support</span>}
+          </button>
         </nav>
 
         {/* User Card (expanded only) */}
@@ -413,6 +421,27 @@ export const Sidebar = ({
           </div>
         )}
       </div>
+
+      {/* ── Modals (Help & Support + Keyboard Shortcuts) ── */}
+      <HelpSupportModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        onOpenShortcuts={() => {
+          setIsHelpModalOpen(false);
+          if (onOpenShortcuts) {
+            onOpenShortcuts();
+          } else {
+            setIsShortcutsModalOpen(true);
+          }
+        }}
+        triggerRef={helpButtonRef}
+      />
+      {!onOpenShortcuts && (
+        <KeyboardShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
+        />
+      )}
     </aside>
   );
 };

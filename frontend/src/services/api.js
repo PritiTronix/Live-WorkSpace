@@ -457,6 +457,13 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
   }
 };
 
+export const supportService = {
+  createRequest: async (data) => {
+    const response = await apiClient.post('/support/requests', data);
+    return response.data;
+  },
+};
+
 export { projectsService } from './projectsService';
 export { taskService, connectTasksWebSocket } from '../modules/tasks/services/taskService';
 export { analyticsService } from './analyticsService';

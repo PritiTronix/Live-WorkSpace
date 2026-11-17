@@ -962,10 +962,28 @@ export const LandingPage = () => {
               <div>
                 <p className="font-label-md text-label-md text-text-primary font-bold uppercase mb-3">Resources</p>
                 <ul className="space-y-2 font-body-sm text-body-sm text-text-secondary">
-                  <li><Link to="/workspace/design-system/modals" className="hover:text-primary transition-colors">Documentation</Link></li>
-                  <li><Link to="/workspace/design-system/modals" className="hover:text-primary transition-colors">API Reference</Link></li>
+                  <li>
+                    {import.meta.env.VITE_DOCS_URL ? (
+                      <a href={import.meta.env.VITE_DOCS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Documentation</a>
+                    ) : (
+                      <a href="#features" className="hover:text-primary transition-colors">Documentation</a>
+                    )}
+                  </li>
+                  <li>
+                    {import.meta.env.VITE_DOCS_URL ? (
+                      <a href={import.meta.env.VITE_DOCS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">API Reference</a>
+                    ) : (
+                      <a href="#workflow" className="hover:text-primary transition-colors">API Reference</a>
+                    )}
+                  </li>
                   <li><Link to="/workspace/rca" className="hover:text-primary transition-colors">Incident Guides</Link></li>
-                  <li><Link to="/workspace/dashboard" className="hover:text-primary transition-colors">System Status (Live)</Link></li>
+                  <li>
+                    {import.meta.env.VITE_STATUS_URL ? (
+                      <a href={import.meta.env.VITE_STATUS_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">System Status (Live)</a>
+                    ) : (
+                      <Link to="/workspace/dashboard" className="hover:text-primary transition-colors">System Status (Live)</Link>
+                    )}
+                  </li>
                 </ul>
               </div>
               <div>

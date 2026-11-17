@@ -408,3 +408,20 @@ class RCARecord(Base):
     ticket: Mapped["Ticket"] = relationship("Ticket")
     author: Mapped["User"] = relationship("User", foreign_keys=[author_id])
     approved_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[approved_by_id])
+
+
+class SupportRequest(Base):
+    __tablename__ = "support_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    subject: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    user: Mapped["User"] = relationship("User")
+    organization: Mapped["Organization"] = relationship("Organization")
+

@@ -31,12 +31,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._lock = asyncio.Lock()
         self._req_counter = 0
 
-        # Sensitive authentication paths requiring brute-force mitigation
+        # Sensitive authentication and intake paths requiring rate limiting mitigation
         self.monitored_paths = [
             "/api/v1/auth/login",
             "/api/v1/auth/register",
             "/api/v1/auth/forgot-password",
             "/api/v1/auth/reset-password",
+            "/api/v1/support/requests",
         ]
 
     def _get_client_key(self, request: Request) -> str:

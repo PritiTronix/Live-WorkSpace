@@ -51,6 +51,8 @@ import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 }
  * Master application routing configuration
  */
 export const AppRoutes = () => {
+  const isDev = Boolean(import.meta.env.DEV);
+
   return (
     <Routes>
       {/* Public Landing Page */}
@@ -81,9 +83,13 @@ export const AppRoutes = () => {
       <Route path="/onboarding/create-org" element={<RegisterPage />} />
       <Route path="/onboarding/join-org" element={<JoinOrgPage />} />
 
-      {/* Design System Catalogs (Screens 22 & 25) */}
-      <Route path="/design-system/modals" element={<ModalCatalogPage />} />
-      <Route path="/design-system/states" element={<StatesCatalogPage />} />
+      {/* Design System Catalogs (Available only in DEV mode) */}
+      {isDev && (
+        <>
+          <Route path="/design-system/modals" element={<ModalCatalogPage />} />
+          <Route path="/design-system/states" element={<StatesCatalogPage />} />
+        </>
+      )}
 
       {/* Main Authenticated Application Shell */}
       <Route
@@ -166,10 +172,14 @@ export const AppRoutes = () => {
         <Route path="analytics" element={<ReportsAnalyticsPage />} />
         <Route path="analytics/*" element={<ReportsAnalyticsPage />} />
 
-        {/* Design System Catalogs in Workspace (Screens 22 & 25) */}
-        <Route path="design-system/modals" element={<ModalCatalogPage />} />
-        <Route path="design-system/states" element={<StatesCatalogPage />} />
-        <Route path="design-system/*" element={<Navigate to="/workspace/design-system/modals" replace />} />
+        {/* Design System Catalogs in Workspace (Available only in DEV mode) */}
+        {isDev && (
+          <>
+            <Route path="design-system/modals" element={<ModalCatalogPage />} />
+            <Route path="design-system/states" element={<StatesCatalogPage />} />
+            <Route path="design-system/*" element={<Navigate to="/workspace/design-system/modals" replace />} />
+          </>
+        )}
 
         {/* Workspace Settings, SLA, Notifications, Appearance & Profile (Screens 49 & 73) */}
         <Route path="settings" element={<Navigate to="/workspace/settings/sla" replace />} />
