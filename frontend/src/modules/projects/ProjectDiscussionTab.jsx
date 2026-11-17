@@ -24,10 +24,12 @@ export const ProjectDiscussionTab = () => {
   const [newCategory, setNewCategory] = useState('general');
   const [isPinned, setIsPinned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [createError, setCreateError] = useState(null);
 
   // Active reply state
   const [replyTextMap, setReplyTextMap] = useState({});
   const [submittingReply, setSubmittingReply] = useState(false);
+  const [commentErrorMap, setCommentErrorMap] = useState({});
 
   const categories = [
     { key: 'all', label: 'All Discussions', icon: 'chat' },
@@ -80,6 +82,7 @@ export const ProjectDiscussionTab = () => {
 
     try {
       setSubmitting(true);
+      setCreateError(null);
       const created = await projectsService.createDiscussion(id, {
         title: newTitle.trim(),
         content: newContent.trim(),
@@ -95,7 +98,7 @@ export const ProjectDiscussionTab = () => {
       setShowCreateModal(false);
     } catch (err) {
       console.error('Failed to create discussion:', err);
-      alert('Failed to post discussion');
+      setCreateError(err?.response?.data?.detail || 'Failed to post discussion');
     } finally {
       setSubmitting(false);
     }
@@ -107,6 +110,7 @@ export const ProjectDiscussionTab = () => {
 
     try {
       setSubmittingReply(true);
+      setCommentErrorMap((prev) => ({ ...prev, [discussionId]: null }));
       const comment = await projectsService.addDiscussionComment(discussionId, { content: text.trim() });
       setDiscussions((prev) =>
         prev.map((d) =>
@@ -118,7 +122,10 @@ export const ProjectDiscussionTab = () => {
       setReplyTextMap((prev) => ({ ...prev, [discussionId]: '' }));
     } catch (err) {
       console.error('Failed to add comment:', err);
-      alert('Failed to post comment');
+      setCommentErrorMap((prev) => ({
+        ...prev,
+        [discussionId]: err?.response?.data?.detail || 'Failed to post comment',
+      }));
     } finally {
       setSubmittingReply(false);
     }
@@ -277,6 +284,14 @@ export const ProjectDiscussionTab = () => {
                   )}
 
                   {/* Quick Reply Form */}
+                  {commentErrorMap[d.id] && (
+                    <div className="px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                      <span>{commentErrorMap[d.id]}</span>
+                      <button type="button" onClick={() => setCommentErrorMap({ ...commentErrorMap, [d.id]: null })} className="text-red-500 hover:text-red-700">
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 pt-space-xs">
                     <input
                       type="text"
@@ -336,6 +351,14 @@ export const ProjectDiscussionTab = () => {
             </div>
 
             <form onSubmit={handleCreateDiscussion} className="flex flex-col gap-space-md">
+              {createError && (
+                <div className="px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                  <span>{createError}</span>
+                  <button type="button" onClick={() => setCreateError(null)} className="text-red-500 hover:text-red-700">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
               <div>
                 <label className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider block mb-1">
                   Title *

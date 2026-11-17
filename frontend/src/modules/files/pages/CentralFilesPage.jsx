@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { filesService } from '../../../services/filesService';
+import { projectsService } from '../../../services/projectsService';
 import FileUploadModal from '../components/FileUploadModal';
 import FilePreviewDrawer from '../components/FilePreviewDrawer';
 import { DEFAULT_USER } from '../../../services/api';
@@ -17,6 +18,13 @@ export const CentralFilesPage = () => {
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedFileForPreview, setSelectedFileForPreview] = useState(null);
+  const [projectList, setProjectList] = useState([]);
+
+  useEffect(() => {
+    projectsService.listProjects().then((list) => {
+      if (Array.isArray(list)) setProjectList(list);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadFilesAndStats();
@@ -170,10 +178,12 @@ export const CentralFilesPage = () => {
               onChange={(e) => setSelectedProject(e.target.value)}
               className="appearance-none bg-canvas-lavender hover:bg-surface-container border border-border-subtle text-text-primary text-xs font-medium rounded-lg pl-3 pr-8 py-2 focus:ring-1 focus:ring-primary focus:outline-none cursor-pointer"
             >
-              <option value="all">All Projects ▾</option>
-              <option value="Cloud Core Infra">Cloud Core Infra</option>
-              <option value="Platform Revamp 2.0">Platform Revamp 2.0</option>
-              <option value="Operations & SLA">Operations & SLA</option>
+              <option value="all">All Projects</option>
+              {projectList.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
             </select>
             <span className="material-symbols-outlined pointer-events-none absolute right-2 top-2 text-text-secondary text-sm">
               expand_more

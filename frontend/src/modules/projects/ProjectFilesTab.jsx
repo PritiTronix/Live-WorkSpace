@@ -25,6 +25,7 @@ export const ProjectFilesTab = () => {
   const [newLinkedTask, setNewLinkedTask] = useState('');
   const [isPinned, setIsPinned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
   const fileTypeFilters = [
     { key: 'all', label: 'All Files' },
@@ -59,6 +60,7 @@ export const ProjectFilesTab = () => {
 
     try {
       setSubmitting(true);
+      setUploadError(null);
       const created = await projectsService.uploadProjectFile(id, {
         name: newFileName.trim(),
         file_type: newFileType,
@@ -75,7 +77,7 @@ export const ProjectFilesTab = () => {
       setShowUploadModal(false);
     } catch (err) {
       console.error('Failed to upload file:', err);
-      alert('Failed to register file');
+      setUploadError(err?.response?.data?.detail || 'Failed to register file');
     } finally {
       setSubmitting(false);
     }
@@ -416,6 +418,14 @@ export const ProjectFilesTab = () => {
             </div>
 
             <form onSubmit={handleUpload} className="flex flex-col gap-space-md">
+              {uploadError && (
+                <div className="px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                  <span>{uploadError}</span>
+                  <button type="button" onClick={() => setUploadError(null)} className="text-red-500 hover:text-red-700">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
               <div>
                 <label className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider block mb-1">
                   File Name *

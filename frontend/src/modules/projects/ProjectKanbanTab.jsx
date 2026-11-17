@@ -24,6 +24,7 @@ export const ProjectKanbanTab = () => {
   const [newDescription, setNewDescription] = useState('');
   const [newPriority, setNewPriority] = useState('medium');
   const [submitting, setSubmitting] = useState(false);
+  const [createTaskError, setCreateTaskError] = useState(null);
 
   // Filter states
   const [search, setSearch] = useState('');
@@ -90,6 +91,7 @@ export const ProjectKanbanTab = () => {
 
     try {
       setSubmitting(true);
+      setCreateTaskError(null);
       const created = await projectsService.createTask({
         title: newTitle.trim(),
         description: newDescription.trim() || null,
@@ -105,7 +107,7 @@ export const ProjectKanbanTab = () => {
       setShowCreateTask(false);
     } catch (err) {
       console.error('Failed to create task:', err);
-      alert('Failed to create task');
+      setCreateTaskError(err?.response?.data?.detail || 'Failed to create task');
     } finally {
       setSubmitting(false);
     }
@@ -303,6 +305,14 @@ export const ProjectKanbanTab = () => {
             </div>
 
             <form onSubmit={handleCreateTask} className="flex flex-col gap-space-md">
+              {createTaskError && (
+                <div className="px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                  <span>{createTaskError}</span>
+                  <button type="button" onClick={() => setCreateTaskError(null)} className="text-red-500 hover:text-red-700">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
               <div>
                 <label className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider block mb-1">
                   Task Title *

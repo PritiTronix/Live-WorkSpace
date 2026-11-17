@@ -117,7 +117,7 @@ export const ProjectOptionsMenu = ({
           <div className="px-3 py-2 border-b border-border-subtle/50 flex items-center justify-between">
             <span className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">Quick Actions</span>
             <span className="font-label-sm text-label-sm text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded font-mono">
-              {project.key || 'PR-2025'}
+              {project.key || 'PROJ'}
             </span>
           </div>
 

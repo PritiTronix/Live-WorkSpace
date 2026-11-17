@@ -9,9 +9,9 @@ export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
-  activeBreadcrumbs = ['Live Workspace', 'Platform Revamp', 'Overview'],
+  activeBreadcrumbs = ['Live Workspace'],
   unreadNotifications = 0,
-  slaBreachCount = 2,
+  slaBreachCount = 0,
   isCollapsed = false,
 }) => {
   const navigate = useNavigate();
@@ -188,16 +188,19 @@ export const GlobalTopBar = ({
             />
           </div>
 
-          {/* Documentation Icon */}
-          <button
-            aria-label="Documentation"
-            onClick={() => navigate('/workspace/design-system/modals')}
-            className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
-            type="button"
-            title="Design System & Documentation"
-          >
-            <span className="material-symbols-outlined text-[20px]">menu_book</span>
-          </button>
+          {/* Documentation Link (from VITE_DOCS_URL, hidden if empty) */}
+          {import.meta.env.VITE_DOCS_URL && (
+            <a
+              href={import.meta.env.VITE_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Documentation"
+              className="w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer"
+              title="Documentation"
+            >
+              <span className="material-symbols-outlined text-[20px]">menu_book</span>
+            </a>
+          )}
         </div>
 
         {/* User Profile Context & Dropdown Trigger */}
@@ -222,11 +225,17 @@ export const GlobalTopBar = ({
             }`}
           >
             <div className="relative">
-              <img
-                alt={user.full_name}
-                className="w-8 h-8 rounded-full object-cover group-hover:opacity-90 transition-opacity"
-                src={user.avatar_url}
-              />
+              {user.avatar_url ? (
+                <img
+                  alt={user.full_name || 'User'}
+                  className="w-8 h-8 rounded-full object-cover group-hover:opacity-90 transition-opacity"
+                  src={user.avatar_url}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center">
+                  {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
               <span
                 className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${getPresenceColor(
                   presence
@@ -234,8 +243,8 @@ export const GlobalTopBar = ({
               ></span>
             </div>
             <div className="text-left hidden lg:block">
-              <p className="font-label-md text-label-md text-text-primary leading-none">{user.full_name}</p>
-              <p className="font-label-sm text-label-sm text-primary leading-none mt-1">{user.role}</p>
+              <p className="font-label-md text-label-md text-text-primary leading-none">{user.full_name || 'Team Member'}</p>
+              <p className="font-label-sm text-label-sm text-primary leading-none mt-1 capitalize">{user.role || 'member'}</p>
             </div>
             <span className="material-symbols-outlined text-text-muted text-[16px] group-hover:text-text-primary transition-colors hidden sm:inline-block">
               {isProfileOpen ? 'keyboard_arrow_up' : 'expand_more'}

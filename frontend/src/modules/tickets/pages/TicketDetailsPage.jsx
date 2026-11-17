@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
+import { authService } from '../../../services/api';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES, TICKET_SEVERITIES } from '../constants/ticketConstants';
 
 export const TicketDetailsPage = () => {
@@ -23,6 +24,7 @@ export const TicketDetailsPage = () => {
 
   // Upload attachment trigger
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [attachmentError, setAttachmentError] = useState(null);
 
   // Fetch Ticket Data
   const fetchTicket = useCallback(async () => {
@@ -47,19 +49,23 @@ export const TicketDetailsPage = () => {
   // WebSocket Live Updates
   useEffect(() => {
     const wsFn = createTicketsWebSocket || ticketsService?.createTicketsWebSocket;
-    let ws = null;
+    let cleanup = null;
     if (typeof wsFn === 'function') {
-      ws = wsFn('org_01', (event) => {
+      const user = authService.getCurrentUserSync();
+      const orgId = user?.organization_id || localStorage.getItem('organization_id') || localStorage.getItem('active_workspace_id') || '';
+      cleanup = wsFn(orgId, (event) => {
+        const eventType = event?.type || event?.event;
         if (
-          (event.type === 'ticket_updated' && event.ticket?.id === id) ||
-          (event.type === 'ticket_comment_added' && event.ticket_id === id)
+          ((eventType === 'ticket_updated' || eventType === 'ticket_status_changed') && (event.ticket?.id === id || event.ticket_id === id)) ||
+          (eventType === 'ticket_comment_added' && (event.ticket_id === id || event.ticket?.id === id))
         ) {
           fetchTicket();
         }
       });
     }
     return () => {
-      if (ws) ws.close();
+      if (typeof cleanup === 'function') cleanup();
+      else if (cleanup && typeof cleanup.close === 'function') cleanup.close();
     };
   }, [id, fetchTicket]);
 
@@ -134,11 +140,12 @@ export const TicketDetailsPage = () => {
       if (!file) return;
       try {
         setUploadingAttachment(true);
+        setAttachmentError(null);
         await ticketsService.addAttachment(id, file);
         fetchTicket();
       } catch (err) {
         console.error('Failed to attach file:', err);
-        alert(err.response?.data?.detail || 'Failed to upload attachment.');
+        setAttachmentError(err.response?.data?.detail || 'Failed to upload attachment.');
       } finally {
         setUploadingAttachment(false);
       }
@@ -748,6 +755,15 @@ export const TicketDetailsPage = () => {
                   ))
                 )}
               </div>
+
+              {attachmentError && (
+                <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                  <span>{attachmentError}</span>
+                  <button type="button" onClick={() => setAttachmentError(null)} className="text-red-500 hover:text-red-700">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+              )}
 
               <button
                 type="button"

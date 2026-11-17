@@ -4,7 +4,7 @@ import Sidebar from '../components/navigation/Sidebar';
 import GlobalTopBar from '../components/navigation/GlobalTopBar';
 import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
 import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
-import { notificationService } from '../services/api';
+import { notificationService, organizationService, dashboardService, connectDashboardWebSocket } from '../services/api';
 import CreateTaskModal from '../modules/tasks/components/CreateTaskModal';
 import { taskService } from '../modules/tasks/services/taskService';
 import CreateTicketModal from '../modules/tickets/components/CreateTicketModal';
@@ -43,7 +43,12 @@ export const DashboardLayout = () => {
   const [isCreateDiscussionModalOpen, setIsCreateDiscussionModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [inboxCount, setInboxCount] = useState(0);
   const [slaBreachCount, setSlaBreachCount] = useState(0);
+  const [priorityIssuesCount, setPriorityIssuesCount] = useState(0);
+  const [openTicketsCount, setOpenTicketsCount] = useState(0);
+  const [workspaceName, setWorkspaceName] = useState('Live Workspace');
+  const [currentProjectName, setCurrentProjectName] = useState(null);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
   useEffect(() => {
@@ -69,44 +74,115 @@ export const DashboardLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch live unread count and active SLA breach notifications on mount and location change
-  useEffect(() => {
-    let isMounted = true;
-    const fetchNotificationCounts = async () => {
-      try {
-        const res = await notificationService.getUnreadCount();
-        if (!isMounted) return;
+  // Fetch workspace and live badges
+  const refreshBadges = async () => {
+    try {
+      const [uRes, iCount, metrics, priorityTkts] = await Promise.all([
+        notificationService.getUnreadCount(),
+        notificationService.getInboxCount(),
+        dashboardService.getMetrics(),
+        dashboardService.getPriorityTickets(),
+      ]);
+      const payload = uRes?.data || uRes;
+      const totalUnread = typeof payload === 'object' && payload !== null
+        ? (payload.unread_count ?? 0)
+        : (Number(payload) || 0);
+      const notifBreachCount = typeof payload === 'object' && payload !== null
+        ? (payload.sla_breach_count ?? 0)
+        : 0;
 
-        // Support both direct response payload and nested .data wrapper if passed through
-        const payload = res?.data || res;
-        const totalUnread = typeof payload === 'object' && payload !== null
-          ? (payload.unread_count ?? 0)
-          : (Number(payload) || 0);
-        const breachCount = typeof payload === 'object' && payload !== null
-          ? (payload.sla_breach_count ?? 0)
-          : 0;
-
-        setUnreadCount(totalUnread);
-        setSlaBreachCount(breachCount);
-      } catch (err) {
-        if (!isMounted) return;
-        setUnreadCount(0);
-        setSlaBreachCount(0);
+      setUnreadCount(totalUnread);
+      setInboxCount(iCount || 0);
+      if (metrics) {
+        setSlaBreachCount(metrics.sla_breached ?? notifBreachCount ?? 0);
+        setOpenTicketsCount(metrics.open_tickets || 0);
+      } else {
+        setSlaBreachCount(notifBreachCount || 0);
       }
-    };
+      if (priorityTkts) {
+        setPriorityIssuesCount(priorityTkts.length || 0);
+      }
+    } catch (err) {
+      console.warn('Failed to refresh badges:', err);
+    }
+  };
 
-    fetchNotificationCounts();
+  useEffect(() => {
+    organizationService.getCurrent().then((ws) => {
+      if (ws?.name) setWorkspaceName(ws.name);
+    });
+    refreshBadges();
+
+    const ws = connectDashboardWebSocket((event) => {
+      if (
+        event.type === 'METRICS_UPDATE' ||
+        event.type === 'PRIORITY_TICKETS_UPDATE' ||
+        event.type === 'NOTIFICATION_NEW'
+      ) {
+        refreshBadges();
+      }
+    });
+
     return () => {
-      isMounted = false;
+      if (ws) ws.close();
     };
   }, [location.pathname]);
 
-  // Dynamic breadcrumbs based on active route
+  // Dynamic breadcrumbs based on active route and verified tenant data
   const getBreadcrumbs = () => {
-    if (location.pathname.startsWith('/workspace/projects')) {
-      return ['Live Workspace', 'Projects', 'Overview'];
+    const path = location.pathname;
+    if (path === '/workspace/dashboard' || path === '/workspace') {
+      return [workspaceName, 'Dashboard'];
     }
-    return ['Live Workspace', 'Platform Revamp', 'Overview'];
+    if (path.startsWith('/workspace/projects/')) {
+      return currentProjectName ? [workspaceName, 'Projects', currentProjectName] : [workspaceName, 'Projects'];
+    }
+    if (path === '/workspace/projects') {
+      return [workspaceName, 'Projects'];
+    }
+    if (path === '/workspace/tasks/my-tasks') {
+      return [workspaceName, 'Tasks', 'My Tasks'];
+    }
+    if (path.startsWith('/workspace/tasks')) {
+      return [workspaceName, 'Tasks'];
+    }
+    if (path === '/workspace/tickets/critical') {
+      return [workspaceName, 'Tickets', 'Priority Issues'];
+    }
+    if (path === '/workspace/tickets/priority') {
+      return [workspaceName, 'Tickets', 'Priority View'];
+    }
+    if (path === '/workspace/tickets/board') {
+      return [workspaceName, 'Tickets', 'Board View'];
+    }
+    if (path.startsWith('/workspace/tickets/')) {
+      return [workspaceName, 'Tickets', 'Ticket Detail'];
+    }
+    if (path === '/workspace/tickets') {
+      return [workspaceName, 'Tickets'];
+    }
+    if (path.startsWith('/workspace/members')) {
+      return [workspaceName, 'Team Members'];
+    }
+    if (path.startsWith('/workspace/discussions')) {
+      return [workspaceName, 'Discussions'];
+    }
+    if (path.startsWith('/workspace/files')) {
+      return [workspaceName, 'Files'];
+    }
+    if (path.startsWith('/workspace/sla')) {
+      return [workspaceName, 'SLA Overview'];
+    }
+    if (path.startsWith('/workspace/audit-logs')) {
+      return [workspaceName, 'Activity Logs'];
+    }
+    if (path.startsWith('/workspace/analytics')) {
+      return [workspaceName, 'Reports'];
+    }
+    if (path.startsWith('/workspace/settings')) {
+      return [workspaceName, 'Settings'];
+    }
+    return [workspaceName];
   };
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K for Search, ? for Shortcuts)
@@ -163,7 +239,10 @@ export const DashboardLayout = () => {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
           onOpenCreate={() => setIsPlusMenuOpen(true)}
+          onOpenShortcuts={() => setIsShortcutsOpen(true)}
           unreadNotifications={unreadCount}
+          inboxCount={inboxCount}
+          priorityIssuesCount={priorityIssuesCount}
         />
       </div>
 
@@ -201,7 +280,13 @@ export const DashboardLayout = () => {
                 setIsMobileSidebarOpen(false);
                 setIsPlusMenuOpen(true);
               }}
+              onOpenShortcuts={() => {
+                setIsMobileSidebarOpen(false);
+                setIsShortcutsOpen(true);
+              }}
               unreadNotifications={unreadCount}
+              inboxCount={inboxCount}
+              priorityIssuesCount={priorityIssuesCount}
             />
           </div>
         </div>
@@ -271,8 +356,8 @@ export const DashboardLayout = () => {
         <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-card/95 backdrop-blur-md border-t border-border-subtle flex items-center justify-around px-2 z-40 md:hidden shadow-[0_-2px_12px_rgba(20,21,41,0.08)] pb-[env(safe-area-inset-bottom)]">
           <MobileNavItem to="/workspace/dashboard" icon="home" label="Home" />
           <MobileNavItem to="/workspace/tasks" icon="task_alt" label="Tasks" />
-          <MobileNavItem to="/workspace/tickets" icon="confirmation_number" label="Tickets" badge={3} />
-          <MobileNavItem to="/workspace/notifications" icon="notifications" label="Alerts" badge={unreadCount} />
+          <MobileNavItem to="/workspace/tickets" icon="confirmation_number" label="Tickets" badge={openTicketsCount > 0 ? openTicketsCount : null} />
+          <MobileNavItem to="/workspace/notifications" icon="notifications" label="Alerts" badge={unreadCount > 0 ? unreadCount : null} />
           <MobileNavItem to="/workspace/settings" icon="settings" label="Settings" />
         </nav>
       </div>

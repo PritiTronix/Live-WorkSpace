@@ -15,11 +15,13 @@ from backend.app.routes.settings import router as settings_router
 from backend.app.routes.dashboard import router as dashboard_router
 from backend.app.routes.search import router as search_router
 from backend.app.routes.notifications import router as notifications_router
+from backend.app.routes.support import router as support_router
 
 api_router = APIRouter()
 
 api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 api_router.include_router(users_router, prefix="/users", tags=["Users"])
+api_router.include_router(users_router, prefix="/members", tags=["Members"])
 api_router.include_router(orgs_router, prefix="/organizations", tags=["Organizations"])
 api_router.include_router(projects_router, prefix="/projects", tags=["Projects"])
 api_router.include_router(tasks_router, prefix="/tasks", tags=["Tasks"])
@@ -34,3 +36,5 @@ api_router.include_router(settings_router, prefix="/settings", tags=["Settings"]
 api_router.include_router(dashboard_router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(search_router, prefix="/search", tags=["Global Search"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["Notifications"])
+api_router.include_router(support_router, prefix="/support", tags=["Support"])
+

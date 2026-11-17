@@ -85,7 +85,7 @@ export const LogoutModal = ({
               {currentUser?.full_name || 'Active User'}
             </span>
             <span className="font-body-sm text-body-sm text-text-secondary truncate block">
-              {currentUser?.email || 'user@tronix365.cloud'}
+              {currentUser?.email || ''}
             </span>
           </div>
           <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-sm text-xs font-semibold">

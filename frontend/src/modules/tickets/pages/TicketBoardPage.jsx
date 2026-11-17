@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ticketsService, { createTicketsWebSocket } from '../../../services/ticketsService';
+import { useTickets } from '../hooks/useTickets';
 import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES } from '../constants/ticketConstants';
+import ErrorState from '../../design-system/components/ErrorState';
 
 /**
  * Screen 62: Ticket Board View (Prompt 38)
@@ -13,60 +14,33 @@ import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES } from '../constants/ti
 export const TicketBoardPage = () => {
   const navigate = useNavigate();
 
-  const [board, setBoard] = useState({
-    open: [],
-    wip: [],
-    on_hold: [],
-    resolved: [],
-    closed: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filters
-  const [search, setSearch] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
+  const {
+    boardTickets,
+    loading,
+    error,
+    isRetrying,
+    isWsConnected,
+    actionError,
+    setActionError,
+    search,
+    setSearch,
+    severityFilter,
+    setSeverityFilter,
+    statusFilter,
+    setStatusFilter,
+    updateTicketStatus,
+    refetch,
+  } = useTickets();
 
   // Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [draggedTicketId, setDraggedTicketId] = useState(null);
 
-  const columns = TICKET_STATUSES.map(key => ({
+  const columns = TICKET_STATUSES.map((key) => ({
     key,
-    label: STATUS_CONFIG[key].label,
-    color: STATUS_CONFIG[key].dot,
+    label: STATUS_CONFIG[key]?.label || key,
+    color: STATUS_CONFIG[key]?.dot || 'bg-outline',
   }));
-
-  const fetchBoard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await ticketsService.getBoard({
-        search: search.trim() || undefined,
-        severity: severityFilter !== 'all' ? severityFilter : undefined,
-      });
-      setBoard(data || {});
-    } catch (err) {
-      console.error('Failed to load ticket board:', err);
-      setError(err.message || 'Failed to load ticket board.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBoard();
-  }, [search, severityFilter]);
-
-  // Real-time updates
-  useEffect(() => {
-    const cleanup = createTicketsWebSocket('org_01', (payload) => {
-      if (['ticket_created', 'ticket_updated', 'ticket_status_changed', 'ticket_deleted'].includes(payload.event)) {
-        fetchBoard();
-      }
-    });
-    return cleanup;
-  }, []);
 
   // Drag and drop handlers
   const handleDragStart = (e, ticketId) => {
@@ -83,40 +57,8 @@ export const TicketBoardPage = () => {
     const ticketId = e.dataTransfer.getData('text/plain') || draggedTicketId;
     if (!ticketId) return;
 
-    // Optimistic UI update
-    setBoard((prev) => {
-      let foundTicket = null;
-      const updated = {};
-
-      // Remove ticket from source
-      for (const [colKey, ticketsList] of Object.entries(prev)) {
-        const remaining = [];
-        for (const t of ticketsList) {
-          if (t.id === ticketId) {
-            foundTicket = { ...t, status: targetStatus };
-          } else {
-            remaining.push(t);
-          }
-        }
-        updated[colKey] = remaining;
-      }
-
-      // Add to target column
-      if (foundTicket && updated[targetStatus]) {
-        updated[targetStatus] = [foundTicket, ...updated[targetStatus]];
-      }
-
-      return updated;
-    });
-
     setDraggedTicketId(null);
-
-    try {
-      await ticketsService.updateTicket(ticketId, { status: targetStatus });
-    } catch (err) {
-      console.error('Failed to update status on drop:', err);
-      fetchBoard(); // rollback
-    }
+    await updateTicketStatus(ticketId, targetStatus);
   };
 
   return (
@@ -126,19 +68,49 @@ export const TicketBoardPage = () => {
         onSearchChange={setSearch}
         severityFilter={severityFilter}
         onSeverityChange={setSeverityFilter}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
         onOpenCreateModal={() => setShowCreateModal(true)}
+        isWsConnected={isWsConnected}
       />
+
+      {/* Action Error Banner (e.g. Drag & Drop failure / rollback notice) */}
+      {actionError && (
+        <div className="bg-error-container/80 text-on-error-container p-3 sm:p-4 rounded-xl flex items-center justify-between gap-3 border border-error/30 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-severity-blocker text-lg">error</span>
+            <span className="font-body-sm text-xs sm:text-body-sm font-medium">{actionError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="text-xs font-semibold px-2 py-1 rounded hover:bg-black/5 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center p-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           <span className="ml-3 font-body-md text-text-secondary">Loading ticket board...</span>
         </div>
+      ) : error ? (
+        <div className="bg-surface-card rounded-xl p-6 border border-border-subtle/50">
+          <ErrorState
+            variant="500"
+            title="Unable to Load Ticket Board"
+            description={error}
+            onRetry={() => refetch(true)}
+            isRetrying={isRetrying}
+          />
+        </div>
       ) : (
         /* 5 Kanban Columns Grid */
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-space-md items-start overflow-x-auto pb-4">
           {columns.map((col) => {
-            const colTickets = board[col.key] || [];
+            const colTickets = boardTickets[col.key] || [];
 
             return (
               <div
@@ -168,8 +140,9 @@ export const TicketBoardPage = () => {
                     </div>
                   ) : (
                     colTickets.map((t) => {
-                      const isBlocker = t.severity === 'blocker';
-                      const sev = SEVERITY_CONFIG[t.severity] || SEVERITY_CONFIG.minor;
+                      const sevKey = (t.severity || '').toLowerCase();
+                      const isBlocker = sevKey === 'blocker';
+                      const sev = SEVERITY_CONFIG[sevKey] || SEVERITY_CONFIG.minor;
 
                       return (
                         <article
@@ -225,7 +198,7 @@ export const TicketBoardPage = () => {
         <CreateTicketModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onTicketCreated={() => fetchBoard()}
+          onTicketCreated={() => refetch()}
         />
       )}
     </div>

@@ -48,16 +48,16 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Fallback user context matching Stitch design specification
+// Fallback user context
 export const DEFAULT_USER = {
-  id: 'usr_01',
-  full_name: 'Bhavesh Burad',
-  email: 'bhaveshburad729@gmail.com',
-  role: 'owner',
-  department: 'Executive & Architecture',
+  id: '',
+  full_name: '',
+  email: '',
+  role: 'member',
+  department: '',
   presence: 'ONLINE',
   onboarding_completed: true,
-  avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg',
+  avatar_url: '',
 };
 
 // Authentication & Profile Services
@@ -158,112 +158,146 @@ export const authService = {
 
 // Global Search Services
 export const searchService = {
-  search: async (query, category = 'all') => {
+  search: async (query, category = 'all', options = {}) => {
+    const { page = 1, limit = 20, signal } = options;
+    const response = await apiClient.get('/search', {
+      params: { q: query, type: category, category, page, limit },
+      signal,
+    });
+    return response.data;
+  },
+  getRecentSearches: async () => {
     try {
-      const response = await apiClient.get('/search', { params: { q: query, category } });
+      const response = await apiClient.get('/search/recent');
+      return Array.isArray(response.data) ? response.data : [];
+    } catch {
+      return [];
+    }
+  },
+  saveRecentSearch: async (query) => {
+    try {
+      const response = await apiClient.post('/search/recent', { query });
       return response.data;
     } catch {
       return null;
     }
   },
-  getRecentSearches: async () => {
+  clearRecentSearches: async (query) => {
     try {
-      const response = await apiClient.get('/search/recent');
+      const response = await apiClient.delete('/search/recent', {
+        params: query ? { query } : undefined,
+      });
       return response.data;
     } catch {
-      return ['kafka consumer lag', 'SRE on-call rotation', 'TKT-1028'];
+      return null;
     }
   },
-  saveRecentSearch: async (query) => {
+};
+
+// Organization Services
+export const organizationService = {
+  list: async () => {
     try {
-      await apiClient.post('/search/recent', { query });
+      const response = await apiClient.get('/organizations');
+      return response.data || [];
     } catch {
-      // Silently ignore or handle in local state
+      return [];
+    }
+  },
+  getCurrent: async () => {
+    try {
+      const response = await apiClient.get('/settings/workspace');
+      return response.data;
+    } catch {
+      return null;
     }
   },
 };
 
 // Dashboard Services
 export const dashboardService = {
-  getMetrics: async () => {
+  getFilters: async () => {
     try {
-      const response = await apiClient.get('/dashboard/metrics');
+      const response = await apiClient.get('/dashboard/filters');
+      return response.data;
+    } catch {
+      return { teams: [], projects: [], date_ranges: [] };
+    }
+  },
+  getMetrics: async (params = {}) => {
+    try {
+      const response = await apiClient.get('/dashboard/metrics', { params });
       return response.data;
     } catch {
       return {
-        total_projects: 14,
-        total_tasks: 248,
-        my_tasks: 12,
-        open_tickets: 37,
-        work_in_progress: 19,
-        on_hold: 5,
-        sla_breached: 2,
+        total_projects: 0,
+        projects_this_month: null,
+        total_tasks: 0,
+        tasks_completion_rate: null,
+        my_tasks: 0,
+        my_tasks_due_today: null,
+        open_tickets: 0,
+        triage_count: null,
+        work_in_progress: 0,
+        active_squads_count: null,
+        on_hold: 0,
+        on_hold_subtext: null,
+        sla_breached: 0,
+        sla_compliance_rate: null,
       };
     }
   },
-  getTasksBreakdown: async () => {
+  getTasksBreakdown: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/tasks-breakdown');
+      const response = await apiClient.get('/dashboard/tasks-breakdown', { params });
       return response.data;
     } catch {
       return {
-        total: 248,
-        done: 142,
-        in_progress: 68,
-        in_review: 26,
-        to_do: 12,
-        completion_rate: 57.2,
+        total: 0,
+        done: 0,
+        in_progress: 0,
+        in_review: 0,
+        to_do: 0,
+        completion_rate: 0.0,
       };
     }
   },
-  getTicketsSeverity: async () => {
+  getTicketsSeverity: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/tickets-severity');
+      const response = await apiClient.get('/dashboard/tickets-severity', { params });
       return response.data;
     } catch {
       return {
-        total_active: 37,
-        blocker: 3,
-        critical: 7,
-        major: 12,
-        minor: 15,
-        violations_24h: 2,
+        total_active: 0,
+        blocker: 0,
+        critical: 0,
+        major: 0,
+        minor: 0,
+        violations_24h: 0,
       };
     }
   },
-  getSlaPerformance: async () => {
+  getSlaPerformance: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/sla-performance');
+      const response = await apiClient.get('/dashboard/sla-performance', { params });
       return response.data;
     } catch {
       return {
-        adherence_rate: 96.4,
-        adherence_delta: '+1.8%',
-        average_mttr: '14m',
-        mttr_delta: '-3m faster',
-        resolved_rolling_total: 34,
-        rolling_days: [
-          { day: 'Thu', count: 4, height: '45%' },
-          { day: 'Fri', count: 6, height: '60%' },
-          { day: 'Sat', count: 3, height: '35%' },
-          { day: 'Sun', count: 2, height: '20%' },
-          { day: 'Mon', count: 9, height: '85%' },
-          { day: 'Tue', count: 10, height: '100%' },
-          { day: 'Today', count: 7, height: '70%' },
-        ],
+        adherence_rate: null,
+        adherence_delta: null,
+        average_mttr: '—',
+        mttr_delta: null,
+        resolved_rolling_total: 0,
+        rolling_days: [],
       };
     }
   },
-  getProjectProgress: async () => {
+  getProjectProgress: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/project-progress');
+      const response = await apiClient.get('/dashboard/project-progress', { params });
       return response.data;
     } catch {
-      return [
-        { id: 'prj_1', title: 'Platform Revamp 2.0', progress: 78, squads: '4 squads assigned', target: 'Dec 15', status_color: 'bg-btn-primary' },
-        { id: 'prj_2', title: 'Auth Proxy Gateway Migration', progress: 92, squads: 'SRE Canary Rollout', target: 'Nov 30', status_color: 'bg-status-resolved' },
-        { id: 'prj_3', title: 'Data Pipeline v3', progress: 45, squads: 'Blocked on Kafka sync', target: 'Jan 10', status_color: 'bg-severity-critical' },
-      ];
+      return [];
     }
   },
   getTeamWorkload: async () => {
@@ -271,125 +305,68 @@ export const dashboardService = {
       const response = await apiClient.get('/dashboard/team-workload');
       return response.data;
     } catch {
-      return [
-        { name: 'Platform Squad', capacity: 88, status: '88% Capacity', color: 'bg-primary-container', desc: '6 Engineers • 18 active tasks • Optimal burn-rate' },
-        { name: 'SRE Incident Response', capacity: 94, status: '94% Overload Warning', color: 'bg-severity-critical', desc: '4 On-call SREs • 2 Blocker alerts active • High paging rate' },
-        { name: 'Core API Squad', capacity: 62, status: '62% Available', color: 'bg-status-resolved', desc: '5 Engineers • Ready for failover sprint allocation' },
-      ];
+      return [];
     }
   },
-  getPriorityTickets: async () => {
+  getPriorityTickets: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/priority-tickets');
+      const response = await apiClient.get('/dashboard/priority-tickets', { params });
       return response.data;
     } catch {
-      return [
-        {
-          id: 'TKT-1025',
-          title: 'Auth proxy latency spike on us-east cluster',
-          severity: 'Blocker',
-          severity_bg: 'bg-red-100 text-severity-blocker border-red-200',
-          status: 'Work in Progress',
-          status_color: 'bg-status-wip text-status-wip',
-          assignee_name: 'Aarav Mehta',
-          assignee_avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDqo8GgKfFsr5cHkqp1lCuMgd1yOtshoM_YSGgJFFDK0Qgzdq0EUdwPnnMhWjR-vLKk-ohcrmXdD__DMIkM0sihddxtnQilLqE9PAGu-e-IxSgqZa2oyFX_FUbcgOdaYbxR0hdK5dugjU4JeIkGzzlFNdKCR8haQg1EvM3Xzb0YLd2kUzSzoev5QLC1O4W2A7GXgHhIPq6RPxCszdG_snfOg4RAAUrndtuYU-ioTyhB',
-          sla_text: 'BREACHED (-14m)',
-          sla_class: 'bg-error text-white animate-pulse',
-        },
-        {
-          id: 'TKT-1031',
-          title: 'Payment Webhook retry queue exhaustion',
-          severity: 'Critical',
-          severity_bg: 'bg-amber-100 text-severity-critical border-amber-200',
-          status: 'Open',
-          status_color: 'bg-status-open text-status-open',
-          assignee_name: 'Maya Shah',
-          assignee_avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCHjELWytJwzAGP7e9QWUNSnKTW-MnICfKIA4yhY0ydh6QRNwk51QKDJmSqZNYC5W3eoKGinUDbbAQmRvX35RpXmFV6yS8x2cAOfq40RxPjGqD3zCWtI1AJFUNvHUEUugdu-zKQHOwWJdzCSo5V8qCwd6DmaI5Yi59nV-giaE3goUTr8b3RUsVWJ7BO_G0fbI6HE11ROdx7RW1hQuT1ZguQQI4UVC1w3V8obEWEYWJJ',
-          sla_text: '18m remaining',
-          sla_class: 'bg-amber-100 text-severity-critical border border-amber-300',
-        },
-        {
-          id: 'TKT-1028',
-          title: 'Kafka consumer lag exceeding 50k messages',
-          severity: 'Critical',
-          severity_bg: 'bg-amber-100 text-severity-critical border-amber-200',
-          status: 'Work in Progress',
-          status_color: 'bg-status-wip text-status-wip',
-          assignee_name: 'David K.',
-          assignee_avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCgpxBabcNP-VflfUu9YxPtRNgBmTPculGmwVPxmA67FPyIuIwm4qwUa1SZB6Ob31t9xz2dfM-HZGM2mWeTTF8ELwGn7hk3zWhLyvo_abqg4as9rbKLAfWH1NfG9EvhTsIbj1jFGmgXElKtRxt-hPjG_KnFLOimtvCmZlBcEHsiM3uP1jk1DMXrsJH360536mg0WTLxlUGj0OVUbNjOySGUYJkfs01YGDuLe34eZ1DO',
-          sla_text: '42m remaining',
-          sla_class: 'text-text-secondary font-medium',
-        },
-        {
-          id: 'TKT-1019',
-          title: 'Cross-region telemetry replication failover',
-          severity: 'Major',
-          severity_bg: 'bg-yellow-100 text-[#b58300] border-yellow-200',
-          status: 'On Hold',
-          status_color: 'bg-status-on-hold text-text-secondary',
-          assignee_name: 'Sarah T.',
-          assignee_avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1igbZGJ7L1Ky6xJ0okSYPBlzX8JW7EnkSjN-LZ6EDW7hdB6IOcBjmoNieDP1pECCl5dYOzlzTfE_TMS-l2sNeANsUCp0vMRe-s3fgpUk8D_5MM8MOFF2c3HNeIN8RDawNhYFdJ38e-UiBbJbHvuFXMUUrvJdrLjYINKXjeUd5kDeC_BFI-k4XmOGA3xyZNMnY81gO8Bj6PXEAUlXsKqHIFLhSe8VEmQWgUye8JmIG',
-          sla_text: '2h 15m remaining',
-          sla_class: 'text-text-secondary font-medium',
-        },
-      ];
+      return [];
     }
   },
-  getActivityTimeline: async () => {
+  getActivityTimeline: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/activity-timeline');
+      const response = await apiClient.get('/dashboard/activity-timeline', { params });
       return response.data;
     } catch {
-      return [
-        {
-          id: 'act_1',
-          actor: 'Aarav Mehta',
-          action: 'escalated',
-          target_id: 'TKT-1025',
-          target_type: 'ticket',
-          status_badge: 'Blocker',
-          status_color: 'text-severity-blocker',
-          dot_color: 'bg-severity-blocker',
-          meta: '4 mins ago • us-east SRE Incident Channel',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbSDx---2N7YIzdzZoQ8HAru3n3DNE-tkCnVWcCPzTznNa_RBQOPWMov2WCi5YUvRYAvfccNsDasvnWl63I735VtTdfTZqM55gCmlu3LthPMNIFIORrDgjXJ8XE6mggi_Gq_oOt2iMZHUF_zC9msl1oXX_2_juzfEdlXYmHuvA6sWB3f2Ep2LJ6gph_Q8xHVEDOaiRv4Ie_Zz9y2YhwvJZccr6CIIJHsC7ContR2EV',
-        },
-        {
-          id: 'act_2',
-          actor: 'Maya Shah',
-          action: 'committed fix to branch fix/webhook-retry on Platform Revamp',
-          target_id: 'commit_e8f902c',
-          dot_color: 'bg-status-resolved',
-          meta: '18 mins ago • GitHub Commit #e8f902c',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCCy6qL9ZlcLH4Vu-iRCkxSXaW5P4LBRnvqfxp6kgLTNP06HXluT9liexSMcTufAAd3NWWFqSshRHyt4scKmJA_HEhxJoPZav3aX81osQsgOAp0QloVpsSK-_z2Rwxbu8wc_U0kolH9icYjq_8cNd3TZNyLMDqnxu_whgCJqw0mRcyFAdqsAee2mqwTcET-ovE-BcEESiGOpz5V4HIbT940fhfWtfdUi7eZtbeG_fjc',
-        },
-        {
-          id: 'act_3',
-          actor: 'System Bot',
-          action: 'triggered SLA warning alert for TKT-1031 (80% threshold reached)',
-          target_id: 'TKT-1031',
-          dot_color: 'bg-severity-critical',
-          meta: '32 mins ago • Datadog Alert Webhook',
-          is_bot: true,
-        },
-        {
-          id: 'act_4',
-          actor: 'Priya Nair',
-          action: 'marked TASK-198 as Resolved',
-          target_id: 'TASK-198',
-          dot_color: 'bg-status-resolved',
-          meta: '1 hr ago • Verified in staging cluster',
-          avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAEr672y36GRoGPHj6QXmjQ6FVZEYKIXOkynZXObLyfier5tVYr9Bd0TdLPzVwhakG4-1yl4Eo9I_4Ptq8N0OPGgQIJ6YCz2ra55-vKMKWwEmtA_PiWfF0RNfQBh8Sw9Qu6oU7sAhzBn6-fi_1lLFe5oUINz4TvjpZ72jWQobwHD-stL4W8xlP_eYZKa8nQXvroDFyG_bJhq6SIuurny8EwByq_n1HQ86BXP7zXa53O',
-        },
-      ];
+      return [];
     }
+  },
+  exportSummary: async (params = {}, format = 'csv') => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const response = await apiClient.get('/dashboard/export', {
+      params: { ...params, format, tz },
+      responseType: 'blob',
+    });
+    const disposition = response.headers ? response.headers['content-disposition'] : null;
+    let filename = `workspace-summary-${new Date().toISOString().slice(0, 10)}.${format}`;
+    if (disposition && disposition.includes('filename=')) {
+      const match = disposition.match(/filename=["']?([^"';]+)["']?/);
+      if (match && match[1]) {
+        filename = match[1].trim();
+      }
+    }
+    const blob = new Blob([response.data], {
+      type: format === 'pdf' ? 'application/pdf' : 'text/csv;charset=utf-8;',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
   },
 };
 
 // WebSocket Real-time Connection Helper
-export const connectDashboardWebSocket = (onMessage, onError) => {
-  const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/api/v1/dashboard/ws';
+export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) => {
+  const token = localStorage.getItem('access_token');
+  const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+  const urlObj = new URL('/api/v1/dashboard/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
+  const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
+  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+
   try {
-    const ws = new WebSocket(wsUrl);
+    onStatusChange?.('reconnecting');
+    const ws = new WebSocket(fullWsUrl);
+    ws.onopen = () => {
+      onStatusChange?.('connected');
+    };
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -399,10 +376,15 @@ export const connectDashboardWebSocket = (onMessage, onError) => {
       }
     };
     ws.onerror = (err) => {
+      onStatusChange?.('offline');
       if (onError) onError(err);
+    };
+    ws.onclose = () => {
+      onStatusChange?.('offline');
     };
     return ws;
   } catch (err) {
+    onStatusChange?.('offline');
     console.warn('WebSocket connection unavailable:', err);
     return null;
   }
@@ -426,6 +408,14 @@ export const notificationService = {
       return response.data;
     } catch {
       return { unread_count: 0, sla_breach_count: 0 };
+    }
+  },
+  getInboxCount: async () => {
+    try {
+      const response = await apiClient.get('/notifications/inbox-count');
+      return response.data?.inbox_count || 0;
+    } catch {
+      return 0;
     }
   },
   markRead: async (notificationId) => {
@@ -467,6 +457,13 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
   }
 };
 
+export const supportService = {
+  createRequest: async (data) => {
+    const response = await apiClient.post('/support/requests', data);
+    return response.data;
+  },
+};
+
 export { projectsService } from './projectsService';
 export { taskService, connectTasksWebSocket } from '../modules/tasks/services/taskService';
 export { analyticsService } from './analyticsService';
@@ -475,3 +472,4 @@ export { discussionsService } from './discussionsService';
 export { filesService } from './filesService';
 export { membersService } from './membersService';
 export { settingsService } from './settingsService';
+export { ticketsService, createTicketsWebSocket } from './ticketsService';

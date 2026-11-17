@@ -112,9 +112,27 @@ export const ticketsService = {
 /**
  * Real-time WebSocket hook for ticket events in workspace
  */
-export const createTicketsWebSocket = (workspaceId, onEvent) => {
+export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => {
   const token = localStorage.getItem('access_token') || '';
-  const resolvedWorkspaceId = workspaceId || localStorage.getItem('active_workspace_id') || localStorage.getItem('organization_id') || 'org_01';
+
+  // Dynamically resolve organization / workspace without hardcoding
+  let userOrgId = null;
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const parsed = JSON.parse(userStr);
+      userOrgId = parsed?.organization_id || parsed?.workspace_id;
+    }
+  } catch {}
+
+  const resolvedWorkspaceId =
+    (workspaceId && workspaceId !== 'org_01' ? workspaceId : null) ||
+    userOrgId ||
+    localStorage.getItem('organization_id') ||
+    localStorage.getItem('active_workspace_id') ||
+    workspaceId ||
+    'org_01';
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const query = token ? `?token=${encodeURIComponent(token)}` : '';
   // Point to backend websocket URL (default port 8000 in local dev)
@@ -127,6 +145,10 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
     try {
       ws = new WebSocket(wsUrl);
 
+      ws.onopen = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(true);
+      };
+
       ws.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
@@ -137,27 +159,37 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
       };
 
       ws.onclose = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(false);
         retryTimer = setTimeout(connect, 3000);
       };
 
       ws.onerror = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(false);
         if (ws) ws.close();
       };
     } catch (err) {
+      if (typeof onStatusChange === 'function') onStatusChange(false);
       retryTimer = setTimeout(connect, 3000);
     }
   };
 
   connect();
 
-  return () => {
+  const cleanup = () => {
+    if (typeof onStatusChange === 'function') onStatusChange(false);
     if (retryTimer) clearTimeout(retryTimer);
     if (ws) {
       ws.onclose = null;
       ws.close();
     }
   };
+
+  // Provide both functional cleanup and .close() compatibility
+  cleanup.close = cleanup;
+  return cleanup;
 };
+
+ticketsService.createTicketsWebSocket = createTicketsWebSocket;
 
 export default ticketsService;
 

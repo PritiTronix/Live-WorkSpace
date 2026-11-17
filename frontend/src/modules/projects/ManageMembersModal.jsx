@@ -201,7 +201,7 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
                   {uiMode === 'empty' ? '1 Member • 0 Pending' : `${totalMembersCount} Members • ${invitations.length} Pending`}
                 </span>
               </div>
-              <span className="font-label-sm text-label-sm text-text-muted">Tronix365 Cloud Security Zone</span>
+              <span className="font-label-sm text-label-sm text-text-muted">Cloud Security Zone</span>
             </div>
             <p className="font-body-md text-body-md text-text-secondary">
               Assign roles, manage access scopes, and invite collaborators to{' '}
