@@ -416,9 +416,6 @@ export const LandingPage = () => {
                   href="#features"
                   onClick={(e) => handleNavClick(e, 'features')}
                 >
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-canvas-lavender hover:bg-surface-container-high transition-all shadow-sm"
-                  href="#features"
-                >
                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-btn-primary text-on-primary">
                     <span className="material-symbols-outlined text-[13px]">bolt</span>
                   </span>
