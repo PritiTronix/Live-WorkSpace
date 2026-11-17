@@ -86,3 +86,7 @@ Thumbs.db
 # Directory Junction Aliases
 client
 server
+
+# Local QA & Reference Documents
+Live_Workspace_Test_Tracker(1).xlsx
+Live_Workspace_Test_Tracker*.xlsx

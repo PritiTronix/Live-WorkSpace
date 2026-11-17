@@ -156,6 +156,7 @@ def test_notifications_endpoints(client, auth_headers):
     res_unread = client.get("/api/v1/notifications/unread-count", headers=auth_headers)
     assert res_unread.status_code == 200
     assert "unread_count" in res_unread.json()
+    assert "sla_breach_count" in res_unread.json()
 
     res_read_all = client.patch("/api/v1/notifications/read-all", headers=auth_headers)
     assert res_read_all.status_code == 200

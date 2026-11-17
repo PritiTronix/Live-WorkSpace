@@ -43,6 +43,7 @@ export const DashboardLayout = () => {
   const [isCreateDiscussionModalOpen, setIsCreateDiscussionModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [slaBreachCount, setSlaBreachCount] = useState(0);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
   useEffect(() => {
@@ -68,9 +69,36 @@ export const DashboardLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch live unread count on mount and location change
+  // Fetch live unread count and active SLA breach notifications on mount and location change
   useEffect(() => {
-    notificationService.getUnreadCount().then((count) => setUnreadCount(count));
+    let isMounted = true;
+    const fetchNotificationCounts = async () => {
+      try {
+        const res = await notificationService.getUnreadCount();
+        if (!isMounted) return;
+
+        // Support both direct response payload and nested .data wrapper if passed through
+        const payload = res?.data || res;
+        const totalUnread = typeof payload === 'object' && payload !== null
+          ? (payload.unread_count ?? 0)
+          : (Number(payload) || 0);
+        const breachCount = typeof payload === 'object' && payload !== null
+          ? (payload.sla_breach_count ?? 0)
+          : 0;
+
+        setUnreadCount(totalUnread);
+        setSlaBreachCount(breachCount);
+      } catch (err) {
+        if (!isMounted) return;
+        setUnreadCount(0);
+        setSlaBreachCount(0);
+      }
+    };
+
+    fetchNotificationCounts();
+    return () => {
+      isMounted = false;
+    };
   }, [location.pathname]);
 
   // Dynamic breadcrumbs based on active route
@@ -135,6 +163,7 @@ export const DashboardLayout = () => {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
           onOpenCreate={() => setIsPlusMenuOpen(true)}
+          unreadNotifications={unreadCount}
         />
       </div>
 
@@ -172,6 +201,7 @@ export const DashboardLayout = () => {
                 setIsMobileSidebarOpen(false);
                 setIsPlusMenuOpen(true);
               }}
+              unreadNotifications={unreadCount}
             />
           </div>
         </div>
@@ -228,7 +258,7 @@ export const DashboardLayout = () => {
             isPlusMenuOpen={isPlusMenuOpen}
             activeBreadcrumbs={getBreadcrumbs()}
             unreadNotifications={unreadCount}
-            slaBreachCount={2}
+            slaBreachCount={slaBreachCount}
           />
         </div>
 
