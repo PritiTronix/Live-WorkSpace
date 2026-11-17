@@ -7,6 +7,53 @@ export const TICKET_STATUSES = ['open', 'wip', 'on_hold', 'resolved', 'closed'];
 
 export const TICKET_SEVERITIES = ['blocker', 'critical', 'major', 'minor'];
 
+export const TICKET_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
+
+/**
+ * Shared Ticket Views & Navigation Constants
+ * Labels match Stitch screens:
+ * - 'Ticket Management Dashboard (Prompts 36 & 37)' -> 'List View'
+ * - 'Ticket Board View (Prompt 38)' -> 'Board View'
+ * - 'Ticket Priority View (Prompt 39)' -> 'Priority View'
+ * - 'Priority Issues Page (Prompt 54)' -> 'Priority Issues'
+ */
+export const TICKET_VIEWS = [
+  {
+    id: 'list',
+    label: 'List View',
+    route: '/workspace/tickets',
+    icon: 'format_list_bulleted',
+    end: true,
+  },
+  {
+    id: 'board',
+    label: 'Board View',
+    route: '/workspace/tickets/board',
+    icon: 'view_kanban',
+    end: false,
+  },
+  {
+    id: 'priority',
+    label: 'Priority View',
+    route: '/workspace/tickets/priority',
+    icon: 'crisis_alert',
+    end: false,
+  },
+];
+
+export const PRIORITY_ISSUES_NAV = {
+  id: 'priority_issues',
+  label: 'Priority Issues',
+  route: '/workspace/tickets/critical',
+  icon: 'warning',
+  end: false,
+};
+
+export const TICKET_NAV_ITEMS = [
+  ...TICKET_VIEWS,
+  PRIORITY_ISSUES_NAV,
+];
+
 export const STATUS_CONFIG = {
   open: {
     key: 'open',
@@ -109,4 +156,3 @@ export const SEVERITY_CONFIG = {
     actionText: 'Inspect',
   },
 };
-

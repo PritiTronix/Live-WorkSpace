@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ticketsService, { createTicketsWebSocket } from '../../../services/ticketsService';
+import { useTickets } from '../hooks/useTickets';
 import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG } from '../constants/ticketConstants';
+import ErrorState from '../../design-system/components/ErrorState';
 
 /**
  * Screen 61: Ticket Management Dashboard (Prompts 36 & 37)
@@ -13,55 +14,28 @@ import { STATUS_CONFIG, SEVERITY_CONFIG } from '../constants/ticketConstants';
 export const TicketsDashboardPage = () => {
   const navigate = useNavigate();
 
-  const [stats, setStats] = useState(null);
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filters
-  const [search, setSearch] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const {
+    tickets,
+    stats,
+    loading,
+    error,
+    isRetrying,
+    isWsConnected,
+    search,
+    setSearch,
+    severityFilter,
+    setSeverityFilter,
+    statusFilter,
+    setStatusFilter,
+    refetch,
+  } = useTickets();
 
   // Modal
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [statsData, ticketsData] = await Promise.all([
-        ticketsService.getStats(),
-        ticketsService.getTickets({
-          search: search.trim() || undefined,
-          severity: severityFilter !== 'all' ? severityFilter : undefined,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-        }),
-      ]);
-      setStats(statsData);
-      setTickets(Array.isArray(ticketsData) ? ticketsData : (ticketsData?.items || []));
-    } catch (err) {
-      console.error('Failed to load tickets dashboard:', err);
-      setError(err.message || 'Failed to load tickets.');
-      setTickets([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [search, severityFilter, statusFilter]);
-
-  // Real-time WebSocket updates
-  useEffect(() => {
-    const cleanup = createTicketsWebSocket('org_01', (payload) => {
-      if (['ticket_created', 'ticket_updated', 'ticket_status_changed', 'ticket_deleted'].includes(payload.event)) {
-        fetchData();
-      }
-    });
-    return cleanup;
-  }, []);
+  const totalCount = stats?.total ?? 0;
+  const hasTotal = totalCount > 0;
+  const slaBreachedCount = stats?.sla_breached ?? 0;
 
   return (
     <div className="p-space-lg max-w-7xl mx-auto w-full space-y-space-lg">
@@ -74,6 +48,7 @@ export const TicketsDashboardPage = () => {
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
         onOpenCreateModal={() => setShowCreateModal(true)}
+        isWsConnected={isWsConnected}
       />
 
       {/* Summary KPI Stat Cards Row (Screen 61) */}
@@ -86,12 +61,17 @@ export const TicketsDashboardPage = () => {
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="font-headline-lg text-headline-lg text-text-primary font-bold">
-              {stats?.total ?? 0}
+              {totalCount}
             </span>
-            <span className="font-label-sm text-label-sm text-text-muted">100% Volume</span>
+            {hasTotal && (
+              <span className="font-label-sm text-label-sm text-text-muted">100% Volume</span>
+            )}
           </div>
           <div className="w-full bg-canvas-lavender h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-primary h-full w-full" />
+            <div
+              className="bg-primary h-full transition-all duration-300"
+              style={{ width: hasTotal ? '100%' : '0%' }}
+            />
           </div>
         </div>
 
@@ -105,14 +85,16 @@ export const TicketsDashboardPage = () => {
             <span className="font-headline-lg text-headline-lg text-text-primary font-bold">
               {stats?.open ?? 0}
             </span>
-            <span className="font-label-sm text-label-sm text-status-open">
-              {stats?.total ? Math.round((stats.open / stats.total) * 100) : 0}%
-            </span>
+            {hasTotal && (
+              <span className="font-label-sm text-label-sm text-status-open">
+                {Math.round(((stats?.open ?? 0) / totalCount) * 100)}%
+              </span>
+            )}
           </div>
           <div className="w-full bg-canvas-lavender h-1 rounded-full mt-3 overflow-hidden">
             <div
-              className="bg-status-open h-full"
-              style={{ width: `${stats?.total ? (stats.open / stats.total) * 100 : 0}%` }}
+              className="bg-status-open h-full transition-all duration-300"
+              style={{ width: `${hasTotal ? Math.round(((stats?.open ?? 0) / totalCount) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -127,14 +109,16 @@ export const TicketsDashboardPage = () => {
             <span className="font-headline-lg text-headline-lg text-text-primary font-bold">
               {stats?.wip ?? 0}
             </span>
-            <span className="font-label-sm text-label-sm text-status-wip">
-              {stats?.total ? Math.round((stats.wip / stats.total) * 100) : 0}%
-            </span>
+            {hasTotal && (
+              <span className="font-label-sm text-label-sm text-status-wip">
+                {Math.round(((stats?.wip ?? 0) / totalCount) * 100)}%
+              </span>
+            )}
           </div>
           <div className="w-full bg-canvas-lavender h-1 rounded-full mt-3 overflow-hidden">
             <div
-              className="bg-status-wip h-full"
-              style={{ width: `${stats?.total ? (stats.wip / stats.total) * 100 : 0}%` }}
+              className="bg-status-wip h-full transition-all duration-300"
+              style={{ width: `${hasTotal ? Math.round(((stats?.wip ?? 0) / totalCount) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -149,14 +133,16 @@ export const TicketsDashboardPage = () => {
             <span className="font-headline-lg text-headline-lg text-text-primary font-bold">
               {stats?.on_hold ?? 0}
             </span>
-            <span className="font-label-sm text-label-sm text-status-on-hold">
-              {stats?.total ? Math.round((stats.on_hold / stats.total) * 100) : 0}%
-            </span>
+            {hasTotal && (
+              <span className="font-label-sm text-label-sm text-status-on-hold">
+                {Math.round(((stats?.on_hold ?? 0) / totalCount) * 100)}%
+              </span>
+            )}
           </div>
           <div className="w-full bg-canvas-lavender h-1 rounded-full mt-3 overflow-hidden">
             <div
-              className="bg-status-on-hold h-full"
-              style={{ width: `${stats?.total ? (stats.on_hold / stats.total) * 100 : 0}%` }}
+              className="bg-status-on-hold h-full transition-all duration-300"
+              style={{ width: `${hasTotal ? Math.round(((stats?.on_hold ?? 0) / totalCount) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -171,14 +157,16 @@ export const TicketsDashboardPage = () => {
             <span className="font-headline-lg text-headline-lg text-text-primary font-bold">
               {stats?.resolved ?? 0}
             </span>
-            <span className="font-label-sm text-label-sm text-status-resolved">
-              {stats?.total ? Math.round((stats.resolved / stats.total) * 100) : 0}%
-            </span>
+            {hasTotal && (
+              <span className="font-label-sm text-label-sm text-status-resolved">
+                {Math.round(((stats?.resolved ?? 0) / totalCount) * 100)}%
+              </span>
+            )}
           </div>
           <div className="w-full bg-canvas-lavender h-1 rounded-full mt-3 overflow-hidden">
             <div
-              className="bg-status-resolved h-full"
-              style={{ width: `${stats?.total ? (stats.resolved / stats.total) * 100 : 0}%` }}
+              className="bg-status-resolved h-full transition-all duration-300"
+              style={{ width: `${hasTotal ? Math.round(((stats?.resolved ?? 0) / totalCount) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -190,18 +178,25 @@ export const TicketsDashboardPage = () => {
               <span className="material-symbols-outlined text-sm">warning</span>
               SLA Breached
             </span>
-            <span className="px-1.5 py-0.5 rounded text-on-error bg-severity-blocker font-label-sm text-xs font-semibold">
-              ATTN
-            </span>
+            {slaBreachedCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded text-on-error bg-severity-blocker font-label-sm text-xs font-semibold animate-pulse">
+                ATTN
+              </span>
+            )}
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="font-headline-lg text-headline-lg text-severity-blocker font-bold">
-              {stats?.sla_breached ?? 0}
+              {slaBreachedCount}
             </span>
-            <span className="font-label-sm text-label-sm font-semibold text-severity-blocker">Action Req</span>
+            {slaBreachedCount > 0 && (
+              <span className="font-label-sm text-label-sm font-semibold text-severity-blocker">Action Req</span>
+            )}
           </div>
           <div className="w-full bg-white/60 h-1 rounded-full mt-3 overflow-hidden">
-            <div className="bg-severity-blocker h-full w-4/5" />
+            <div
+              className="bg-severity-blocker h-full transition-all duration-300"
+              style={{ width: `${hasTotal ? Math.min(100, Math.round((slaBreachedCount / totalCount) * 100)) : 0}%` }}
+            />
           </div>
         </div>
       </div>
@@ -212,6 +207,16 @@ export const TicketsDashboardPage = () => {
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             <span className="ml-3 font-body-md text-text-secondary">Loading ticket records...</span>
+          </div>
+        ) : error ? (
+          <div className="p-6">
+            <ErrorState
+              variant="500"
+              title="Unable to Load Tickets"
+              description={error}
+              onRetry={() => refetch(true)}
+              isRetrying={isRetrying}
+            />
           </div>
         ) : tickets.length === 0 ? (
           <div className="p-space-2xl text-center">
@@ -235,8 +240,10 @@ export const TicketsDashboardPage = () => {
               </thead>
               <tbody className="divide-y divide-border-subtle/40">
                 {tickets.map((t) => {
-                  const sevConfig = SEVERITY_CONFIG[t.severity] || SEVERITY_CONFIG.minor;
-                  const stConfig = STATUS_CONFIG[t.status] || STATUS_CONFIG.open;
+                  const sevKey = (t.severity || '').toLowerCase();
+                  const stKey = (t.status || '').toLowerCase();
+                  const sevConfig = SEVERITY_CONFIG[sevKey] || SEVERITY_CONFIG.minor;
+                  const stConfig = STATUS_CONFIG[stKey] || STATUS_CONFIG.open;
 
                   return (
                     <tr
@@ -314,7 +321,7 @@ export const TicketsDashboardPage = () => {
         <CreateTicketModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onTicketCreated={() => fetchData()}
+          onTicketCreated={() => refetch()}
         />
       )}
     </div>

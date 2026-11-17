@@ -235,8 +235,9 @@ export const DashboardOverviewPage = () => {
 
   const filteredTickets = priorityTickets.filter((ticket) => {
     if (selectedPriorityFilter === 'ALL') return true;
-    if (selectedPriorityFilter === 'BLOCKER') return ticket.severity === 'Blocker';
-    if (selectedPriorityFilter === 'CRITICAL') return ticket.severity === 'Critical';
+    const sev = (ticket.severity || '').toLowerCase();
+    if (selectedPriorityFilter === 'BLOCKER') return sev === 'blocker';
+    if (selectedPriorityFilter === 'CRITICAL') return sev === 'critical';
     if (selectedPriorityFilter === 'BREACHED') return (ticket.sla_text || '').includes('BREACHED');
     return true;
   });
@@ -950,9 +951,9 @@ export const DashboardOverviewPage = () => {
                     <tr
                       key={ticket.id}
                       className={`transition-colors ${
-                        ticket.severity === 'Blocker'
+                        (ticket.severity || '').toLowerCase() === 'blocker'
                           ? 'hover:bg-red-50/30'
-                          : ticket.severity === 'Critical'
+                          : (ticket.severity || '').toLowerCase() === 'critical'
                           ? 'hover:bg-amber-50/30'
                           : 'hover:bg-slate-50'
                       }`}
@@ -974,18 +975,18 @@ export const DashboardOverviewPage = () => {
                         <span className="inline-flex items-center gap-1.5 font-medium">
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              ticket.status === 'Open'
+                              (ticket.status || '').toLowerCase() === 'open'
                                 ? 'bg-status-open'
-                                : ticket.status === 'On Hold'
+                                : ['on_hold', 'on hold'].includes((ticket.status || '').toLowerCase())
                                 ? 'bg-status-on-hold'
                                 : 'bg-status-wip'
                             }`}
                           ></span>
                           <span
                             className={
-                              ticket.status === 'Open'
+                              (ticket.status || '').toLowerCase() === 'open'
                                 ? 'text-status-open'
-                                : ticket.status === 'On Hold'
+                                : ['on_hold', 'on hold'].includes((ticket.status || '').toLowerCase())
                                 ? 'text-text-secondary'
                                 : 'text-status-wip'
                             }

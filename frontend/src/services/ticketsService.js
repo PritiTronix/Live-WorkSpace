@@ -112,7 +112,7 @@ export const ticketsService = {
 /**
  * Real-time WebSocket hook for ticket events in workspace
  */
-export const createTicketsWebSocket = (workspaceId, onEvent) => {
+export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => {
   const token = localStorage.getItem('access_token') || '';
 
   // Dynamically resolve organization / workspace without hardcoding
@@ -145,6 +145,10 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
     try {
       ws = new WebSocket(wsUrl);
 
+      ws.onopen = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(true);
+      };
+
       ws.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
@@ -155,13 +159,16 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
       };
 
       ws.onclose = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(false);
         retryTimer = setTimeout(connect, 3000);
       };
 
       ws.onerror = () => {
+        if (typeof onStatusChange === 'function') onStatusChange(false);
         if (ws) ws.close();
       };
     } catch (err) {
+      if (typeof onStatusChange === 'function') onStatusChange(false);
       retryTimer = setTimeout(connect, 3000);
     }
   };
@@ -169,6 +176,7 @@ export const createTicketsWebSocket = (workspaceId, onEvent) => {
   connect();
 
   const cleanup = () => {
+    if (typeof onStatusChange === 'function') onStatusChange(false);
     if (retryTimer) clearTimeout(retryTimer);
     if (ws) {
       ws.onclose = null;

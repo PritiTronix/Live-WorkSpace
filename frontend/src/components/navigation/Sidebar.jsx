@@ -7,6 +7,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { authService, organizationService } from '../../services/api';
 import HelpSupportModal from '../modals/HelpSupportModal';
 import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
+import { TICKET_VIEWS, PRIORITY_ISSUES_NAV } from '../../modules/tickets/constants/ticketConstants';
 
 const getInitials = (str) => {
   if (!str) return 'W';
@@ -293,10 +294,14 @@ export const Sidebar = ({
                 label="Tickets"
                 isCollapsed={isCollapsed}
               >
-                <SubNavItem to="/workspace/tickets" label="Dashboard" end />
-                <SubNavItem to="/workspace/tickets/board" label="Board View" />
-                <SubNavItem to="/workspace/tickets/priority" label="Priority View" />
-                <SubNavItem to="/workspace/tickets/critical" label="Priority Issues" />
+                {TICKET_VIEWS.map((view) => (
+                  <SubNavItem
+                    key={view.id}
+                    to={view.route}
+                    label={view.label}
+                    end={view.end}
+                  />
+                ))}
               </ExpandableNavItem>
             </div>
           </div>
@@ -316,8 +321,8 @@ export const Sidebar = ({
             <SectionLabel label="Monitoring" isCollapsed={isCollapsed} />
             <div className="space-y-0.5">
               <NavLink
-                to="/workspace/tickets/critical"
-                title={isCollapsed ? 'Priority Issues' : undefined}
+                to={PRIORITY_ISSUES_NAV.route}
+                title={isCollapsed ? PRIORITY_ISSUES_NAV.label : undefined}
                 className={({ isActive }) =>
                   `flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
                     isActive
@@ -327,8 +332,8 @@ export const Sidebar = ({
                 }
               >
                 <div className="flex items-center gap-space-sm">
-                  <span className="material-symbols-outlined text-[18px]">warning</span>
-                  {!isCollapsed && <span className="font-label-md text-label-md">Priority Issues</span>}
+                  <span className="material-symbols-outlined text-[18px]">{PRIORITY_ISSUES_NAV.icon}</span>
+                  {!isCollapsed && <span className="font-label-md text-label-md">{PRIORITY_ISSUES_NAV.label}</span>}
                 </div>
                 {priorityIssuesCount > 0 && <span className="w-2 h-2 rounded-full bg-severity-blocker" />}
               </NavLink>

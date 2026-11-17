@@ -244,6 +244,9 @@ async def get_ticket_board(
             selectinload(Ticket.assignee),
             selectinload(Ticket.reporter),
             selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
         )
         .join(Ticket.project)
         .where(Project.organization_id == current_user.organization_id)
@@ -291,6 +294,9 @@ async def get_ticket_priority(
             selectinload(Ticket.assignee),
             selectinload(Ticket.reporter),
             selectinload(Ticket.project),
+            selectinload(Ticket.comments),
+            selectinload(Ticket.attachments),
+            selectinload(Ticket.activities),
         )
         .join(Ticket.project)
         .where(Project.organization_id == current_user.organization_id)

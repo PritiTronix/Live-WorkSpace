@@ -17,4 +17,5 @@ export { default as ChangeDeadlineModal } from './components/ChangeDeadlineModal
 export { default as ReopenTicketModal } from './components/ReopenTicketModal';
 export { default as CloseTicketModal } from './components/CloseTicketModal';
 export { default as TicketViewSwitcher } from './components/TicketViewSwitcher';
+export { default as useTickets, useTickets as useTicketsHook } from './hooks/useTickets';
 export * from './constants/ticketConstants';

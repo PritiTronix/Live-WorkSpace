@@ -42,3 +42,34 @@ TASK_PRIORITY_DISPLAY = {
     TaskPriority.high: "High",
     TaskPriority.urgent: "Urgent",
 }
+
+
+class TicketStatus(str, Enum):
+    open = "open"
+    wip = "wip"
+    on_hold = "on_hold"
+    resolved = "resolved"
+    closed = "closed"
+
+
+class TicketSeverity(str, Enum):
+    blocker = "blocker"
+    critical = "critical"
+    major = "major"
+    minor = "minor"
+
+
+TICKET_STATUS_DISPLAY = {
+    TicketStatus.open: "Open",
+    TicketStatus.wip: "Work in Progress",
+    TicketStatus.on_hold: "On Hold",
+    TicketStatus.resolved: "Resolved",
+    TicketStatus.closed: "Closed",
+}
+
+TICKET_SEVERITY_DISPLAY = {
+    TicketSeverity.blocker: "Blocker",
+    TicketSeverity.critical: "Critical",
+    TicketSeverity.major: "Major",
+    TicketSeverity.minor: "Minor",
+}

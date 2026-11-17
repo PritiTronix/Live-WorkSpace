@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
-import { authService } from '../../../services/api';
+import { useTickets } from '../hooks/useTickets';
 import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_SEVERITIES } from '../constants/ticketConstants';
@@ -14,162 +13,45 @@ import ErrorState from '../../design-system/components/ErrorState';
  */
 export const TicketPriorityPage = () => {
   const navigate = useNavigate();
-  const [groupedTickets, setGroupedTickets] = useState({
-    blocker: [],
-    critical: [],
-    major: [],
-    minor: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isNetworkFailure, setIsNetworkFailure] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
 
-  // Filter toolbar state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const {
+    priorityTickets,
+    tickets,
+    loading,
+    error,
+    isRetrying,
+    isWsConnected,
+    search,
+    setSearch,
+    severityFilter,
+    setSeverityFilter,
+    statusFilter,
+    setStatusFilter,
+    refetch,
+    resetFilters,
+  } = useTickets();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [autoTriageActive, setAutoTriageActive] = useState(true);
   const [silenced, setSilenced] = useState(false);
 
-  // Load Priority Data scoped to user's authenticated organization
-  const fetchPriority = useCallback(async (isRetry = false) => {
-    try {
-      if (isRetry) {
-        setIsRetrying(true);
-      } else {
-        setLoading(true);
-      }
-      setError(null);
-      setIsNetworkFailure(false);
-
-      const data = await ticketsService.getPriority();
-      setGroupedTickets({
-        blocker: data?.blocker || [],
-        critical: data?.critical || [],
-        major: data?.major || [],
-        minor: data?.minor || [],
-      });
-    } catch (err) {
-      console.error('Failed to load priority tickets:', err);
-      const is503OrNetwork = !err.response || err.response?.status === 503 || err.code === 'ERR_NETWORK';
-      setIsNetworkFailure(is503OrNetwork);
-      if (is503OrNetwork) {
-        setError('Service temporarily unavailable (503 / Network connection issue). Please retry.');
-      } else {
-        setError(err.response?.data?.detail || err.message || 'Unable to load priority view. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-      setIsRetrying(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPriority();
-  }, [fetchPriority]);
-
-  // WebSocket Live Real-Time Updates dynamically scoped to authenticated organization
-  useEffect(() => {
-    let isMounted = true;
-    let cleanup = null;
-
-    const connectWs = async () => {
-      try {
-        const user = await authService.getCurrentUser().catch(() => authService.getCurrentUserSync());
-        const orgId = user?.organization_id || localStorage.getItem('organization_id') || localStorage.getItem('active_workspace_id') || '';
-
-        if (!isMounted) return;
-
-        cleanup = createTicketsWebSocket(orgId, (event) => {
-          const eventType = event?.type || event?.event;
-          if (
-            [
-              'ticket_created',
-              'ticket_updated',
-              'ticket_deleted',
-              'ticket_comment_added',
-              'ticket_status_changed',
-              'ticket_severity_changed',
-            ].includes(eventType)
-          ) {
-            fetchPriority();
-          }
-        });
-      } catch (wsErr) {
-        console.warn('Real-time priority WebSocket connection failed:', wsErr);
-      }
-    };
-
-    connectWs();
-
-    return () => {
-      isMounted = false;
-      if (typeof cleanup === 'function') {
-        cleanup();
-      }
-    };
-  }, [fetchPriority]);
-
-  // Calculate Breaches & Stats
+  // Calculate Breaches & Stats from unified dataset
   const now = new Date();
   const breachedCount = useMemo(() => {
-    return Object.values(groupedTickets)
-      .flat()
-      .filter((ticket) => {
-        if (!ticket || ['resolved', 'closed'].includes(ticket.status)) return false;
-        return ticket.deadline && new Date(ticket.deadline) < now;
-      }).length;
-  }, [groupedTickets, now]);
+    return tickets.filter((ticket) => {
+      if (!ticket || ['resolved', 'closed'].includes((ticket.status || '').toLowerCase())) return false;
+      return ticket.deadline && new Date(ticket.deadline) < now;
+    }).length;
+  }, [tickets, now]);
 
-  const blockerCount = groupedTickets.blocker?.length || 0;
-
-  // Filtered tickets by search, severityFilter, and statusFilter
-  const filteredGroupedTickets = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    const result = {};
-
-    for (const severity of TICKET_SEVERITIES) {
-      if (severityFilter !== 'all' && severityFilter !== severity) {
-        result[severity] = [];
-        continue;
-      }
-
-      let list = groupedTickets[severity] || [];
-
-      if (statusFilter !== 'all') {
-        list = list.filter((t) => (t.status || '').toLowerCase() === statusFilter.toLowerCase());
-      }
-
-      if (query) {
-        list = list.filter(
-          (t) =>
-            (t.ticket_number && t.ticket_number.toLowerCase().includes(query)) ||
-            (t.title && t.title.toLowerCase().includes(query)) ||
-            (t.description && t.description.toLowerCase().includes(query))
-        );
-      }
-
-      result[severity] = list;
-    }
-
-    return result;
-  }, [groupedTickets, searchQuery, severityFilter, statusFilter]);
+  const blockerCount = priorityTickets.blocker?.length || 0;
 
   const totalVisibleTickets = useMemo(() => {
-    return Object.values(filteredGroupedTickets).reduce((acc, list) => acc + (list?.length || 0), 0);
-  }, [filteredGroupedTickets]);
+    return Object.values(priorityTickets).reduce((acc, list) => acc + (list?.length || 0), 0);
+  }, [priorityTickets]);
 
   const handleTicketCreated = () => {
-    fetchPriority();
-  };
-
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setSeverityFilter('all');
-    setStatusFilter('all');
+    refetch();
   };
 
   return (
@@ -177,13 +59,14 @@ export const TicketPriorityPage = () => {
       <div className="px-space-xl py-space-lg flex flex-col gap-space-lg">
         {/* Header & View Switcher */}
         <TicketViewSwitcher
-          search={searchQuery}
-          onSearchChange={setSearchQuery}
+          search={search}
+          onSearchChange={setSearch}
           severityFilter={severityFilter}
           onSeverityChange={setSeverityFilter}
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
           onOpenCreateModal={() => setIsCreateModalOpen(true)}
+          isWsConnected={isWsConnected}
         />
 
         {/* Operational Filter & Control Bar */}
@@ -216,10 +99,10 @@ export const TicketPriorityPage = () => {
               <span>SLA Breached First</span>
             </div>
 
-            {(searchQuery || severityFilter !== 'all' || statusFilter !== 'all') && (
+            {(search || severityFilter !== 'all' || statusFilter !== 'all') && (
               <button
                 type="button"
-                onClick={handleResetFilters}
+                onClick={resetFilters}
                 className="px-2.5 py-1.5 text-text-secondary hover:text-text-primary text-xs font-label-sm flex items-center gap-1 rounded-md hover:bg-canvas-lavender transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">filter_alt_off</span>
@@ -230,7 +113,7 @@ export const TicketPriorityPage = () => {
 
           <div className="flex items-center gap-space-sm">
             <span className="text-body-sm text-text-secondary">
-              Total High Severity: <strong>{blockerCount + (groupedTickets.critical?.length || 0)}</strong>
+              Total High Severity: <strong>{blockerCount + (priorityTickets.critical?.length || 0)}</strong>
             </span>
           </div>
         </div>
@@ -260,49 +143,46 @@ export const TicketPriorityPage = () => {
               <button
                 type="button"
                 onClick={() => setSilenced(true)}
-                className="h-9 px-3 bg-surface-card hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-sm text-label-sm rounded-lg shadow-sm transition-colors flex items-center gap-1"
+                className="px-3.5 py-2 text-text-secondary hover:text-text-primary font-label-md text-label-md rounded-lg transition-colors"
               >
-                <span className="material-symbols-outlined text-base">notifications_paused</span>
-                <span>Silence Alert</span>
+                Silence Alarm
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  const firstBlocker = groupedTickets.blocker?.[0];
-                  if (firstBlocker) navigate(`/workspace/tickets/${firstBlocker.id}`);
-                }}
-                className="h-9 px-3 bg-severity-blocker text-on-error font-label-sm text-label-sm rounded-lg shadow-sm hover:opacity-90 transition-opacity flex items-center gap-1"
+                onClick={() => navigate('/workspace/tickets/critical')}
+                className="px-4 py-2 bg-severity-blocker hover:opacity-90 text-on-error font-label-md text-label-md rounded-lg shadow-sm transition-all flex items-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-base">video_call</span>
-                <span>Join Incident Room</span>
+                <span>Launch War Room</span>
+                <span className="material-symbols-outlined text-base">launch</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading Spinner */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
-            <span className="material-symbols-outlined text-4xl animate-spin text-btn-primary mb-3">sync</span>
-            <p className="font-label-md text-label-md">Loading priority matrix...</p>
+          <div className="flex flex-col items-center justify-center p-16">
+            <div className="w-10 h-10 border-4 border-canvas-lavender border-t-btn-primary rounded-full animate-spin"></div>
+            <span className="mt-4 font-label-md text-label-md text-text-secondary">
+              Loading real-time priority incidents...
+            </span>
           </div>
         )}
 
-        {/* Error State with Retry Button */}
-        {error && !loading && (
-          <div className="my-6">
+        {/* Error Handling State with Retry */}
+        {!loading && error && (
+          <div className="my-8">
             <ErrorState
-              variant={isNetworkFailure ? 'network' : '500'}
-              title={isNetworkFailure ? 'Connection Issue' : 'Unable to Load Priority View'}
+              variant="500"
+              title="Unable to Load Priority Incidents"
               description={error}
-              actionText="Retry Now"
-              onRetry={() => fetchPriority(true)}
+              onRetry={() => refetch(true)}
               isRetrying={isRetrying}
             />
           </div>
         )}
 
-        {/* Priority Swimlanes */}
+        {/* Empty state when 0 tickets visible */}
         {!loading && !error && totalVisibleTickets === 0 && (
           <div className="p-12 bg-surface-card rounded-2xl border border-dashed border-border-subtle text-center flex flex-col items-center justify-center my-8">
             <div className="w-14 h-14 rounded-2xl bg-canvas-lavender text-btn-primary flex items-center justify-center mb-4">
@@ -310,15 +190,15 @@ export const TicketPriorityPage = () => {
             </div>
             <h3 className="font-headline-md text-headline-md text-text-primary mb-2">No Priority Tickets</h3>
             <p className="font-body-md text-body-md text-text-secondary max-w-md mb-6">
-              {searchQuery || severityFilter !== 'all' || statusFilter !== 'all'
+              {search || severityFilter !== 'all' || statusFilter !== 'all'
                 ? 'No tickets match the selected filters. Try clearing your filters.'
                 : 'There are currently no tickets in the priority swimlanes for your workspace.'}
             </p>
             <div className="flex items-center gap-3">
-              {(searchQuery || severityFilter !== 'all' || statusFilter !== 'all') && (
+              {(search || severityFilter !== 'all' || statusFilter !== 'all') && (
                 <button
                   type="button"
-                  onClick={handleResetFilters}
+                  onClick={resetFilters}
                   className="px-4 py-2 rounded-lg border border-border-subtle bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-md text-label-md transition-colors"
                 >
                   Clear Filters
@@ -336,6 +216,7 @@ export const TicketPriorityPage = () => {
           </div>
         )}
 
+        {/* Priority Swimlanes */}
         {!loading && !error && totalVisibleTickets > 0 && (
           <div className="flex flex-col gap-space-xl">
             {TICKET_SEVERITIES.map((severityKey) => {
@@ -344,7 +225,7 @@ export const TicketPriorityPage = () => {
               }
 
               const config = SEVERITY_CONFIG[severityKey];
-              const tickets = filteredGroupedTickets[severityKey] || [];
+              const tierTickets = priorityTickets[severityKey] || [];
 
               return (
                 <section key={severityKey} className="flex flex-col gap-space-sm">
@@ -358,7 +239,7 @@ export const TicketPriorityPage = () => {
                       </div>
                       <h2 className="font-headline-md text-headline-md text-text-primary">{config.label}</h2>
                       <span className={`px-2.5 py-0.5 rounded-full ${config.bgBadge} ${config.textBadge} font-label-sm text-label-sm font-bold`}>
-                        {tickets.length} Active
+                        {tierTickets.length} Active
                       </span>
                       <span className="hidden sm:inline font-body-sm text-body-sm text-text-muted">
                         | {config.subtext}
@@ -367,15 +248,19 @@ export const TicketPriorityPage = () => {
                   </div>
 
                   {/* Cards Container */}
-                  {tickets.length === 0 ? (
+                  {tierTickets.length === 0 ? (
                     <div className="p-6 bg-surface-card rounded-xl border border-dashed border-border-subtle text-center text-text-muted font-body-sm">
                       No active tickets in {config.label.toLowerCase()} tier.
                     </div>
                   ) : (
                     <div className="flex flex-col gap-space-sm">
-                      {tickets.map((ticket) => {
-                        const statusBadge = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open;
-                        const isBreached = ticket.deadline && new Date(ticket.deadline) < now && !['resolved', 'closed'].includes(ticket.status);
+                      {tierTickets.map((ticket) => {
+                        const statusKey = (ticket.status || '').toLowerCase();
+                        const statusBadge = STATUS_CONFIG[statusKey] || STATUS_CONFIG.open;
+                        const isBreached =
+                          ticket.deadline &&
+                          new Date(ticket.deadline) < now &&
+                          !['resolved', 'closed'].includes(statusKey);
 
                         return (
                           <div
