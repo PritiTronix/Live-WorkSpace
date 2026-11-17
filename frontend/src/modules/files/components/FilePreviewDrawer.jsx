@@ -4,6 +4,8 @@ import { DEFAULT_USER } from '../../../services/api';
 
 export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
 
@@ -15,13 +17,14 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
     }
     try {
       setIsDeleting(true);
+      setDeleteError(null);
       await filesService.deleteFile(file.id);
       if (onFileDeleted) {
         onFileDeleted(file.id);
       }
       onClose();
     } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to delete file');
+      setDeleteError(err?.response?.data?.detail || 'Failed to delete file');
     } finally {
       setIsDeleting(false);
     }
@@ -172,13 +175,22 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
         </div>
       </div>
 
+      {deleteError && (
+        <div className="mx-4 mt-2 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+          <span>{deleteError}</span>
+          <button type="button" onClick={() => setDeleteError(null)} className="ml-2 text-red-500 hover:text-red-700">
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+      )}
+
       {/* Drawer Actions Footer */}
       <div className="p-4 border-t border-border-subtle bg-canvas-lavender/40 flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="p-2 text-severity-blocker hover:bg-error-container/20 rounded-lg transition-colors flex items-center gap-1 font-label-md text-label-md"
+          className="p-2 text-severity-blocker hover:bg-error-container/20 rounded-lg transition-colors flex items-center gap-1 font-label-md text-label-md cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">delete</span>
           <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
@@ -189,12 +201,13 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
             type="button"
             onClick={() => {
               navigator.clipboard?.writeText(window.location.href);
-              alert('File link copied to clipboard!');
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
             }}
-            className="px-3 py-2 bg-surface-card hover:bg-canvas-lavender text-text-primary border border-border-subtle rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3 py-2 bg-surface-card hover:bg-canvas-lavender text-text-primary border border-border-subtle rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[16px]">link</span>
-            <span>Share Link</span>
+            <span className="material-symbols-outlined text-[16px]">{copied ? 'check' : 'link'}</span>
+            <span>{copied ? 'Copied!' : 'Share Link'}</span>
           </button>
           <a
             href={downloadUrl}

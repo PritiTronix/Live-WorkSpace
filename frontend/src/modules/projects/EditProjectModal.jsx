@@ -45,8 +45,8 @@ export const EditProjectModal = ({ project, isOpen, onClose, onProjectUpdated })
       setColor(project.color || 'bg-primary-container');
       setStatus(project.status || 'Active');
       setLeadId(project.lead_id || '');
-      setStartDate(project.start_date || '2025-11-12');
-      setTargetDate(project.target_date || '2025-12-15');
+      setStartDate(project.start_date ? project.start_date.slice(0, 10) : new Date().toISOString().slice(0, 10));
+      setTargetDate(project.target_date ? project.target_date.slice(0, 10) : '');
       setIsRestricted(project.visibility === 'private');
       setMembers(project.members || []);
 

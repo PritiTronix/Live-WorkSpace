@@ -14,7 +14,7 @@ from fastapi import (
     File,
     status,
 )
-from sqlalchemy import select, and_, desc, func, or_
+from sqlalchemy import select, and_, or_, desc, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError

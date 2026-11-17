@@ -19,6 +19,13 @@ class UserBase(BaseSchema):
     department: Optional[str] = None
     email_verified: bool = False
     onboarding_completed: bool = False
+    timezone: Optional[str] = None
+    last_active_at: Optional[datetime] = None
+    on_call_role: Optional[str] = None
+
+
+class UserUpdateRole(BaseSchema):
+    role: str
 
 
 class UserCreate(BaseSchema):
@@ -53,6 +60,8 @@ class UserUpdateProfile(BaseSchema):
     title: Optional[str] = None
     department: Optional[str] = None
     avatar_url: Optional[str] = None
+    timezone: Optional[str] = None
+    on_call_role: Optional[str] = None
 
 
 class UserChangePassword(BaseSchema):
@@ -98,11 +107,13 @@ class OnboardingCompleteResponse(BaseSchema):
 class OrganizationBase(BaseSchema):
     name: str
     slug: str
+    plan: Optional[str] = "Standard"
 
 
 class OrganizationRead(OrganizationBase):
     id: str
     created_at: datetime
+    plan: Optional[str] = "Standard"
 
 
 # --- Project Member & Invitation Schemas ---
@@ -675,4 +686,31 @@ class AuditLogExportRequest(BaseSchema):
     time_horizon: Optional[str] = "7d"
     event_domains: Optional[List[str]] = Field(default_factory=list)
     severity: Optional[str] = "all"
+
+
+# --- Support Request Schemas ---
+class SupportRequestCreate(BaseSchema):
+    subject: str = Field(..., min_length=1, max_length=200, description="Summary of the support issue or problem")
+    category: str = Field(..., min_length=1, max_length=50, description="Support category or domain")
+    message: str = Field(..., min_length=1, max_length=5000, description="Detailed problem description or steps to reproduce")
+
+    @field_validator("subject", "category", "message")
+    @classmethod
+    def strip_and_validate_non_empty(cls, v: str) -> str:
+        stripped = v.strip()
+        if not stripped:
+            raise ValueError("Field cannot be empty or contain only whitespace")
+        return stripped
+
+
+class SupportRequestResponse(BaseSchema):
+    id: str
+    user_id: str
+    organization_id: str
+    subject: str
+    category: str
+    message: str
+    status: str
+    created_at: datetime
+
 

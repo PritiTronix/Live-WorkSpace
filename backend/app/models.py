@@ -20,6 +20,7 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    plan: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="Standard")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
     users: Mapped[list["User"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
@@ -37,6 +38,9 @@ class User(Base):
     title: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Lead Architect, Project Manager, etc.
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    timezone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    on_call_role: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     onboarding_completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
@@ -404,3 +408,20 @@ class RCARecord(Base):
     ticket: Mapped["Ticket"] = relationship("Ticket")
     author: Mapped["User"] = relationship("User", foreign_keys=[author_id])
     approved_by: Mapped[Optional["User"]] = relationship("User", foreign_keys=[approved_by_id])
+
+
+class SupportRequest(Base):
+    __tablename__ = "support_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    subject: Mapped[str] = mapped_column(String(200), nullable=False)
+    category: Mapped[str] = mapped_column(String(50), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    user: Mapped["User"] = relationship("User")
+    organization: Mapped["Organization"] = relationship("Organization")
+

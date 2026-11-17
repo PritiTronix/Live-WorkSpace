@@ -19,6 +19,7 @@ export const RcaManagementPage = () => {
   const [timeline, setTimeline] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [approveError, setApproveError] = useState(null);
 
   const loadData = async () => {
     try {
@@ -71,10 +72,11 @@ export const RcaManagementPage = () => {
 
   const handleApprove = async (id) => {
     try {
+      setApproveError(null);
       await rcaService.approve(id);
       await loadData();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to approve RCA');
+      setApproveError(err.response?.data?.detail || 'Failed to approve RCA');
     }
   };
 
@@ -147,6 +149,15 @@ export const RcaManagementPage = () => {
           ))}
         </div>
       </div>
+
+      {approveError && (
+        <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl flex items-center justify-between">
+          <span>{approveError}</span>
+          <button type="button" onClick={() => setApproveError(null)} className="text-red-500 hover:text-red-700">
+            <span className="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (

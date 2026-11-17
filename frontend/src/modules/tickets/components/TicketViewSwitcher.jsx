@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { TICKET_VIEWS } from '../constants/ticketConstants';
 
 /**
  * Shared Header, View Switcher & Filter Toolbar
@@ -13,6 +14,7 @@ export const TicketViewSwitcher = ({
   statusFilter = 'all',
   onStatusChange,
   onOpenCreateModal,
+  isWsConnected = false,
 }) => {
   return (
     <div className="flex flex-col gap-space-md">
@@ -23,9 +25,12 @@ export const TicketViewSwitcher = ({
             <h1 className="font-headline-xl text-xl sm:text-headline-xl text-text-primary tracking-tight">
               Ticket Management
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-status-open/10 text-status-open font-label-sm text-xs font-semibold">
-              SLA Engine Live
-            </span>
+            {isWsConnected && (
+              <span className="px-2.5 py-0.5 rounded-full bg-status-open/10 text-status-open font-label-sm text-xs font-semibold flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-open animate-pulse" />
+                SLA Engine Live
+              </span>
+            )}
           </div>
           <p className="font-body-md text-xs sm:text-body-md text-text-secondary mt-1">
             Real-time incident response, severity matrix, triage workflows, and SLA resolution timers.
@@ -36,48 +41,23 @@ export const TicketViewSwitcher = ({
         <div className="flex flex-wrap items-center gap-2 sm:gap-space-sm">
           {/* Navigation Views */}
           <div className="flex items-center p-1 bg-canvas-main rounded-lg border border-border-subtle">
-            <NavLink
-              to="/workspace/tickets"
-              end
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1.5 rounded-md font-label-md text-xs sm:text-label-md transition-all ${
-                  isActive
-                    ? 'bg-surface-card text-primary shadow-xs font-bold'
-                    : 'text-text-secondary hover:text-text-primary'
-                }`
-              }
-            >
-              <span className="material-symbols-outlined text-base">view_list</span>
-              <span>List</span>
-            </NavLink>
-
-            <NavLink
-              to="/workspace/tickets/board"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1.5 rounded-md font-label-md text-xs sm:text-label-md transition-all ${
-                  isActive
-                    ? 'bg-surface-card text-primary shadow-xs font-bold'
-                    : 'text-text-secondary hover:text-text-primary'
-                }`
-              }
-            >
-              <span className="material-symbols-outlined text-base">view_kanban</span>
-              <span>Board</span>
-            </NavLink>
-
-            <NavLink
-              to="/workspace/tickets/priority"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1.5 rounded-md font-label-md text-xs sm:text-label-md transition-all ${
-                  isActive
-                    ? 'bg-surface-card text-primary shadow-xs font-bold'
-                    : 'text-text-secondary hover:text-text-primary'
-                }`
-              }
-            >
-              <span className="material-symbols-outlined text-base">crisis_alert</span>
-              <span>Priority</span>
-            </NavLink>
+            {TICKET_VIEWS.map((view) => (
+              <NavLink
+                key={view.id}
+                to={view.route}
+                end={view.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-3 py-1.5 rounded-md font-label-md text-xs sm:text-label-md transition-all ${
+                    isActive
+                      ? 'bg-surface-card text-primary shadow-xs font-bold'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`
+                }
+              >
+                <span className="material-symbols-outlined text-base">{view.icon}</span>
+                <span>{view.label}</span>
+              </NavLink>
+            ))}
           </div>
 
           {/* Create Ticket Trigger */}

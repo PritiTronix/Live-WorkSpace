@@ -228,9 +228,6 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
                       {p.name}
                     </option>
                   ))}
-                  <option value="Platform Revamp 2.0">Platform Revamp 2.0</option>
-                  <option value="Cloud Core Infra">Cloud Core Infra</option>
-                  <option value="Operations & SLA">Operations & SLA</option>
                 </select>
                 <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-2.5 text-text-secondary text-sm">
                   expand_more

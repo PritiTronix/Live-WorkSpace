@@ -80,7 +80,7 @@ export const UserProfilePage = () => {
               </h1>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#28C078]/15 text-[#28C078] text-xs font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#28C078] animate-pulse"></span>
-                Active Enterprise Profile
+                Active Profile
               </span>
             </div>
           </div>
@@ -164,11 +164,11 @@ export const UserProfilePage = () => {
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1 text-[#9C9CA9] text-xs">
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5" />
-                    <span>{user?.email || 'alex.rivera@tronix365.internal'}</span>
+                    <span>{user?.email || ''}</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>UTC-05:00 (Eastern Time - US &amp; Canada)</span>
+                    <span>{user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'}</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />

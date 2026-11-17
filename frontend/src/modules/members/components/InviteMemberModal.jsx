@@ -193,7 +193,7 @@ export const InviteMemberModal = ({ isOpen, onClose, onMemberInvited }) => {
               </div>
               <div className="flex items-center gap-1.5 text-[#9C9CA9] text-[11px] mt-0.5">
                 <Shield className="w-3.5 h-3.5" />
-                <span>Permitted: <code className="text-[#6040F0] font-semibold">@tronix365.io</code> or <code className="text-[#6040F0] font-semibold">@company.com</code></span>
+                <span>Permitted: <code className="text-[#6040F0] font-semibold">organization domain</code> or <code className="text-[#6040F0] font-semibold">@company.com</code></span>
               </div>
             </div>
 

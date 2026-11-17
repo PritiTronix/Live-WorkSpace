@@ -14,6 +14,7 @@ export const TeamDiscussionsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quickPostContent, setQuickPostContent] = useState('');
   const [isQuickPosting, setIsQuickPosting] = useState(false);
+  const [quickPostError, setQuickPostError] = useState(null);
 
   useEffect(() => {
     loadDiscussions();
@@ -42,6 +43,7 @@ export const TeamDiscussionsPage = () => {
     if (!quickPostContent.trim()) return;
     try {
       setIsQuickPosting(true);
+      setQuickPostError(null);
       const newDisc = await discussionsService.createDiscussion({
         title: quickPostContent.slice(0, 60) + (quickPostContent.length > 60 ? '...' : ''),
         content: quickPostContent.trim(),
@@ -50,7 +52,7 @@ export const TeamDiscussionsPage = () => {
       setDiscussions((prev) => [newDisc, ...prev]);
       setQuickPostContent('');
     } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to publish post');
+      setQuickPostError(err?.response?.data?.detail || 'Failed to publish post');
     } finally {
       setIsQuickPosting(false);
     }
@@ -239,6 +241,14 @@ export const TeamDiscussionsPage = () => {
                   rows={2}
                   className="w-full bg-canvas-main rounded-lg p-space-sm font-body-md text-body-md text-text-primary placeholder:text-text-muted focus:outline-none focus:bg-surface-card resize-none border border-transparent focus:border-border-subtle"
                 />
+                {quickPostError && (
+                  <div className="px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center justify-between">
+                    <span>{quickPostError}</span>
+                    <button type="button" onClick={() => setQuickPostError(null)} className="text-red-500 hover:text-red-700">
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center justify-between gap-space-xs pt-1">
                   <div className="flex items-center gap-1">
                     <button
