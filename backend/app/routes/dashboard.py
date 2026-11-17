@@ -36,6 +36,7 @@ from reportlab.pdfgen import canvas
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
 from backend.app.models import Project, Task, Ticket, ProjectActivity, User, Organization
+from backend.app.services.sla import is_active_sla_breach
 from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
@@ -386,26 +387,13 @@ async def get_dashboard_metrics(
             active_project_ids.add(tk.project_id)
     active_teams_count = len(active_project_ids) if active_project_ids else (1 if work_in_progress > 0 else 0)
 
-    # SLA calculations from real SLA timers/deadlines
+    # SLA calculations from centralized active breach definition
+    breached_count = sum(1 for t in tickets if is_active_sla_breach(t, now))
     tickets_with_timers = [t for t in tickets if t.deadline is not None]
     total_timers = len(tickets_with_timers)
-
-    breached_count = 0
     if total_timers > 0:
-        for t in tickets_with_timers:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if (t.status or "").lower() in ("resolved", "closed"):
-                if t.updated_at:
-                    up = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
-                    if up > dl:
-                        breached_count += 1
-            else:
-                if now > dl:
-                    breached_count += 1
         compliance_rate = round(((total_timers - breached_count) / total_timers) * 100.0, 1)
     else:
-        # Fallback to blocker count for breached count if no deadlines exist
-        breached_count = sum(1 for t in tickets if (t.severity or "").lower() == "blocker" and (t.status or "").lower() not in ("resolved", "closed"))
         compliance_rate = None  # None indicates no timers exist, displays "—"
 
     return DashboardMetrics(
@@ -1166,33 +1154,20 @@ async def export_workspace_summary(
     minor_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "minor")
 
     twenty_four_hours_ago = now_utc - timedelta(hours=24)
-    violations_24h = 0
-    for t in active_tickets:
-        if t.deadline:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if twenty_four_hours_ago <= dl <= now_utc:
-                violations_24h += 1
-        elif (t.severity or "").lower() == "blocker":
-            violations_24h += 1
+    violations_24h = sum(
+        1 for t in active_tickets
+        if is_active_sla_breach(t, now_utc)
+        and t.deadline
+        and twenty_four_hours_ago <= (t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)) <= now_utc
+    )
 
-    # SLA Breached and compliance
+    # SLA Breached and compliance from centralized active breach definition
+    breached_count = sum(1 for t in tickets if is_active_sla_breach(t, now_utc))
     tickets_with_timers = [t for t in tickets if t.deadline is not None]
     if tickets_with_timers:
-        breached_count = 0
-        for t in tickets_with_timers:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if (t.status or "").lower() in ("resolved", "closed"):
-                if t.updated_at:
-                    up = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
-                    if up > dl:
-                        breached_count += 1
-            else:
-                if now_utc > dl:
-                    breached_count += 1
         compliance_rate_val = round(((len(tickets_with_timers) - breached_count) / len(tickets_with_timers)) * 100.0, 1)
         compliance_rate_str = f"{compliance_rate_val}%"
     else:
-        breached_count = blocker_count
         compliance_rate_str = "—"
 
     # Per-project breakdown

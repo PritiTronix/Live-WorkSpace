@@ -485,6 +485,10 @@ class TicketRead(TicketBase):
     comments: List[TicketCommentRead] = Field(default_factory=list)
     attachments: List[TicketAttachmentRead] = Field(default_factory=list)
     activities: List[TicketActivityRead] = Field(default_factory=list)
+    is_breached: bool = False
+    breached_at: Optional[datetime] = None
+    overrun_duration: Optional[str] = None
+    overrun_seconds: Optional[int] = None
 
 
 class TicketStats(BaseSchema):

@@ -155,7 +155,9 @@ export const TicketDetailsPage = () => {
 
   // Check SLA Status
   const isBreached = useMemo(() => {
-    if (!ticket || ['resolved', 'closed'].includes(ticket.status)) return false;
+    if (!ticket) return false;
+    if (typeof ticket.is_breached === 'boolean') return ticket.is_breached;
+    if (['resolved', 'closed'].includes(ticket.status)) return false;
     if (!ticket.deadline) return false;
     return new Date(ticket.deadline) < new Date();
   }, [ticket]);
@@ -212,6 +214,13 @@ export const TicketDetailsPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-space-xs shrink-0">
+            <Link
+              to="/workspace/sla"
+              className="h-8 px-3 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-sm text-label-sm shadow-sm transition-colors flex items-center gap-1.5"
+            >
+              <span>SLA Overview</span>
+              <span className="material-symbols-outlined text-xs">open_in_new</span>
+            </Link>
             <button
               onClick={() => handleStatusChange('wip')}
               className="h-8 px-3 rounded-lg bg-surface-card hover:bg-canvas-lavender text-text-primary font-label-sm text-label-sm shadow-sm transition-colors flex items-center gap-1.5"
@@ -399,9 +408,18 @@ export const TicketDetailsPage = () => {
                   <span className="material-symbols-outlined text-primary text-xl">acute</span>
                   <h2 className="font-headline-sm text-headline-sm text-text-primary">Incident SLA Tracking &amp; Milestones</h2>
                 </div>
-                <span className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider">
-                  {ticket.severity === 'blocker' ? 'Tier-1 P0 Agreement' : 'Standard Service Level'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="font-label-sm text-label-sm text-text-muted uppercase tracking-wider hidden sm:inline">
+                    {ticket.severity === 'blocker' ? 'Tier-1 P0 Agreement' : 'Standard Service Level'}
+                  </span>
+                  <Link
+                    to="/workspace/sla"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-canvas-lavender hover:bg-primary-fixed text-primary font-label-sm text-xs font-semibold transition-colors"
+                  >
+                    <span>SLA Overview</span>
+                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                  </Link>
+                </div>
               </div>
 
               {/* Horizontal Stepper Visualization */}
@@ -448,7 +466,9 @@ export const TicketDetailsPage = () => {
                       </span>
                     </div>
                     <p className="font-label-md text-label-md text-text-primary pt-1">Resolution Target</p>
-                    <p className="font-body-sm text-body-sm text-text-secondary">Expected cutoff</p>
+                    <p className="font-body-sm text-body-sm text-text-secondary">
+                      {ticket.deadline ? new Date(ticket.deadline).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Expected cutoff'}
+                    </p>
                   </div>
 
                   {/* Step 4: Resolution Status */}
@@ -464,7 +484,7 @@ export const TicketDetailsPage = () => {
                       </span>
                     </div>
                     <p className={`font-label-md text-label-md ${isBreached ? 'text-severity-blocker font-bold' : 'text-text-primary'} pt-1`}>
-                      {isBreached ? 'Breached' : statusInfo.label}
+                      {isBreached ? `Breached (+${ticket.overrun_duration || 'Overdue'})` : statusInfo.label}
                     </p>
                     <p className="font-body-sm text-body-sm text-text-secondary">Current lifecycle</p>
                   </div>

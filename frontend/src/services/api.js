@@ -48,6 +48,48 @@ apiClient.interceptors.response.use(
   }
 );
 
+/**
+ * Shared API Error Helper
+ * Maps HTTP and network errors to consistent user-facing error messages:
+ * - 422: 'The filter is not valid'
+ * - 429: 'Too many requests. Please wait a moment and try again.'
+ * - 5xx: 'An unexpected server error occurred. Please retry.' (503: 'Service temporarily unavailable. Please retry.')
+ * - Connection failure (no response): 'Cannot reach the server'
+ * Never labels a non-503 error as 503.
+ */
+export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error occurred.') => {
+  if (!error) return defaultMessage;
+
+  // Failed connection: no response from server, network down, or timeout
+  if (!error.response) {
+    return 'Cannot reach the server';
+  }
+
+  const statusCode = error.response.status;
+
+  if (statusCode === 422) {
+    return 'The filter is not valid';
+  }
+
+  if (statusCode === 429) {
+    return 'Too many requests. Please wait a moment and try again.';
+  }
+
+  if (statusCode >= 500 && statusCode <= 599) {
+    if (statusCode === 503) {
+      return 'Service temporarily unavailable. Please retry.';
+    }
+    return 'An unexpected server error occurred. Please retry.';
+  }
+
+  const detail = error.response.data?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+
+  return error.message || defaultMessage;
+};
+
 // Fallback user context
 export const DEFAULT_USER = {
   id: '',

@@ -146,6 +146,26 @@ class Ticket(Base):
     attachments: Mapped[list["TicketAttachment"]] = relationship(back_populates="ticket", cascade="all, delete-orphan", lazy="selectin")
     activities: Mapped[list["TicketActivity"]] = relationship(back_populates="ticket", cascade="all, delete-orphan", lazy="selectin")
 
+    @property
+    def is_breached(self) -> bool:
+        from backend.app.services.sla import is_active_sla_breach
+        return is_active_sla_breach(self)
+
+    @property
+    def breached_at(self) -> Optional[datetime]:
+        from backend.app.services.sla import check_ticket_sla_breach
+        return check_ticket_sla_breach(self).breached_at
+
+    @property
+    def overrun_duration(self) -> Optional[str]:
+        from backend.app.services.sla import check_ticket_sla_breach
+        return check_ticket_sla_breach(self).overrun_duration
+
+    @property
+    def overrun_seconds(self) -> Optional[int]:
+        from backend.app.services.sla import check_ticket_sla_breach
+        return check_ticket_sla_breach(self).overrun_seconds
+
 
 class TicketComment(Base):
     __tablename__ = "ticket_comments"
