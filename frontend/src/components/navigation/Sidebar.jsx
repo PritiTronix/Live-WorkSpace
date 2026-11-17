@@ -8,6 +8,7 @@ import { authService, organizationService } from '../../services/api';
 import HelpSupportModal from '../modals/HelpSupportModal';
 import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
 import { TICKET_VIEWS, PRIORITY_ISSUES_NAV } from '../../modules/tickets/constants/ticketConstants';
+import { isSidebarItemActive } from '../../utils/navigation';
 
 const getInitials = (str) => {
   if (!str) return 'W';
@@ -17,39 +18,45 @@ const getInitials = (str) => {
 };
 
 /** Single nav link with optional badge and tooltip for collapsed state */
-const NavItem = ({ to, icon, label, badge, isCollapsed, end = false }) => (
-  <NavLink
-    to={to}
-    end={end}
-    title={isCollapsed ? label : undefined}
-    className={({ isActive }) =>
-      `relative flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
+const NavItem = ({ to, icon, label, badge, isCollapsed }) => {
+  const location = useLocation();
+  const isActive = isSidebarItemActive(location.pathname, to);
+
+  return (
+    <NavLink
+      to={to}
+      title={isCollapsed ? label : undefined}
+      className={`relative flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-canvas-lavender text-primary font-semibold'
           : 'text-text-secondary hover:bg-canvas-lavender hover:text-text-primary'
-      }`
-    }
-  >
-    <div className="flex items-center gap-space-sm">
-      <span className="material-symbols-outlined text-[18px]">{icon}</span>
-      {!isCollapsed && <span className="font-label-md text-label-md">{label}</span>}
-    </div>
-    {!isCollapsed && badge > 0 && (
-      <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold leading-none">
-        {badge > 99 ? '99+' : badge}
-      </span>
-    )}
-    {isCollapsed && badge > 0 && (
-      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-severity-blocker" />
-    )}
-  </NavLink>
-);
+      }`}
+    >
+      <div className="flex items-center gap-space-sm">
+        <span className="material-symbols-outlined text-[18px]">{icon}</span>
+        {!isCollapsed && <span className="font-label-md text-label-md">{label}</span>}
+      </div>
+      {!isCollapsed && badge > 0 && (
+        <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold leading-none">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
+      {isCollapsed && badge > 0 && (
+        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-severity-blocker" />
+      )}
+    </NavLink>
+  );
+};
 
 /** Collapsible sub-section for nested items (e.g. Tickets views) */
 const ExpandableNavItem = ({ to, icon, label, isCollapsed, children }) => {
   const location = useLocation();
-  const isParentActive = location.pathname.startsWith(to);
+  const isParentActive = isSidebarItemActive(location.pathname, to);
   const [open, setOpen] = useState(isParentActive);
+
+  useEffect(() => {
+    if (isParentActive) setOpen(true);
+  }, [isParentActive]);
 
   return (
     <div>
@@ -119,6 +126,7 @@ export const Sidebar = ({
   isMobile = false,
   onOpenShortcuts,
 }) => {
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
   const [organizations, setOrganizations] = useState([]);
   const [currentOrg, setCurrentOrg] = useState(null);
@@ -323,9 +331,9 @@ export const Sidebar = ({
               <NavLink
                 to={PRIORITY_ISSUES_NAV.route}
                 title={isCollapsed ? PRIORITY_ISSUES_NAV.label : undefined}
-                className={({ isActive }) =>
+                className={
                   `flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
-                    isActive
+                    isSidebarItemActive(location.pathname, PRIORITY_ISSUES_NAV.route)
                       ? 'bg-canvas-lavender text-primary font-semibold'
                       : 'text-text-secondary hover:bg-canvas-lavender hover:text-text-primary'
                   }`

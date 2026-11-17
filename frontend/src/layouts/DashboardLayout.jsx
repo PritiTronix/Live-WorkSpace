@@ -13,6 +13,7 @@ import InviteMemberModal from '../modules/members/components/InviteMemberModal';
 import FileUploadModal from '../modules/files/components/FileUploadModal';
 import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
 import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal';
+import { isSidebarItemActive } from '../utils/navigation';
 
 /**
  * DashboardLayout
@@ -436,7 +437,7 @@ export const DashboardLayout = () => {
 /** Reusable bottom nav tab */
 function MobileNavItem({ to, icon, label, badge }) {
   const location = useLocation();
-  const isActive = location.pathname.startsWith(to);
+  const isActive = isSidebarItemActive(location.pathname, to);
 
   return (
     <Link

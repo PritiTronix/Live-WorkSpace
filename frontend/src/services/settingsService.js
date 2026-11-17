@@ -21,6 +21,11 @@ export const settingsService = {
     return response.data;
   },
 
+  deleteSlaConfig: async () => {
+    const response = await apiClient.delete('/settings/sla');
+    return response.data;
+  },
+
   getNotificationPreferences: async () => {
     const response = await apiClient.get('/settings/notifications');
     return response.data;

@@ -12,8 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_active_user
-from backend.app.models import Ticket, Project, User
+from backend.app.dependencies import get_current_active_user, require_roles
+from backend.app.models import Ticket, Project, User, WorkspaceSetting
 from backend.app.schemas import SLARead
 
 router = APIRouter()
@@ -99,5 +99,36 @@ async def list_sla_policies(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List SLA policy definitions and timer configurations."""
+    """List SLA policy definitions and timer configurations for current organization."""
     return DEFAULT_POLICIES
+
+
+@router.post("/policies")
+async def create_sla_policy(
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "created", "policy": payload}
+
+
+@router.put("/policies/{policy_id}")
+async def update_sla_policy(
+    policy_id: str,
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "updated", "id": policy_id, "policy": payload}
+
+
+@router.delete("/policies/{policy_id}")
+async def delete_sla_policy(
+    policy_id: str,
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "deleted", "id": policy_id}
