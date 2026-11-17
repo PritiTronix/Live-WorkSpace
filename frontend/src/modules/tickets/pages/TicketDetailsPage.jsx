@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ticketsService } from '../../../services/ticketsService';
+import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES, TICKET_SEVERITIES } from '../constants/ticketConstants';
 
 export const TicketDetailsPage = () => {
@@ -46,14 +46,18 @@ export const TicketDetailsPage = () => {
 
   // WebSocket Live Updates
   useEffect(() => {
-    const ws = ticketsService.createTicketsWebSocket('org_01', (event) => {
-      if (
-        (event.type === 'ticket_updated' && event.ticket?.id === id) ||
-        (event.type === 'ticket_comment_added' && event.ticket_id === id)
-      ) {
-        fetchTicket();
-      }
-    });
+    const wsFn = createTicketsWebSocket || ticketsService?.createTicketsWebSocket;
+    let ws = null;
+    if (typeof wsFn === 'function') {
+      ws = wsFn('org_01', (event) => {
+        if (
+          (event.type === 'ticket_updated' && event.ticket?.id === id) ||
+          (event.type === 'ticket_comment_added' && event.ticket_id === id)
+        ) {
+          fetchTicket();
+        }
+      });
+    }
     return () => {
       if (ws) ws.close();
     };

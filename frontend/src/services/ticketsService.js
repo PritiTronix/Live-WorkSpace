@@ -105,6 +105,8 @@ export const ticketsService = {
     const baseUrl = apiClient.defaults.baseURL || '/api/v1';
     return `${baseUrl}/tickets/${ticketId}/attachments/${attachmentId}/download`;
   },
+
+  createTicketsWebSocket: (workspaceId, onEvent) => createTicketsWebSocket(workspaceId, onEvent),
 };
 
 /**

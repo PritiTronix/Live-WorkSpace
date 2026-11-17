@@ -304,6 +304,39 @@ async def get_project(
     return out
 
 
+@router.get("/{project_id}/activity", response_model=List[ProjectActivityRead])
+async def get_project_activity(
+    project_id: str,
+    category: Optional[str] = Query(None),
+    actor_id: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Screen 45: Get activity events for a specific project."""
+    proj_res = await db.execute(
+        select(Project).where(
+            Project.id == project_id,
+            Project.organization_id == current_user.organization_id
+        )
+    )
+    if not proj_res.scalars().first():
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    query = select(ProjectActivity).where(ProjectActivity.project_id == project_id)
+    if category and category.lower() != "all":
+        query = query.where(ProjectActivity.category == category)
+    if actor_id and actor_id.lower() != "all":
+        query = query.where(ProjectActivity.actor_id == actor_id)
+    if search:
+        s = f"%{search.strip()}%"
+        query = query.where(ProjectActivity.description.ilike(s))
+
+    query = query.order_by(desc(ProjectActivity.created_at))
+    res = await db.execute(query)
+    return res.scalars().all()
+
+
 @router.get("/{project_id}/overview", response_model=ProjectOverviewSummary)
 async def get_project_overview(
     project_id: str,
@@ -388,6 +421,7 @@ async def get_project_overview(
 
     tkt_res = await db.execute(
         select(Ticket)
+        .options(selectinload(Ticket.project))
         .where(
             Ticket.project_id == project_id,
             Ticket.status.in_(["open", "wip", "on_hold"])

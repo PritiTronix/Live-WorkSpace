@@ -423,9 +423,9 @@ export const notificationService = {
   getUnreadCount: async () => {
     try {
       const response = await apiClient.get('/notifications/unread-count');
-      return response.data.unread_count;
+      return response.data;
     } catch {
-      return 0;
+      return { unread_count: 0, sla_breach_count: 0 };
     }
   },
   markRead: async (notificationId) => {
