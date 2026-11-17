@@ -9,7 +9,7 @@ export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
-  activeBreadcrumbs = ['Live Workspace'],
+  activeBreadcrumbs = [authService.getCurrentUserSync()?.organization?.name || ''],
   unreadNotifications = 0,
   slaBreachCount = 0,
   isCollapsed = false,

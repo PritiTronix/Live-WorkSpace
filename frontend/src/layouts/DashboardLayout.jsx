@@ -48,7 +48,7 @@ export const DashboardLayout = () => {
   const [slaBreachCount, setSlaBreachCount] = useState(0);
   const [priorityIssuesCount, setPriorityIssuesCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
-  const [workspaceName, setWorkspaceName] = useState('Live Workspace');
+  const [workspaceName, setWorkspaceName] = useState(() => authService.getCurrentUserSync()?.organization?.name || '');
   const [currentProjectName, setCurrentProjectName] = useState(null);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
@@ -111,6 +111,9 @@ export const DashboardLayout = () => {
   useEffect(() => {
     organizationService.getCurrent().then((ws) => {
       if (ws?.name) setWorkspaceName(ws.name);
+    });
+    authService.getCurrentUser().then((u) => {
+      if (u?.organization?.name) setWorkspaceName(u.organization.name);
     });
     refreshBadges();
 
@@ -311,9 +314,9 @@ export const DashboardLayout = () => {
           </button>
           <div className="flex items-center gap-2 flex-1">
             <div className="w-7 h-7 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm">
-              LW
+              {workspaceName ? (workspaceName.trim().split(/\s+/).length >= 2 ? (workspaceName.trim().split(/\s+/)[0][0] + workspaceName.trim().split(/\s+/)[1][0]).toUpperCase() : workspaceName.slice(0, 2).toUpperCase()) : ''}
             </div>
-            <span className="font-headline-sm text-headline-sm text-text-primary">Live Workspace</span>
+            <span className="font-headline-sm text-headline-sm text-text-primary truncate">{workspaceName}</span>
           </div>
           <button
             onClick={() => setIsSearchOpen(true)}

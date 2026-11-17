@@ -96,62 +96,91 @@ export const ProjectOverviewTab = () => {
             <div>
               <h2 className="font-headline-md text-headline-md text-text-primary">Sprint Burndown & Velocity</h2>
               <p className="font-body-sm text-body-sm text-text-secondary mt-0.5">
-                {burndown?.sprint_name || 'Active Cycle'} • Real-time completion rate
+                {burndown?.sprint_name ? `${burndown.sprint_name} • Real-time completion rate` : 'Real-time iteration tracking'}
               </p>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-bold">
-              {burndown?.progress_pct ?? 78}% Complete
-            </span>
+            {burndown?.progress_pct !== undefined && burndown?.has_data !== false && (
+              <span className="px-2.5 py-1 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-bold">
+                {burndown.progress_pct}% Complete
+              </span>
+            )}
           </div>
 
-          {/* Graphical Burn visualization container */}
-          <div className="h-44 w-full bg-canvas-main rounded-xl p-space-md flex flex-col justify-between border border-border-subtle/50">
-            <div className="flex items-center justify-between text-text-muted font-label-sm text-label-sm">
-              <span>Sprint Day 1 (180 pts)</span>
-              <span>Target Velocity: 12 pts/day</span>
-              <span>Day 14 (Done)</span>
-            </div>
-            {/* SVG Wave Burndown representation */}
-            <div className="relative h-24 w-full flex items-end">
-              <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 40">
-                {/* Ideal guide line */}
-                <line x1="0" y1="5" x2="100" y2="35" stroke="#E5E5EF" strokeWidth="2" strokeDasharray="3 3" />
-                {/* Actual completed slope */}
-                <path
-                  d="M0 5 Q 30 18, 55 22 T 100 32"
-                  fill="none"
-                  stroke="#6040F0"
-                  strokeWidth="3"
-                />
-              </svg>
-            </div>
-            <div className="flex items-center justify-between font-label-sm text-label-sm pt-1 border-t border-border-subtle">
-              <div className="flex items-center gap-1.5 text-text-secondary">
-                <span className="w-2.5 h-2.5 rounded-full bg-btn-primary" />
-                <span>Actual Burn: {burndown?.completed_points || 33} pts</span>
+          {/* Render Burndown when real sprint data exists, else designed empty state */}
+          {burndown && burndown.has_data !== false && burndown.sprint_name ? (
+            <>
+              <div className="h-44 w-full bg-canvas-main rounded-xl p-space-md flex flex-col justify-between border border-border-subtle/50">
+                <div className="flex items-center justify-between text-text-muted font-label-sm text-label-sm">
+                  <span>Start ({burndown.total_story_points || 0} pts)</span>
+                  <span>Target: {burndown.target_velocity || 10} pts/day</span>
+                  <span>End</span>
+                </div>
+                <div className="relative h-24 w-full flex items-end">
+                  <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 40">
+                    <line x1="0" y1="5" x2="100" y2="35" stroke="#E5E5EF" strokeWidth="2" strokeDasharray="3 3" />
+                    <path
+                      d="M0 5 Q 30 18, 55 22 T 100 32"
+                      fill="none"
+                      stroke="#6040F0"
+                      strokeWidth="3"
+                    />
+                  </svg>
+                </div>
+                <div className="flex items-center justify-between font-label-sm text-label-sm pt-1 border-t border-border-subtle">
+                  <div className="flex items-center gap-1.5 text-text-secondary">
+                    <span className="w-2.5 h-2.5 rounded-full bg-btn-primary" />
+                    <span>Actual Burn: {burndown.completed_points || 0} pts</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-text-muted">
+                    <span className="w-2.5 h-0.5 bg-border-subtle" />
+                    <span>Ideal Pace</span>
+                  </div>
+                  <span className="font-bold text-text-primary">
+                    {burndown.days_remaining ? `${burndown.days_remaining} days remaining` : 'In Progress'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-text-muted">
-                <span className="w-2.5 h-0.5 bg-border-subtle" />
-                <span>Ideal Pace</span>
-              </div>
-              <span className="font-bold text-text-primary">{burndown?.days_remaining || 14} days remaining</span>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-3 gap-space-md pt-space-xs text-center">
-            <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
-              <span className="font-label-sm text-label-sm text-text-muted block">Estimated Velocity</span>
-              <span className="font-headline-sm text-headline-sm font-bold text-text-primary mt-1 block">42 pts / wk</span>
+              <div className="grid grid-cols-3 gap-space-md pt-space-xs text-center">
+                <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
+                  <span className="font-label-sm text-label-sm text-text-muted block">Estimated Velocity</span>
+                  <span className="font-headline-sm text-headline-sm font-bold text-text-primary mt-1 block">
+                    {burndown.velocity || 'N/A'}
+                  </span>
+                </div>
+                <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
+                  <span className="font-label-sm text-label-sm text-text-muted block">Story Points Closed</span>
+                  <span className="font-headline-sm text-headline-sm font-bold text-status-resolved mt-1 block">
+                    {burndown.completed_points || 0} / {burndown.total_story_points || 0} pts
+                  </span>
+                </div>
+                <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
+                  <span className="font-label-sm text-label-sm text-text-muted block">Sprint SLA Adherence</span>
+                  <span className="font-headline-sm text-headline-sm font-bold text-primary mt-1 block">
+                    {burndown.sla_adherence || '100%'}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="h-64 w-full bg-canvas-main rounded-xl p-space-md flex flex-col items-center justify-center text-center border border-border-subtle/50">
+              <div className="w-12 h-12 rounded-xl bg-canvas-lavender flex items-center justify-center text-primary mb-3 shadow-xs">
+                <span className="material-symbols-outlined text-[24px]">trending_down</span>
+              </div>
+              <h3 className="font-headline-sm text-[15px] font-semibold text-text-primary mb-1">No Active Sprint Data</h3>
+              <p className="font-body-sm text-body-sm text-text-secondary max-w-sm mb-4">
+                There are no active sprint or burndown records configured for this project.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/projects/${id}/board`)}
+                className="px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-sm text-label-sm flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">view_kanban</span>
+                <span>Manage Board Tasks</span>
+              </button>
             </div>
-            <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
-              <span className="font-label-sm text-label-sm text-text-muted block">Story Points Closed</span>
-              <span className="font-headline-sm text-headline-sm font-bold text-status-resolved mt-1 block">99 / 128 pts</span>
-            </div>
-            <div className="p-space-sm rounded-lg bg-canvas-main border border-border-subtle/40">
-              <span className="font-label-sm text-label-sm text-text-muted block">Sprint SLA Adherence</span>
-              <span className="font-headline-sm text-headline-sm font-bold text-primary mt-1 block">94.8%</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Key Milestones & Deliverables (5 cols) */}
@@ -169,47 +198,78 @@ export const ProjectOverviewTab = () => {
           </div>
 
           <div className="flex flex-col gap-space-sm">
-            {milestones?.map((m) => (
-              <div
-                key={m.id}
-                className="p-space-md rounded-xl bg-canvas-main hover:bg-canvas-lavender/50 border border-border-subtle/60 transition-all flex flex-col gap-2"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-[18px]">flag</span>
-                    <h3 className="font-headline-sm text-[14px] text-text-primary font-semibold">{m.title}</h3>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      m.status === 'on_track'
-                        ? 'bg-status-resolved/10 text-status-resolved'
-                        : m.status === 'at_risk'
-                        ? 'bg-severity-critical/10 text-severity-critical'
-                        : 'bg-severity-blocker/10 text-severity-blocker'
-                    }`}
-                  >
-                    {m.status.replace('_', ' ')}
-                  </span>
-                </div>
+            {milestones && milestones.length > 0 ? (
+              milestones.map((m) => {
+                const isOverdue = m.due_date && new Date(m.due_date) < new Date() && (m.progress_pct ?? 0) < 100;
+                const displayStatus = isOverdue ? 'overdue' : (m.status || 'planned').toLowerCase();
+                const statusLabel = isOverdue ? 'Overdue' : displayStatus.replace('_', ' ');
+                const statusBadgeClass =
+                  displayStatus === 'on_track' && !isOverdue
+                    ? 'bg-status-resolved/10 text-status-resolved'
+                    : isOverdue || displayStatus === 'at_risk' || displayStatus === 'delayed'
+                    ? 'bg-severity-critical/10 text-severity-critical'
+                    : displayStatus === 'completed'
+                    ? 'bg-status-resolved/15 text-status-resolved'
+                    : 'bg-canvas-lavender text-text-secondary';
 
-                <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                return (
                   <div
-                    className={`h-1.5 rounded-full ${
-                      m.status === 'on_track' ? 'bg-status-resolved' : 'bg-severity-critical'
-                    }`}
-                    style={{ width: `${m.progress_pct}%` }}
-                  />
-                </div>
+                    key={m.id}
+                    className="p-space-md rounded-xl bg-canvas-main hover:bg-canvas-lavender/50 border border-border-subtle/60 transition-all flex flex-col gap-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-primary text-[18px]">flag</span>
+                        <h3 className="font-headline-sm text-[14px] text-text-primary font-semibold">{m.title}</h3>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${statusBadgeClass}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
 
-                <div className="flex items-center justify-between font-body-sm text-body-sm text-text-secondary pt-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <img className="w-5 h-5 rounded-full object-cover" src={m.owner_avatar} alt={m.owner} />
-                    <span>{m.owner}</span>
+                    <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={`h-1.5 rounded-full ${
+                          displayStatus === 'on_track' && !isOverdue ? 'bg-status-resolved' : 'bg-severity-critical'
+                        }`}
+                        style={{ width: `${m.progress_pct ?? 0}%` }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between font-body-sm text-body-sm text-text-secondary pt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        {m.owner_avatar ? (
+                          <img className="w-5 h-5 rounded-full object-cover" src={m.owner_avatar} alt={m.owner || 'Owner'} />
+                        ) : (
+                          <span className="material-symbols-outlined text-[16px] text-text-muted">person</span>
+                        )}
+                        <span>{m.owner || 'Unassigned'}</span>
+                      </div>
+                      <span className={`font-medium ${isOverdue ? 'text-severity-critical font-bold' : 'text-text-muted'}`}>
+                        {m.due_date || 'No due date'}
+                      </span>
+                    </div>
                   </div>
-                  <span className="font-medium text-text-muted">{m.due_date}</span>
+                );
+              })
+            ) : (
+              <div className="p-space-xl rounded-xl bg-canvas-main border border-border-subtle/60 text-center flex flex-col items-center justify-center min-h-[220px]">
+                <div className="w-12 h-12 rounded-xl bg-canvas-lavender flex items-center justify-center text-primary mb-3 shadow-xs">
+                  <span className="material-symbols-outlined text-[24px]">flag</span>
                 </div>
+                <h3 className="font-headline-sm text-[15px] font-semibold text-text-primary mb-1">No Key Milestones</h3>
+                <p className="font-body-sm text-body-sm text-text-secondary max-w-xs mb-3">
+                  No milestone checkpoints have been scheduled for this project.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/workspace/projects/${id}/timeline`)}
+                  className="px-3 py-1.5 rounded-lg bg-surface-card border border-border-subtle hover:bg-canvas-lavender text-text-primary font-label-sm text-label-sm transition-colors"
+                >
+                  Schedule Milestones
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

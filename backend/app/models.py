@@ -86,6 +86,8 @@ class Project(Base):
     invitations: Mapped[list["ProjectInvitation"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     tickets: Mapped[list["Ticket"]] = relationship(back_populates="project", cascade="all, delete-orphan")
     tasks: Mapped[list["Task"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    sprints: Mapped[list["ProjectSprint"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    milestones: Mapped[list["ProjectMilestone"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 
 class ProjectMember(Base):
@@ -115,6 +117,39 @@ class ProjectInvitation(Base):
 
     project: Mapped["Project"] = relationship(back_populates="invitations")
     invited_by: Mapped[Optional["User"]] = relationship("User")
+
+
+class ProjectSprint(Base):
+    __tablename__ = "project_sprints"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="active")  # planned, active, completed
+    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    target_points: Mapped[int] = mapped_column(Integer, default=0)
+    completed_points: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    project: Mapped["Project"] = relationship(back_populates="sprints")
+
+
+class ProjectMilestone(Base):
+    __tablename__ = "project_milestones"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="planned")  # planned, on_track, at_risk, completed, overdue
+    progress_pct: Mapped[int] = mapped_column(Integer, default=0)
+    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    owner_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    project: Mapped["Project"] = relationship(back_populates="milestones")
+    owner: Mapped[Optional["User"]] = relationship("User")
 
 
 class Ticket(Base):

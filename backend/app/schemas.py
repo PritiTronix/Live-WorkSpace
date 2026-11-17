@@ -248,6 +248,8 @@ class ProjectMetrics(BaseSchema):
     blocker_tickets: int = 0
     critical_tickets: int = 0
     sprint_progress: int = 0
+    total_discussions: int = 0
+    total_files: int = 0
     attention_severity: Optional[str] = None
     attention_text: Optional[str] = None
 
@@ -614,11 +616,11 @@ class ProjectActivityRead(ProjectActivityBase):
 # --- Project Workspace Summary (Overview Tab) ---
 class ProjectOverviewSummary(BaseSchema):
     project: ProjectRead
-    burndown: dict
-    milestones: List[dict]
-    team_workload: List[dict]
-    urgent_tickets: List[TicketRead]
-    recent_activity: List[ProjectActivityRead]
+    burndown: Optional[dict] = None
+    milestones: List[dict] = []
+    team_workload: List[dict] = []
+    urgent_tickets: List[TicketRead] = []
+    recent_activity: List[ProjectActivityRead] = []
 
 
 # --- SLA Schemas ---

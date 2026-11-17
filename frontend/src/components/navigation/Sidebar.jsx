@@ -11,7 +11,7 @@ import { TICKET_VIEWS, PRIORITY_ISSUES_NAV } from '../../modules/tickets/constan
 import { isSidebarItemActive } from '../../utils/navigation';
 
 const getInitials = (str) => {
-  if (!str) return 'W';
+  if (!str) return '';
   const parts = str.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return str.slice(0, 2).toUpperCase();
@@ -129,7 +129,10 @@ export const Sidebar = ({
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
   const [organizations, setOrganizations] = useState([]);
-  const [currentOrg, setCurrentOrg] = useState(null);
+  const [currentOrg, setCurrentOrg] = useState(() => {
+    const user = authService.getCurrentUserSync();
+    return user?.organization ? { name: user.organization.name, plan: user.organization.plan } : null;
+  });
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
@@ -138,7 +141,16 @@ export const Sidebar = ({
   useEffect(() => {
     let mounted = true;
     authService.getCurrentUser().then((user) => {
-      if (mounted && user) setCurrentUser(user);
+      if (mounted && user) {
+        setCurrentUser(user);
+        if (user.organization?.name) {
+          setCurrentOrg((prev) => ({
+            ...prev,
+            name: user.organization.name,
+            plan: user.organization.plan || prev?.plan || null,
+          }));
+        }
+      }
     });
 
     organizationService.list().then((orgs) => {
@@ -168,11 +180,20 @@ export const Sidebar = ({
     const handleProfileUpdated = (e) => {
       if (e.detail) {
         setCurrentUser((prev) => ({ ...prev, ...e.detail }));
+        if (e.detail.organization?.name) {
+          setCurrentOrg((prev) => ({
+            ...prev,
+            name: e.detail.organization.name,
+            plan: e.detail.organization.plan || prev?.plan || null,
+          }));
+        }
       }
     };
     window.addEventListener('user-profile-updated', handleProfileUpdated);
     return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
   }, []);
+
+  const organizationName = currentOrg?.name || currentUser?.organization?.name || '';
 
   return (
     <aside
@@ -185,15 +206,12 @@ export const Sidebar = ({
         <div className="flex items-center justify-between pb-space-sm">
           <div className="flex items-center gap-space-sm">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm font-bold shadow-sm flex-shrink-0">
-              {getInitials(currentOrg?.name || 'Live Workspace')}
+              {getInitials(organizationName)}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">
-                  Live Workspace
-                </span>
-                <span className="font-label-sm text-label-sm text-text-muted truncate max-w-[130px]">
-                  {currentOrg?.name || 'Workspace'}
+                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none truncate max-w-[170px]">
+                  {organizationName}
                 </span>
               </div>
             )}
@@ -221,11 +239,11 @@ export const Sidebar = ({
             >
               <div className="flex items-center gap-space-sm min-w-0">
                 <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
-                  {getInitials(currentOrg?.name || 'Workspace')}
+                  {getInitials(organizationName)}
                 </span>
                 <div className="flex flex-col text-left min-w-0">
                   <span className="font-label-md text-label-md text-text-primary truncate max-w-[130px]">
-                    {currentOrg?.name || 'Workspace'}
+                    {organizationName}
                   </span>
                   {currentOrg?.plan ? (
                     <span className="font-label-sm text-label-sm text-primary capitalize">

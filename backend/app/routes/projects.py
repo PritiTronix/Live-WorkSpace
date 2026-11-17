@@ -7,7 +7,20 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user, get_current_user_id, require_roles
-from backend.app.models import Project, ProjectMember, ProjectInvitation, Task, Ticket, User, Organization, Discussion, ProjectFile, ProjectActivity
+from backend.app.models import (
+    Project,
+    ProjectMember,
+    ProjectInvitation,
+    Task,
+    Ticket,
+    User,
+    Organization,
+    Discussion,
+    ProjectFile,
+    ProjectActivity,
+    ProjectMilestone,
+    ProjectSprint,
+)
 from backend.app.schemas import (
     ProjectCreate,
     ProjectUpdate,
@@ -38,6 +51,20 @@ def generate_key_from_name(name: str) -> str:
     return "".join(letters)[:6].upper()
 
 
+def check_project_lead_or_org_admin(project: Project, current_user: User):
+    """
+    RBAC rule: only the project lead, an organization admin, or owner
+    can invite, change roles, or remove members. Returns 403 for everyone else.
+    """
+    is_org_admin_or_owner = (current_user.role or "").lower() in ("owner", "admin")
+    is_project_lead = project.lead_id == current_user.id
+    if not (is_org_admin_or_owner or is_project_lead):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Only the project lead, an organization admin, or owner can manage project members."
+        )
+
+
 async def calculate_project_metrics(project_id: str, db: AsyncSession) -> ProjectMetrics:
     tasks_res = await db.execute(select(Task).where(Task.project_id == project_id))
     tasks = tasks_res.scalars().all()
@@ -50,6 +77,12 @@ async def calculate_project_metrics(project_id: str, db: AsyncSession) -> Projec
     open_tickets = sum(1 for tk in tickets if (tk.status or "").lower() not in ("closed", "resolved"))
     blocker_tickets = sum(1 for tk in tickets if (tk.severity or "").lower() == "blocker" and (tk.status or "").lower() != "closed")
     critical_tickets = sum(1 for tk in tickets if (tk.severity or "").lower() == "critical" and (tk.status or "").lower() != "closed")
+
+    disc_res = await db.execute(select(func.count(Discussion.id)).where(Discussion.project_id == project_id))
+    total_discussions = disc_res.scalar() or 0
+
+    file_res = await db.execute(select(func.count(ProjectFile.id)).where(ProjectFile.project_id == project_id))
+    total_files = file_res.scalar() or 0
 
     attention_severity = None
     attention_text = None
@@ -67,6 +100,8 @@ async def calculate_project_metrics(project_id: str, db: AsyncSession) -> Projec
         blocker_tickets=blocker_tickets,
         critical_tickets=critical_tickets,
         sprint_progress=sprint_progress,
+        total_discussions=total_discussions,
+        total_files=total_files,
         attention_severity=attention_severity,
         attention_text=attention_text,
     )
@@ -370,38 +405,56 @@ async def get_project_overview(
 
     tasks_res = await db.execute(select(Task).where(Task.project_id == project_id))
     tasks = tasks_res.scalars().all()
-    total_pts = len(tasks) * 3
-    done_pts = sum(3 for t in tasks if (t.status or "").lower() in ("done", "completed", "resolved"))
-    burndown = {
-        "sprint_name": "Sprint 4 of 6",
-        "progress_pct": metrics.sprint_progress,
-        "ideal_burn": 140,
-        "actual_burn": max(0, total_pts - done_pts),
-        "total_story_points": max(total_pts, 180),
-        "completed_points": done_pts,
-        "days_remaining": 14,
-    }
 
-    milestones = [
-        {
-            "id": "ms_01",
-            "title": "Auth Engine OIDC 2.0 Multi-Tenant Gateway",
-            "progress_pct": 82,
-            "tasks_count": 8,
-            "status": "on_track",
-            "owner": "Aarav Mehta",
-            "due_date": "Dec 01, 2025",
-        },
-        {
-            "id": "ms_02",
-            "title": "Storage Tiers Partitioned S3 Bucketing",
-            "progress_pct": 54,
-            "tasks_count": 5,
-            "status": "at_risk",
-            "owner": "David K.",
-            "due_date": "Dec 12, 2025",
-        },
-    ]
+    # Query real sprint records if available
+    burndown = None
+    try:
+        sprints_res = await db.execute(
+            select(ProjectSprint)
+            .where(ProjectSprint.project_id == project_id, ProjectSprint.status == "active")
+            .order_by(desc(ProjectSprint.created_at))
+        )
+        active_sprint = sprints_res.scalars().first()
+        if active_sprint:
+            now = datetime.now(timezone.utc)
+            days_rem = (active_sprint.end_date - now).days if active_sprint.end_date else None
+            burndown = {
+                "sprint_name": active_sprint.name,
+                "progress_pct": round(active_sprint.completed_points / active_sprint.target_points * 100) if active_sprint.target_points > 0 else 0,
+                "total_story_points": active_sprint.target_points,
+                "completed_points": active_sprint.completed_points,
+                "days_remaining": max(0, days_rem) if days_rem is not None else 0,
+                "has_data": True,
+            }
+    except Exception:
+        burndown = None
+
+    # Query real milestone records if available
+    milestones = []
+    try:
+        ms_res = await db.execute(
+            select(ProjectMilestone)
+            .options(selectinload(ProjectMilestone.owner))
+            .where(ProjectMilestone.project_id == project_id)
+            .order_by(ProjectMilestone.due_date.asc().nulls_last())
+        )
+        now = datetime.now(timezone.utc)
+        for m in ms_res.scalars().all():
+            m_status = m.status or "planned"
+            # Overdue or past dates are never labelled 'on_track'
+            if m.due_date and m.due_date < now and (m.progress_pct or 0) < 100 and m_status == "on_track":
+                m_status = "overdue"
+            milestones.append({
+                "id": m.id,
+                "title": m.title,
+                "progress_pct": m.progress_pct or 0,
+                "status": m_status,
+                "owner": m.owner.full_name if m.owner else "Unassigned",
+                "owner_avatar": m.owner.avatar_url if m.owner else None,
+                "due_date": m.due_date.strftime("%b %d, %Y") if m.due_date else None,
+            })
+    except Exception:
+        milestones = []
 
     workload = []
     for mem in project.members:
@@ -635,12 +688,15 @@ async def get_project_members(
     """Get roster of project members and pending invitations within organization."""
     # Ensure project belongs to current organization
     p_check = await db.execute(
-        select(Project.id).where(
+        select(Project)
+        .options(selectinload(Project.lead))
+        .where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_check.scalar_one_or_none():
+    project = p_check.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
     members_res = await db.execute(
@@ -649,7 +705,26 @@ async def get_project_members(
         .where(ProjectMember.project_id == project_id)
         .order_by(ProjectMember.created_at)
     )
-    members = members_res.scalars().all()
+    members = list(members_res.scalars().all())
+
+    # Guarantee single source of truth: if project has a lead who is not yet in project_members, insert as owner
+    if project.lead_id and not any(m.user_id == project.lead_id for m in members):
+        lead_mem = ProjectMember(
+            project_id=project.id,
+            user_id=project.lead_id,
+            role="owner",
+            access_scope="Full Control",
+            created_at=project.created_at or datetime.now(timezone.utc),
+        )
+        db.add(lead_mem)
+        await db.commit()
+        members_res = await db.execute(
+            select(ProjectMember)
+            .options(selectinload(ProjectMember.user))
+            .where(ProjectMember.project_id == project_id)
+            .order_by(ProjectMember.created_at)
+        )
+        members = list(members_res.scalars().all())
 
     invites_res = await db.execute(
         select(ProjectInvitation)
@@ -669,18 +744,25 @@ async def get_project_members(
 async def add_project_member(
     project_id: str,
     member_in: ProjectMemberCreate,
-    current_user: User = Depends(require_roles(["owner", "admin", "lead", "manager"])),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Add a member or create an invitation by email to project."""
+    """
+    Add a member or create an invitation by email to project.
+    Scoped strictly to caller's organization.
+    Only project lead, org admin, or owner can invite members (403 for others).
+    """
     p_res = await db.execute(
         select(Project).where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_res.scalars().first():
+    project = p_res.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    check_project_lead_or_org_admin(project, current_user)
 
     target_user = None
     if member_in.user_id:
@@ -691,6 +773,8 @@ async def add_project_member(
             )
         )
         target_user = u_res.scalars().first()
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User not found in organization")
     elif member_in.email:
         u_res = await db.execute(
             select(User).where(
@@ -701,6 +785,7 @@ async def add_project_member(
         target_user = u_res.scalars().first()
 
     now = datetime.now(timezone.utc)
+    normalized_role = (member_in.role or "developer").lower()
 
     if target_user:
         m_res = await db.execute(
@@ -711,7 +796,9 @@ async def add_project_member(
         )
         existing = m_res.scalars().first()
         if existing:
-            existing.role = member_in.role
+            if (existing.role == "owner" or existing.user_id == project.lead_id) and normalized_role != "owner":
+                raise HTTPException(status_code=400, detail="Cannot demote the project owner or lead.")
+            existing.role = normalized_role
             if member_in.access_scope:
                 existing.access_scope = member_in.access_scope
             await db.commit()
@@ -720,7 +807,7 @@ async def add_project_member(
         new_member = ProjectMember(
             project_id=project_id,
             user_id=target_user.id,
-            role=member_in.role,
+            role=normalized_role,
             access_scope=member_in.access_scope or "Full Repository Write Access",
             created_at=now,
         )
@@ -738,7 +825,7 @@ async def add_project_member(
         inv = ProjectInvitation(
             project_id=project_id,
             email=str(member_in.email).lower(),
-            role=member_in.role,
+            role=normalized_role,
             invited_by_id=current_user.id,
             status="pending",
             created_at=now,
@@ -761,18 +848,25 @@ async def update_project_member(
     project_id: str,
     member_id: str,
     member_update: ProjectMemberUpdate,
-    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Update role or access permissions of an assigned project member."""
+    """
+    Update role or access permissions of an assigned project member.
+    Enforces project lead, org admin, or owner RBAC (403 for others).
+    Project owner/lead cannot be demoted.
+    """
     p_check = await db.execute(
-        select(Project.id).where(
+        select(Project).where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_check.scalar_one_or_none():
+    project = p_check.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    check_project_lead_or_org_admin(project, current_user)
 
     res = await db.execute(
         select(ProjectMember)
@@ -783,14 +877,15 @@ async def update_project_member(
     if not member:
         raise HTTPException(status_code=404, detail="Project member not found")
 
-    if member.role == "owner" and member_update.role and member_update.role != "owner":
+    is_owner_or_lead = member.role == "owner" or member.user_id == project.lead_id
+    if is_owner_or_lead and member_update.role and member_update.role.lower() != "owner":
         raise HTTPException(
             status_code=400,
             detail="Cannot demote project owner directly. Transfer ownership first."
         )
 
     if member_update.role:
-        member.role = member_update.role
+        member.role = member_update.role.lower()
     if member_update.access_scope:
         member.access_scope = member_update.access_scope
 
@@ -802,18 +897,25 @@ async def update_project_member(
 async def remove_project_member(
     project_id: str,
     member_id: str,
-    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Remove a collaborator from a project."""
+    """
+    Remove a collaborator from a project.
+    Enforces project lead, org admin, or owner RBAC (403 for others).
+    Project owner/lead cannot be removed.
+    """
     p_check = await db.execute(
-        select(Project.id).where(
+        select(Project).where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_check.scalar_one_or_none():
+    project = p_check.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    check_project_lead_or_org_admin(project, current_user)
 
     res = await db.execute(
         select(ProjectMember).where(ProjectMember.id == member_id, ProjectMember.project_id == project_id)
@@ -822,7 +924,7 @@ async def remove_project_member(
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
 
-    if member.role == "owner":
+    if member.role == "owner" or member.user_id == project.lead_id:
         raise HTTPException(status_code=400, detail="Cannot remove the project owner")
 
     await db.delete(member)
@@ -835,18 +937,21 @@ async def remove_project_member(
 async def resend_invitation(
     project_id: str,
     invitation_id: str,
-    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Resend a pending invitation."""
+    """Resend a pending invitation. Enforces project lead / org admin RBAC."""
     p_check = await db.execute(
-        select(Project.id).where(
+        select(Project).where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_check.scalar_one_or_none():
+    project = p_check.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    check_project_lead_or_org_admin(project, current_user)
 
     res = await db.execute(
         select(ProjectInvitation).where(
@@ -867,18 +972,21 @@ async def resend_invitation(
 async def revoke_invitation(
     project_id: str,
     invitation_id: str,
-    current_user: User = Depends(require_roles(["owner", "admin", "lead"])),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Revoke a pending project invitation."""
+    """Revoke a pending project invitation. Enforces project lead / org admin RBAC."""
     p_check = await db.execute(
-        select(Project.id).where(
+        select(Project).where(
             Project.id == project_id,
             Project.organization_id == current_user.organization_id
         )
     )
-    if not p_check.scalar_one_or_none():
+    project = p_check.scalars().first()
+    if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    check_project_lead_or_org_admin(project, current_user)
 
     res = await db.execute(
         select(ProjectInvitation).where(
