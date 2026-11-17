@@ -211,7 +211,6 @@ export const Sidebar = ({
                 to="/workspace/inbox"
                 icon="inbox"
                 label="Inbox"
-                badge={3}
                 isCollapsed={isCollapsed}
               />
             </div>
@@ -280,22 +279,18 @@ export const Sidebar = ({
       {/* ── Bottom: Settings + User Card ── */}
       <div className="p-space-md space-y-space-sm border-t border-border-subtle bg-surface-sidebar">
         <nav className="space-y-0.5">
-          <NavLink
+          <NavItem
             to="/workspace/settings"
-            title={isCollapsed ? 'Settings' : undefined}
-            className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">settings</span>
-            {!isCollapsed && <span className="font-label-md text-label-md">Settings</span>}
-          </NavLink>
-          <NavLink
+            icon="settings"
+            label="Settings"
+            isCollapsed={isCollapsed}
+          />
+          <NavItem
             to="/workspace/design-system/modals"
-            title={isCollapsed ? 'Help & Documentation' : undefined}
-            className="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-text-secondary hover:bg-canvas-lavender hover:text-text-primary transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">help</span>
-            {!isCollapsed && <span className="font-label-md text-label-md">Help & Docs</span>}
-          </NavLink>
+            icon="help"
+            label="Help & Docs"
+            isCollapsed={isCollapsed}
+          />
         </nav>
 
         {/* User Card (expanded only) */}
@@ -318,7 +313,7 @@ export const Sidebar = ({
                   {currentUser?.full_name || DEFAULT_USER.full_name}
                 </span>
                 <span className="font-body-sm text-body-sm text-text-secondary leading-tight capitalize">
-                  {currentUser?.role || DEFAULT_USER.role}
+                  {currentUser?.title || currentUser?.role || DEFAULT_USER.role}
                 </span>
               </div>
             </div>

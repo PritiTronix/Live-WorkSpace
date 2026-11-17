@@ -57,6 +57,7 @@ class NotificationListResponse(BaseModel):
 
 class UnreadCountResponse(BaseModel):
     unread_count: int
+    sla_breach_count: int = 0
 
 
 class MarkReadRequest(BaseModel):
@@ -160,7 +161,17 @@ async def get_unread_count(
     )
     res = await db.execute(unread_q)
     count = res.scalar() or 0
-    return UnreadCountResponse(unread_count=count)
+
+    breach_q = select(func.count(Notification.id)).where(
+        Notification.user_id == current_user.id,
+        Notification.organization_id == current_user.organization_id,
+        Notification.is_read.is_(False),
+        Notification.type == "sla_breach",
+    )
+    b_res = await db.execute(breach_q)
+    breach_count = b_res.scalar() or 0
+
+    return UnreadCountResponse(unread_count=count, sla_breach_count=breach_count)
 
 
 @router.patch("/{notification_id}/read", summary="Mark a notification as read")

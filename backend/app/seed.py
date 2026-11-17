@@ -345,6 +345,7 @@ async def seed_initial_data_if_empty(db: AsyncSession) -> None:
         # Tickets
         for t in p["tickets"]:
             ticket = Ticket(
+                id=t["ticket_number"],
                 ticket_number=t["ticket_number"],
                 title=t["title"],
                 severity=t["severity"],

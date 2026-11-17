@@ -35,7 +35,8 @@ export const ProjectActivityTab = () => {
         actor_id: selectedActor !== 'all' ? selectedActor : undefined,
         search: search.trim() || undefined,
       });
-      setActivities(data);
+      const list = Array.isArray(data) ? data : (data?.items || []);
+      setActivities(list);
     } catch (err) {
       console.error('Failed to load project activity:', err);
     } finally {

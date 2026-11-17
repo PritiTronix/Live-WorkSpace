@@ -94,7 +94,7 @@ export const AppRoutes = () => {
       >
         <Route index element={<Navigate to="/workspace/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardOverviewPage />} />
-        <Route path="inbox" element={<DashboardOverviewPage />} />
+        <Route path="inbox" element={<NotificationCenterPage />} />
         <Route path="notifications" element={<NotificationCenterPage />} />
 
         {/* Projects Listing & Workspace Routes (Screens 18, 38-45) */}

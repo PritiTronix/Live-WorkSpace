@@ -10,7 +10,7 @@ from typing import Optional, List, Any
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -123,6 +123,30 @@ async def list_rca_records(
     res = await db.execute(query)
     records = res.scalars().all()
     return [_format_rca_record(r) for r in records]
+
+
+@router.get("/{rca_id}", response_model=RCARecordRead, summary="Get single RCA record by ID")
+async def get_rca_record(
+    rca_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a single RCA record by ID."""
+    query = (
+        select(RCARecord)
+        .options(selectinload(RCARecord.ticket))
+        .where(
+            and_(
+                RCARecord.id == rca_id,
+                RCARecord.organization_id == current_user.organization_id,
+            )
+        )
+    )
+    res = await db.execute(query)
+    record = res.scalars().first()
+    if not record:
+        raise HTTPException(status_code=404, detail="RCA record not found")
+    return _format_rca_record(record)
 
 
 @router.post("", response_model=RCARecordRead, status_code=status.HTTP_201_CREATED, summary="Create formal RCA record")
