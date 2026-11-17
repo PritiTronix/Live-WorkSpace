@@ -34,10 +34,13 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    display_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="member")  # owner, admin, manager, member
     title: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Lead Architect, Project Manager, etc.
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    slack_handle: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     timezone: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     last_active_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     on_call_role: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

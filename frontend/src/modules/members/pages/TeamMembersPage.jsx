@@ -59,6 +59,16 @@ export const TeamMembersPage = () => {
 
   useEffect(() => {
     fetchMembers();
+
+    const handleProfileUpdated = (e) => {
+      if (e.detail?.id) {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === e.detail.id ? { ...m, ...e.detail } : m))
+        );
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
   }, []);
 
   const triggerToast = (msg) => {

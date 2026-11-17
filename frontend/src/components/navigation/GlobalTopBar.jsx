@@ -33,6 +33,14 @@ export const GlobalTopBar = ({
         if (userData.presence) setPresence(userData.presence);
       }
     });
+
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setUser((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
   }, []);
 
   // Close dropdowns on outside click

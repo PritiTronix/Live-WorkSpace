@@ -163,6 +163,17 @@ export const Sidebar = ({
     };
   }, []);
 
+  // Live profile updates without page refresh
+  useEffect(() => {
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setCurrentUser((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
+  }, []);
+
   return (
     <aside
       className={`fixed left-0 top-0 h-full bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto border-r border-border-subtle transition-all duration-200 ${

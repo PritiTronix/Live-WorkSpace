@@ -27,6 +27,18 @@ async def lifespan(app: FastAPI):
                     await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50)"))
                 except Exception:
                     pass
+            for col_name, col_type in [
+                ("display_name", "VARCHAR(255)"),
+                ("phone", "VARCHAR(50)"),
+                ("slack_handle", "VARCHAR(100)"),
+            ]:
+                try:
+                    await conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+                except Exception:
+                    try:
+                        await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                    except Exception:
+                        pass
         async with AsyncSessionLocal() as session:
             await seed_initial_data_if_empty(session)
             await session.commit()
@@ -73,6 +85,7 @@ def create_application() -> FastAPI:
     os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
     os.makedirs(os.path.join(uploads_dir, "files"), exist_ok=True)
     os.makedirs(os.path.join(uploads_dir, "tasks"), exist_ok=True)
+    os.makedirs(os.path.join(uploads_dir, "avatars"), exist_ok=True)
 
     @application.get("/health", tags=["Health"])
     async def health_check():

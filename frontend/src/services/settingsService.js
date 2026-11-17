@@ -51,6 +51,28 @@ export const settingsService = {
     return response.data;
   },
 
+  uploadAvatar: async (file, onUploadProgress) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/users/me/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onUploadProgress && progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onUploadProgress(percent);
+        }
+      },
+    });
+    return response.data;
+  },
+
+  deleteAvatar: async () => {
+    const response = await apiClient.delete('/users/me/avatar');
+    return response.data;
+  },
+
   changePassword: async (data) => {
     const response = await apiClient.post('/users/change-password', data);
     return response.data;

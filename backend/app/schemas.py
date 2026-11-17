@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
@@ -12,11 +13,14 @@ class BaseSchema(BaseModel):
 class UserBase(BaseSchema):
     email: EmailStr
     full_name: str
+    display_name: Optional[str] = None
     is_active: bool = True
     role: str = "member"
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+    phone: Optional[str] = None
+    slack_handle: Optional[str] = None
     email_verified: bool = False
     onboarding_completed: bool = False
     timezone: Optional[str] = None
@@ -32,10 +36,13 @@ class UserCreate(BaseSchema):
     email: EmailStr
     password: str
     full_name: str
+    display_name: Optional[str] = None
     organization_name: Optional[str] = None
     title: Optional[str] = None
     avatar_url: Optional[str] = None
     department: Optional[str] = None
+    phone: Optional[str] = None
+    slack_handle: Optional[str] = None
 
     @field_validator("password")
     @classmethod
@@ -49,19 +56,93 @@ class UserAdminCreate(UserCreate):
     organization_id: Optional[str] = None
 
 
+class OperationalVelocity(BaseSchema):
+    quarter_label: str
+    sla_adherence: Optional[float] = None
+    sla_adherence_trend: Optional[str] = None
+    mttr_minutes: Optional[int] = None
+    mttr_formatted: Optional[str] = None
+    mttr_trend: Optional[str] = None
+    mttr_target: str = "< 2h 00m"
+    incidents_resolved_count: int = 0
+    incidents_label: str = "P1 / P2"
+
+
+class QueueItem(BaseSchema):
+    id: str
+    item_number: str
+    title: str
+    item_type: str
+    severity: str
+    status: str
+    url: str
+
+
+class ActiveOperationalQueue(BaseSchema):
+    total_assigned: int = 0
+    open_tickets_count: int = 0
+    high_priority_tickets_count: int = 0
+    rcas_count: int = 0
+    tasks_count: int = 0
+    top_items: List[QueueItem] = []
+
+
+class OrganizationSummary(BaseSchema):
+    id: str
+    name: str
+    plan: Optional[str] = "Standard"
+
+
 class UserRead(UserBase):
     id: str
     organization_id: Optional[str] = None
     created_at: datetime
+    operational_velocity: Optional[OperationalVelocity] = None
+    active_queue: Optional[ActiveOperationalQueue] = None
+    organization_summary: Optional[OrganizationSummary] = Field(default=None, serialization_alias="organization")
 
 
 class UserUpdateProfile(BaseSchema):
     full_name: Optional[str] = None
+    display_name: Optional[str] = None
     title: Optional[str] = None
     department: Optional[str] = None
     avatar_url: Optional[str] = None
     timezone: Optional[str] = None
     on_call_role: Optional[str] = None
+    phone: Optional[str] = None
+    slack_handle: Optional[str] = None
+
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v_clean = v.strip()
+            if not v_clean:
+                raise ValueError("Full legal name cannot be empty")
+            return v_clean
+        return None
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v_clean = v.strip()
+        if not v_clean:
+            return None
+        # E.164 phone format validation
+        if not re.match(r"^\+[1-9]\d{1,14}$", v_clean):
+            raise ValueError("Phone number must be in valid E.164 format (e.g. +14155552671)")
+        return v_clean
+
+    @field_validator("display_name", "title", "department", "avatar_url", "timezone", "on_call_role", "slack_handle")
+    @classmethod
+    def empty_str_to_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v_clean = v.strip()
+        return v_clean if v_clean else None
 
 
 class UserChangePassword(BaseSchema):
