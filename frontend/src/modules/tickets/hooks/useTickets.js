@@ -65,7 +65,7 @@ export const useTickets = ({
         // Fallback computation from tickets if stats endpoint fails
         const total = items.length;
         const open = items.filter((t) => (t.status || '').toLowerCase() === 'open').length;
-        const wip = items.filter((t) => (t.status || '').toLowerCase() === 'wip').length;
+        const wip = items.filter((t) => ['wip', 'in_progress'].includes((t.status || '').toLowerCase())).length;
         const on_hold = items.filter((t) => (t.status || '').toLowerCase() === 'on_hold').length;
         const resolved = items.filter((t) => (t.status || '').toLowerCase() === 'resolved').length;
         const closed = items.filter((t) => (t.status || '').toLowerCase() === 'closed').length;

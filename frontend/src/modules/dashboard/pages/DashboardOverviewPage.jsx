@@ -4,6 +4,13 @@ import { dashboardService, connectDashboardWebSocket, authService } from '../../
 import { useClock } from '../../../utils/greeting';
 import { pluralize } from '../../../utils/pluralize';
 import WelcomeModal from '../components/WelcomeModal';
+import {
+  TASK_STATUS_FILTER,
+  TICKET_STATUS_FILTER,
+  TICKET_SEVERITY_FILTER,
+  SLA_FILTER,
+  DASHBOARD_ROUTES,
+} from '../../../constants/navigation';
 
 export const DashboardOverviewPage = () => {
   const navigate = useNavigate();
@@ -476,11 +483,10 @@ export const DashboardOverviewPage = () => {
       {/* Row 1: Primary 4 Metric Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Projects */}
-        <div
-          onClick={() => navigate('/workspace/projects')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.PROJECTS}
+          aria-label={`Show ${metrics.total_projects} total ${metrics.total_projects === 1 ? 'project' : 'projects'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>Total Projects</span>
@@ -496,14 +502,13 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
 
         {/* Total Tasks */}
-        <div
-          onClick={() => navigate('/workspace/tasks')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.TASKS}
+          aria-label={`Show ${metrics.total_tasks} total ${metrics.total_tasks === 1 ? 'task' : 'tasks'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>Total Tasks</span>
@@ -519,14 +524,13 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
 
         {/* My Tasks */}
-        <div
-          onClick={() => navigate('/workspace/tasks/my-tasks')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.TASKS_MY}
+          aria-label={`Show ${metrics.my_tasks} my ${metrics.my_tasks === 1 ? 'task' : 'tasks'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>My Tasks</span>
@@ -542,14 +546,13 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
 
         {/* Open Tickets */}
-        <div
-          onClick={() => navigate('/workspace/tickets')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.TICKETS_BY_STATUS(TICKET_STATUS_FILTER.OPEN)}
+          aria-label={`Show ${metrics.open_tickets} open ${metrics.open_tickets === 1 ? 'ticket' : 'tickets'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>Open Tickets</span>
@@ -565,17 +568,16 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Row 2: Secondary 3 Operational Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Work in Progress */}
-        <div
-          onClick={() => navigate('/workspace/tasks')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.TICKETS_BY_STATUS(TICKET_STATUS_FILTER.IN_PROGRESS)}
+          aria-label={`Show ${metrics.work_in_progress} in progress ${metrics.work_in_progress === 1 ? 'ticket' : 'tickets'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>Work in Progress</span>
@@ -591,14 +593,13 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
 
         {/* On Hold */}
-        <div
-          onClick={() => navigate('/workspace/tickets')}
-          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group"
-          role="button"
-          tabIndex={0}
+        <Link
+          to={DASHBOARD_ROUTES.TICKETS_BY_STATUS(TICKET_STATUS_FILTER.ON_HOLD)}
+          aria-label={`Show ${metrics.on_hold} on hold ${metrics.on_hold === 1 ? 'ticket' : 'tickets'}`}
+          className="flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <span className="text-[#110e1b] text-sm font-medium leading-normal group-hover:text-primary transition-colors flex items-center justify-between">
             <span>On Hold</span>
@@ -612,16 +613,15 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
           )}
-        </div>
+        </Link>
 
         {/* SLA Breached */}
-        <div
-          onClick={() => navigate('/workspace/tickets/critical')}
-          className={`flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm transition-all cursor-pointer group ${
-            metrics.sla_breached > 0 ? 'hover:border-severity-blocker/50 hover:shadow-md' : 'hover:border-primary/50 hover:shadow-md'
+        <Link
+          to={DASHBOARD_ROUTES.TICKETS_BY_SLA(SLA_FILTER.BREACHED)}
+          aria-label={`Show ${metrics.sla_breached} SLA breached ${metrics.sla_breached === 1 ? 'ticket' : 'tickets'}`}
+          className={`flex flex-col gap-2 rounded-xl p-5 bg-surface-card border border-[#d5d0e6] shadow-sm transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 ${
+            metrics.sla_breached > 0 ? 'hover:border-severity-blocker/50 hover:shadow-md focus-visible:ring-severity-blocker' : 'hover:border-primary/50 hover:shadow-md focus-visible:ring-primary'
           }`}
-          role="button"
-          tabIndex={0}
         >
           <span
             className={`text-sm font-semibold leading-normal flex items-center justify-between ${
@@ -652,7 +652,7 @@ export const DashboardOverviewPage = () => {
           ) : (
             <span className="text-[#5d4f96] text-xs font-medium leading-normal">—</span>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Analytics & Team Operations Section */}
@@ -672,66 +672,106 @@ export const DashboardOverviewPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Card 1: Tasks by Status Donut Chart */}
           <div className="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-2">
+            <Link
+              to={DASHBOARD_ROUTES.TASKS}
+              aria-label={`Show all ${tasksBreakdown.total} tasks`}
+              className="flex items-center justify-between mb-2 group cursor-pointer rounded-lg p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">
                   check_circle
                 </span>
-                <h3 className="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Tasks by Status</h3>
+                <h3 className="text-text-primary group-hover:text-primary transition-colors font-bold text-sm font-['Plus_Jakarta_Sans'] flex items-center gap-1">
+                  <span>Tasks by Status</span>
+                  <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                </h3>
               </div>
-              <span className="text-xs text-text-secondary font-medium">{tasksBreakdown.total} Total</span>
-            </div>
+              <span className="text-xs text-text-secondary group-hover:text-primary font-medium transition-colors">
+                {tasksBreakdown.total} Total
+              </span>
+            </Link>
 
             {/* Donut Chart */}
             <div className="flex items-center justify-center my-3">
               <div className="relative w-36 h-36 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                   {/* Done */}
-                  <circle
-                    cx="18"
-                    cy="18"
-                    fill="transparent"
-                    r="14"
-                    stroke="#28C078"
-                    strokeDasharray={`${donePct} ${100 - donePct}`}
-                    strokeDashoffset="0"
-                    strokeWidth="4.5"
-                  />
+                  <Link
+                    to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.DONE)}
+                    aria-label={`Show ${tasksBreakdown.done} done ${tasksBreakdown.done === 1 ? 'task' : 'tasks'}`}
+                    className="cursor-pointer focus-visible:outline-none"
+                  >
+                    <circle
+                      cx="18"
+                      cy="18"
+                      fill="transparent"
+                      r="14"
+                      stroke="#28C078"
+                      strokeDasharray={`${donePct} ${100 - donePct}`}
+                      strokeDashoffset="0"
+                      strokeWidth="4.5"
+                      className="hover:stroke-[5.5] transition-all"
+                    />
+                  </Link>
                   {/* In Progress */}
-                  <circle
-                    cx="18"
-                    cy="18"
-                    fill="transparent"
-                    r="14"
-                    stroke="#6848E8"
-                    strokeDasharray={`${inProgPct} ${100 - inProgPct}`}
-                    strokeDashoffset={`-${donePct}`}
-                    strokeWidth="4.5"
-                  />
+                  <Link
+                    to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.IN_PROGRESS)}
+                    aria-label={`Show ${tasksBreakdown.in_progress} in progress ${tasksBreakdown.in_progress === 1 ? 'task' : 'tasks'}`}
+                    className="cursor-pointer focus-visible:outline-none"
+                  >
+                    <circle
+                      cx="18"
+                      cy="18"
+                      fill="transparent"
+                      r="14"
+                      stroke="#6848E8"
+                      strokeDasharray={`${inProgPct} ${100 - inProgPct}`}
+                      strokeDashoffset={`-${donePct}`}
+                      strokeWidth="4.5"
+                      className="hover:stroke-[5.5] transition-all"
+                    />
+                  </Link>
                   {/* Review */}
-                  <circle
-                    cx="18"
-                    cy="18"
-                    fill="transparent"
-                    r="14"
-                    stroke="#3888F8"
-                    strokeDasharray={`${inRevPct} ${100 - inRevPct}`}
-                    strokeDashoffset={`-${donePct + inProgPct}`}
-                    strokeWidth="4.5"
-                  />
+                  <Link
+                    to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.IN_REVIEW)}
+                    aria-label={`Show ${tasksBreakdown.in_review} in review ${tasksBreakdown.in_review === 1 ? 'task' : 'tasks'}`}
+                    className="cursor-pointer focus-visible:outline-none"
+                  >
+                    <circle
+                      cx="18"
+                      cy="18"
+                      fill="transparent"
+                      r="14"
+                      stroke="#3888F8"
+                      strokeDasharray={`${inRevPct} ${100 - inRevPct}`}
+                      strokeDashoffset={`-${donePct + inProgPct}`}
+                      strokeWidth="4.5"
+                      className="hover:stroke-[5.5] transition-all"
+                    />
+                  </Link>
                   {/* To Do */}
-                  <circle
-                    cx="18"
-                    cy="18"
-                    fill="transparent"
-                    r="14"
-                    stroke="#c9c4d8"
-                    strokeDasharray={`${todoPct} ${100 - todoPct}`}
-                    strokeDashoffset={`-${donePct + inProgPct + inRevPct}`}
-                    strokeWidth="4.5"
-                  />
+                  <Link
+                    to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.TODO)}
+                    aria-label={`Show ${tasksBreakdown.to_do} to do ${tasksBreakdown.to_do === 1 ? 'task' : 'tasks'}`}
+                    className="cursor-pointer focus-visible:outline-none"
+                  >
+                    <circle
+                      cx="18"
+                      cy="18"
+                      fill="transparent"
+                      r="14"
+                      stroke="#c9c4d8"
+                      strokeDasharray={`${todoPct} ${100 - todoPct}`}
+                      strokeDashoffset={`-${donePct + inProgPct + inRevPct}`}
+                      strokeWidth="4.5"
+                      className="hover:stroke-[5.5] transition-all"
+                    />
+                  </Link>
                 </svg>
-                <div className="absolute flex flex-col items-center">
+                <div
+                  className="absolute flex flex-col items-center"
+                  title="Percentage of workspace tasks marked as Done: (Done Tasks / Total Tasks) × 100"
+                >
                   <span className="text-xs text-text-muted">Completed</span>
                   <span className="text-lg font-bold text-text-primary font-['Plus_Jakarta_Sans']">
                     {tasksBreakdown.completion_rate}%
@@ -741,22 +781,38 @@ export const DashboardOverviewPage = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border-subtle text-xs">
-              <div className="flex items-center gap-1.5">
+              <Link
+                to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.DONE)}
+                aria-label={`Show ${tasksBreakdown.done} done ${tasksBreakdown.done === 1 ? 'task' : 'tasks'}`}
+                className="flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-resolved group"
+              >
                 <span className="w-2.5 h-2.5 rounded-full bg-status-resolved"></span>
-                <span className="text-text-secondary">Done ({tasksBreakdown.done})</span>
-              </div>
-              <div className="flex items-center gap-1.5">
+                <span className="text-text-secondary group-hover:text-text-primary">Done ({tasksBreakdown.done})</span>
+              </Link>
+              <Link
+                to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.IN_PROGRESS)}
+                aria-label={`Show ${tasksBreakdown.in_progress} in progress ${tasksBreakdown.in_progress === 1 ? 'task' : 'tasks'}`}
+                className="flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-wip group"
+              >
                 <span className="w-2.5 h-2.5 rounded-full bg-status-wip"></span>
-                <span className="text-text-secondary">In Prog ({tasksBreakdown.in_progress})</span>
-              </div>
-              <div className="flex items-center gap-1.5">
+                <span className="text-text-secondary group-hover:text-text-primary">In Prog ({tasksBreakdown.in_progress})</span>
+              </Link>
+              <Link
+                to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.IN_REVIEW)}
+                aria-label={`Show ${tasksBreakdown.in_review} in review ${tasksBreakdown.in_review === 1 ? 'task' : 'tasks'}`}
+                className="flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-open group"
+              >
                 <span className="w-2.5 h-2.5 rounded-full bg-status-open"></span>
-                <span className="text-text-secondary">Review ({tasksBreakdown.in_review})</span>
-              </div>
-              <div className="flex items-center gap-1.5">
+                <span className="text-text-secondary group-hover:text-text-primary">Review ({tasksBreakdown.in_review})</span>
+              </Link>
+              <Link
+                to={DASHBOARD_ROUTES.TASKS_BY_STATUS(TASK_STATUS_FILTER.TODO)}
+                aria-label={`Show ${tasksBreakdown.to_do} to do ${tasksBreakdown.to_do === 1 ? 'task' : 'tasks'}`}
+                className="flex items-center gap-1.5 p-1 -m-1 rounded hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+              >
                 <span className="w-2.5 h-2.5 rounded-full bg-[#c9c4d8]"></span>
-                <span className="text-text-secondary">To Do ({tasksBreakdown.to_do})</span>
-              </div>
+                <span className="text-text-secondary group-hover:text-text-primary">To Do ({tasksBreakdown.to_do})</span>
+              </Link>
             </div>
           </div>
 
@@ -769,9 +825,13 @@ export const DashboardOverviewPage = () => {
                 </span>
                 <h3 className="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">Tickets by Severity</h3>
               </div>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-red-50 text-severity-blocker">
+              <Link
+                to={DASHBOARD_ROUTES.TICKETS_BY_STATUS(TICKET_STATUS_FILTER.ACTIVE)}
+                aria-label={`Show ${ticketsSeverity.total_active} active ${ticketsSeverity.total_active === 1 ? 'ticket' : 'tickets'}`}
+                className="text-xs font-semibold px-2 py-0.5 rounded bg-red-50 text-severity-blocker hover:bg-red-100 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-severity-blocker"
+              >
                 {ticketsSeverity.total_active} Active
-              </span>
+              </Link>
             </div>
 
             {/* Horizontal Segmented Bar */}
@@ -784,52 +844,73 @@ export const DashboardOverviewPage = () => {
               </div>
 
               <div className="space-y-2 pt-2">
-                <div className="flex items-center justify-between text-xs">
+                <Link
+                  to={DASHBOARD_ROUTES.TICKETS_BY_SEVERITY(TICKET_SEVERITY_FILTER.BLOCKER)}
+                  aria-label={`Show ${ticketsSeverity.blocker} blocker ${ticketsSeverity.blocker === 1 ? 'ticket' : 'tickets'}`}
+                  className="flex items-center justify-between text-xs p-1.5 -mx-1.5 rounded hover:bg-red-50/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-severity-blocker group"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-sm bg-severity-blocker"></span>
-                    <span className="font-medium text-text-primary">Blocker</span>
+                    <span className="font-medium text-text-primary group-hover:text-severity-blocker transition-colors">Blocker</span>
                   </div>
                   <span className="font-bold text-text-primary">
                     {ticketsSeverity.blocker} tickets{' '}
                     <span className="text-text-muted font-normal">({blockerPct}%)</span>
                   </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
+                </Link>
+                <Link
+                  to={DASHBOARD_ROUTES.TICKETS_BY_SEVERITY(TICKET_SEVERITY_FILTER.CRITICAL)}
+                  aria-label={`Show ${ticketsSeverity.critical} critical ${ticketsSeverity.critical === 1 ? 'ticket' : 'tickets'}`}
+                  className="flex items-center justify-between text-xs p-1.5 -mx-1.5 rounded hover:bg-amber-50/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-severity-critical group"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-sm bg-severity-critical"></span>
-                    <span className="font-medium text-text-primary">Critical</span>
+                    <span className="font-medium text-text-primary group-hover:text-severity-critical transition-colors">Critical</span>
                   </div>
                   <span className="font-bold text-text-primary">
                     {ticketsSeverity.critical} tickets{' '}
                     <span className="text-text-muted font-normal">({criticalPct}%)</span>
                   </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
+                </Link>
+                <Link
+                  to={DASHBOARD_ROUTES.TICKETS_BY_SEVERITY(TICKET_SEVERITY_FILTER.MAJOR)}
+                  aria-label={`Show ${ticketsSeverity.major} major ${ticketsSeverity.major === 1 ? 'ticket' : 'tickets'}`}
+                  className="flex items-center justify-between text-xs p-1.5 -mx-1.5 rounded hover:bg-yellow-50/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-severity-major group"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-sm bg-severity-major"></span>
-                    <span className="font-medium text-text-primary">Major</span>
+                    <span className="font-medium text-text-primary group-hover:text-severity-major transition-colors">Major</span>
                   </div>
                   <span className="font-bold text-text-primary">
                     {ticketsSeverity.major} tickets{' '}
                     <span className="text-text-muted font-normal">({majorPct}%)</span>
                   </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
+                </Link>
+                <Link
+                  to={DASHBOARD_ROUTES.TICKETS_BY_SEVERITY(TICKET_SEVERITY_FILTER.MINOR)}
+                  aria-label={`Show ${ticketsSeverity.minor} minor ${ticketsSeverity.minor === 1 ? 'ticket' : 'tickets'}`}
+                  className="flex items-center justify-between text-xs p-1.5 -mx-1.5 rounded hover:bg-blue-50/50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-open group"
+                >
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-sm bg-status-open"></span>
-                    <span className="font-medium text-text-primary">Minor</span>
+                    <span className="font-medium text-text-primary group-hover:text-status-open transition-colors">Minor</span>
                   </div>
                   <span className="font-bold text-text-primary">
                     {ticketsSeverity.minor} tickets{' '}
                     <span className="text-text-muted font-normal">({minorPct}%)</span>
                   </span>
-                </div>
+                </Link>
               </div>
             </div>
 
-            <div className="text-[11px] text-text-secondary bg-surface-container-low p-2 rounded mt-3 text-center">
+            <Link
+              to={DASHBOARD_ROUTES.TICKETS_BY_SLA(SLA_FILTER.BREACHED)}
+              aria-label={`Show ${ticketsSeverity.violations_24h} SLA violations logged in last 24h`}
+              title="Number of ticket SLA deadlines breached within the past 24 hours"
+              className="block text-[11px] text-text-secondary hover:text-severity-blocker bg-surface-container-low hover:bg-red-50/50 p-2 rounded mt-3 text-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-severity-blocker"
+            >
               {ticketsSeverity.violations_24h} SLA violations logged in last 24h
-            </div>
+            </Link>
           </div>
 
           {/* Card 3: Ticket Resolution & SLA Velocity */}
@@ -847,9 +928,15 @@ export const DashboardOverviewPage = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3 my-2">
-              <div className="p-3 bg-surface-container-low rounded-lg border border-border-subtle">
-                <div className="text-[11px] text-text-secondary uppercase tracking-wider font-semibold">
-                  SLA Adherence
+              <Link
+                to={DASHBOARD_ROUTES.SLA}
+                aria-label={`SLA Adherence: ${slaPerformance.adherence_rate !== null ? slaPerformance.adherence_rate + '%' : 'no data'}. View SLA governance`}
+                title="Percentage of tickets with deadlines resolved or progressing without an SLA breach: ((Total Timed Tickets - Breached Tickets) / Total Timed Tickets) × 100"
+                className="p-3 bg-surface-container-low hover:bg-green-50/40 rounded-lg border border-border-subtle hover:border-status-resolved/50 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-resolved block group"
+              >
+                <div className="text-[11px] text-text-secondary uppercase tracking-wider font-semibold flex items-center justify-between">
+                  <span>SLA Adherence</span>
+                  <span className="material-symbols-outlined text-xs text-text-muted group-hover:text-status-resolved opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                 </div>
                 <div className="text-xl font-extrabold text-status-resolved font-['Plus_Jakarta_Sans'] mt-0.5">
                   {slaPerformance.adherence_rate !== null ? `${slaPerformance.adherence_rate}%` : '—'}
@@ -860,13 +947,19 @@ export const DashboardOverviewPage = () => {
                     {slaPerformance.adherence_delta} vs last week
                   </div>
                 )}
-              </div>
+              </Link>
 
-              <div className="p-3 bg-surface-container-low rounded-lg border border-border-subtle">
-                <div className="text-[11px] text-text-secondary uppercase tracking-wider font-semibold">
-                  Average MTTR
+              <Link
+                to={DASHBOARD_ROUTES.ANALYTICS}
+                aria-label={`Average MTTR: ${slaPerformance.average_mttr}. View analytics`}
+                title="Average duration from ticket creation to final resolution across all resolved tickets: Total Resolution Time / Total Resolved Tickets"
+                className="p-3 bg-surface-container-low hover:bg-primary/5 rounded-lg border border-border-subtle hover:border-primary/50 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary block group"
+              >
+                <div className="text-[11px] text-text-secondary uppercase tracking-wider font-semibold flex items-center justify-between">
+                  <span>Average MTTR</span>
+                  <span className="material-symbols-outlined text-xs text-text-muted group-hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                 </div>
-                <div className="text-xl font-extrabold text-text-primary font-['Plus_Jakarta_Sans'] mt-0.5">
+                <div className="text-xl font-extrabold text-text-primary group-hover:text-primary transition-colors font-['Plus_Jakarta_Sans'] mt-0.5">
                   {slaPerformance.average_mttr}
                 </div>
                 {slaPerformance.mttr_delta && (
@@ -874,13 +967,21 @@ export const DashboardOverviewPage = () => {
                     <span className="material-symbols-outlined text-[13px]">timer</span> {slaPerformance.mttr_delta}
                   </div>
                 )}
-              </div>
+              </Link>
             </div>
 
             {/* Mini Bar Sparkline */}
-            <div className="pt-2">
+            <Link
+              to={DASHBOARD_ROUTES.ANALYTICS}
+              aria-label={`View analytics: ${slaPerformance.resolved_rolling_total} total resolved tickets in rolling velocity`}
+              title="Total number of tickets resolved over the rolling 7-day window"
+              className="pt-2 block rounded-lg p-1.5 -m-1.5 hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+            >
               <div className="text-xs text-text-secondary font-medium mb-1.5 flex justify-between">
-                <span>Rolling Velocity (Resolved Tickets)</span>
+                <span className="group-hover:text-primary transition-colors flex items-center gap-1">
+                  <span>Rolling Velocity (Resolved Tickets)</span>
+                  <span className="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                </span>
                 <span className="font-bold text-text-primary">{slaPerformance.resolved_rolling_total} total</span>
               </div>
               <div className="flex items-end gap-1.5 h-10 w-full pt-1">
@@ -888,7 +989,7 @@ export const DashboardOverviewPage = () => {
                   slaPerformance.rolling_days.map((item, idx) => (
                     <div
                       key={idx}
-                      className="flex-1 rounded-t transition-all bg-secondary-container hover:bg-primary"
+                      className="flex-1 rounded-t transition-all bg-secondary-container group-hover:bg-primary"
                       style={{ height: item.height }}
                       title={`${item.day}: ${item.count}`}
                     ></div>
@@ -897,7 +998,7 @@ export const DashboardOverviewPage = () => {
                   <div className="w-full text-center text-text-muted text-[11px]">No rolling tickets</div>
                 )}
               </div>
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -905,29 +1006,41 @@ export const DashboardOverviewPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Project Progress */}
           <div className="bg-surface-card rounded-xl p-5 border border-border-subtle shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+            <Link
+              to={DASHBOARD_ROUTES.PROJECTS}
+              aria-label={`Show ${projectProgress.length} active ${projectProgress.length === 1 ? 'project' : 'projects'}`}
+              className="flex items-center justify-between mb-4 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg p-0.5"
+            >
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">
                   rocket_launch
                 </span>
-                <h3 className="text-text-primary font-bold text-sm font-['Plus_Jakarta_Sans']">
-                  Project Progress & Status
+                <h3 className="text-text-primary group-hover:text-primary transition-colors font-bold text-sm font-['Plus_Jakarta_Sans'] flex items-center gap-1">
+                  <span>Project Progress & Status</span>
+                  <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
                 </h3>
               </div>
-              <span className="text-xs text-text-secondary">{projectProgress.length} Active</span>
-            </div>
+              <span className="text-xs text-text-secondary group-hover:text-primary font-medium transition-colors">
+                {projectProgress.length} Active
+              </span>
+            </Link>
 
             <div className="space-y-4">
               {projectProgress.length > 0 ? (
                 projectProgress.map((proj) => (
-                  <div key={proj.id}>
+                  <Link
+                    key={proj.id}
+                    to={DASHBOARD_ROUTES.PROJECT_DETAIL(proj.id)}
+                    aria-label={`Open project ${proj.title}: ${proj.progress}% complete`}
+                    className="block p-2 -mx-2 rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+                  >
                     <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="font-semibold text-text-primary">{proj.title}</span>
+                      <span className="font-semibold text-text-primary group-hover:text-primary transition-colors">{proj.title}</span>
                       <span className="font-bold text-primary">{proj.progress}%</span>
                     </div>
-                    <div className="w-full bg-surface-container rounded-full h-2">
+                    <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden">
                       <div
-                        className={`${proj.status_color} h-2 rounded-full`}
+                        className={`${proj.status_color} h-2 rounded-full transition-all`}
                         style={{ width: `${proj.progress}%` }}
                       ></div>
                     </div>
@@ -937,7 +1050,7 @@ export const DashboardOverviewPage = () => {
                         Target: {proj.target}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-xs text-text-muted py-4 text-center">No active projects found.</p>
@@ -962,19 +1075,28 @@ export const DashboardOverviewPage = () => {
             <div className="space-y-4">
               {teamWorkload.length > 0 ? (
                 teamWorkload.map((team, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border bg-surface-container-low border-border-subtle">
+                  <Link
+                    key={idx}
+                    to={DASHBOARD_ROUTES.MEMBERS_BY_TEAM(team.name)}
+                    aria-label={`View members for ${team.name}: ${team.status}`}
+                    title="Team availability percentage calculated as 100% minus utilization (baseline: 5 concurrent active items per member = 100% load)"
+                    className="block p-3 rounded-lg border bg-surface-container-low border-border-subtle hover:border-primary/50 hover:bg-canvas-lavender/20 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+                  >
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-text-primary">{team.name}</span>
+                      <span className="font-semibold text-text-primary group-hover:text-primary transition-colors flex items-center gap-1">
+                        <span>{team.name}</span>
+                        <span className="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                      </span>
                       <span className="font-bold text-primary">{team.status}</span>
                     </div>
-                    <div className="w-full bg-white rounded-full h-2">
+                    <div className="w-full bg-white rounded-full h-2 overflow-hidden">
                       <div
-                        className={`${team.color} h-2 rounded-full`}
+                        className={`${team.color} h-2 rounded-full transition-all`}
                         style={{ width: `${team.capacity}%` }}
                       ></div>
                     </div>
                     <p className="text-[11px] text-text-secondary mt-1.5">{team.desc}</p>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-xs text-text-muted py-4 text-center">No team workloads recorded.</p>
@@ -1044,44 +1166,47 @@ export const DashboardOverviewPage = () => {
 
           {/* Interactive Tickets Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-surface-container-low text-text-secondary uppercase tracking-wider font-semibold border-b border-border-subtle">
-                <tr>
-                  <th className="py-3 px-4">Ticket ID & Summary</th>
-                  <th className="py-3 px-4">Severity</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Assignee</th>
-                  <th className="py-3 px-4">SLA Countdown</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-subtle">
+            <div className="table w-full text-left text-xs" role="table">
+              <div className="table-header-group bg-surface-container-low text-text-secondary uppercase tracking-wider font-semibold border-b border-border-subtle" role="rowgroup">
+                <div className="table-row" role="row">
+                  <div className="table-cell py-3 px-4 font-semibold" role="columnheader">Ticket ID & Summary</div>
+                  <div className="table-cell py-3 px-4 font-semibold" role="columnheader">Severity</div>
+                  <div className="table-cell py-3 px-4 font-semibold" role="columnheader">Status</div>
+                  <div className="table-cell py-3 px-4 font-semibold" role="columnheader">Assignee</div>
+                  <div className="table-cell py-3 px-4 font-semibold" role="columnheader">SLA Countdown</div>
+                  <div className="table-cell py-3 px-4 text-right font-semibold" role="columnheader">Action</div>
+                </div>
+              </div>
+              <div className="table-row-group divide-y divide-border-subtle" role="rowgroup">
                 {filteredTickets.length > 0 ? (
                   filteredTickets.map((ticket) => (
-                    <tr
+                    <Link
                       key={ticket.id}
-                      className={`transition-colors ${
+                      to={DASHBOARD_ROUTES.TICKET_DETAIL(ticket.id)}
+                      role="row"
+                      aria-label={`View ticket ${ticket.id}: ${ticket.title}`}
+                      className={`table-row transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group ${
                         (ticket.severity || '').toLowerCase() === 'blocker'
-                          ? 'hover:bg-red-50/30'
+                          ? 'hover:bg-red-50/40'
                           : (ticket.severity || '').toLowerCase() === 'critical'
-                          ? 'hover:bg-amber-50/30'
+                          ? 'hover:bg-amber-50/40'
                           : 'hover:bg-slate-50'
                       }`}
                     >
-                      <td className="py-3.5 px-4">
+                      <div className="table-cell py-3.5 px-4" role="cell">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-text-primary tracking-tight font-mono">{ticket.id}</span>
-                          <span className="text-text-primary font-medium truncate max-w-xs md:max-w-md">
+                          <span className="text-text-primary font-medium truncate max-w-xs md:max-w-md group-hover:text-primary transition-colors">
                             {ticket.title}
                           </span>
                         </div>
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </div>
+                      <div className="table-cell py-3.5 px-4" role="cell">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold border ${ticket.severity_bg}`}>
                           {ticket.severity}
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </div>
+                      <div className="table-cell py-3.5 px-4" role="cell">
                         <span className="inline-flex items-center gap-1.5 font-medium">
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
@@ -1104,8 +1229,8 @@ export const DashboardOverviewPage = () => {
                             {ticket.status}
                           </span>
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </div>
+                      <div className="table-cell py-3.5 px-4" role="cell">
                         <div className="flex items-center gap-2">
                           {ticket.assignee_avatar ? (
                             <img
@@ -1120,28 +1245,28 @@ export const DashboardOverviewPage = () => {
                           )}
                           <span className="text-text-primary font-medium">{ticket.assignee_name}</span>
                         </div>
-                      </td>
-                      <td className="py-3.5 px-4">
+                      </div>
+                      <div className="table-cell py-3.5 px-4" role="cell">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold font-mono ${ticket.sla_class}`}>
                           {ticket.sla_text}
                         </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <Link to={`/workspace/tickets/${ticket.id}`} className="inline-flex items-center text-primary font-bold hover:underline">
+                      </div>
+                      <div className="table-cell py-3.5 px-4 text-right" role="cell">
+                        <span className="inline-flex items-center text-primary font-bold group-hover:underline">
                           View Ticket →
-                        </Link>
-                      </td>
-                    </tr>
+                        </span>
+                      </div>
+                    </Link>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-text-muted">
+                  <div className="table-row" role="row">
+                    <div className="table-cell py-8 text-center text-text-muted" role="cell" style={{ gridColumn: 'span 6' }}>
                       No priority issues requiring attention.
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
 

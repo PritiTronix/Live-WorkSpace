@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Users,
   Terminal,
@@ -24,12 +25,37 @@ export const TeamMembersPage = () => {
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTeam = searchParams.get('team') || searchParams.get('department') || 'all';
+
   // Filters & View State
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [deptFilter, setDeptFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState(urlTeam);
   const [statusFilter, setStatusFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+
+  // Sync state when URL params change
+  useEffect(() => {
+    const t = searchParams.get('team') || searchParams.get('department') || 'all';
+    if (t !== deptFilter) {
+      setDeptFilter(t);
+    }
+  }, [searchParams]);
+
+  const handleDeptChange = (val) => {
+    setDeptFilter(val);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!val || val === 'all') {
+        next.delete('team');
+        next.delete('department');
+      } else {
+        next.set('team', val);
+      }
+      return next;
+    }, { replace: true });
+  };
 
   // Modal / Drawer state
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -421,7 +447,7 @@ export const TeamMembersPage = () => {
 
             <select
               value={deptFilter}
-              onChange={(e) => setDeptFilter(e.target.value)}
+              onChange={(e) => handleDeptChange(e.target.value)}
               className="h-10 px-3 bg-[#F9F9FB] dark:bg-[#141529] text-[#141529] dark:text-white text-xs font-semibold rounded-lg border border-[#E5E5EF] dark:border-[#2e2f41] focus:outline-none cursor-pointer"
             >
               <option value="all">Dept: All Departments</option>

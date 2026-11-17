@@ -672,6 +672,8 @@ async def invite_member(
 @router.get("", response_model=List[UserRead])
 @router.get("/", response_model=List[UserRead], include_in_schema=False)
 async def list_team_members(
+    department: Optional[str] = Query(None, description="Filter by department / team"),
+    team: Optional[str] = Query(None, description="Alias for department filter"),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -679,11 +681,13 @@ async def list_team_members(
     if not current_user.organization_id:
         return [current_user]
 
-    res = await db.execute(
-        select(User)
-        .where(User.organization_id == current_user.organization_id)
-        .order_by(User.full_name)
-    )
+    query = select(User).where(User.organization_id == current_user.organization_id)
+    eff_dept = department or team
+    if eff_dept and eff_dept.lower().strip() != "all":
+        query = query.where(User.department.ilike(f"%{eff_dept.strip()}%"))
+    query = query.order_by(User.full_name)
+
+    res = await db.execute(query)
     return res.scalars().all()
 
 

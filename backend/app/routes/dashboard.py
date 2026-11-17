@@ -367,10 +367,9 @@ async def get_dashboard_metrics(
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
 
-    open_tickets = sum(1 for t in tickets if (t.status or "").lower() in ("open", "wip"))
+    open_tickets = sum(1 for t in tickets if (t.status or "").lower() == "open")
     wip_tickets = sum(1 for t in tickets if (t.status or "").lower() == "wip")
-    wip_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_progress")
-    work_in_progress = wip_tickets + wip_tasks
+    work_in_progress = wip_tickets
 
     on_hold_count = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
 

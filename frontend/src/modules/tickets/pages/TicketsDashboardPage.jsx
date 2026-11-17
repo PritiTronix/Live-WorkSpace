@@ -86,7 +86,10 @@ export const TicketsDashboardPage = () => {
   };
 
   const handleStatusCardClick = (targetStatus) => {
-    const nextVal = statusFilter === targetStatus ? 'all' : targetStatus;
+    const isCurrentlyActive =
+      statusFilter === targetStatus ||
+      (['wip', 'in_progress'].includes(targetStatus) && ['wip', 'in_progress'].includes(statusFilter));
+    const nextVal = isCurrentlyActive ? 'all' : targetStatus;
     setStatusFilter(nextVal);
     updateUrlParams({ status: nextVal });
   };
@@ -189,7 +192,7 @@ export const TicketsDashboardPage = () => {
           onClick={() => handleStatusCardClick('wip')}
           aria-label={`Show ${stats?.wip ?? 0} in progress tickets`}
           className={`text-left w-full p-space-md rounded-xl shadow-sm flex flex-col justify-between transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-status-wip ${
-            statusFilter === 'wip'
+            statusFilter === 'wip' || statusFilter === 'in_progress'
               ? 'bg-surface-card ring-2 ring-status-wip border-status-wip shadow-md'
               : 'bg-surface-card hover:bg-canvas-lavender/30 border border-border-subtle/50'
           }`}

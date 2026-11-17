@@ -83,6 +83,9 @@ export const ProjectsListPage = () => {
         } else if (pStatus !== fStatus) {
           return false;
         }
+      } else {
+        // By default, ALL view displays active (non-archived) projects to match Total Projects metric
+        if (project.is_archived) return false;
       }
 
       // Lead filter

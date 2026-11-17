@@ -279,7 +279,9 @@ async def get_filtered_tickets_query(
         query = query.where(Ticket.severity == norm_sev)
 
     norm_status = normalize_ticket_status(status)
-    if norm_status:
+    if norm_status == "active":
+        query = query.where(Ticket.status.notin_(["resolved", "closed"]))
+    elif norm_status:
         query = query.where(Ticket.status == norm_status)
 
     if assignee_id and assignee_id.lower() != "all":
