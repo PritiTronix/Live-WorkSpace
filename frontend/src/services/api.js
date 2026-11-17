@@ -300,9 +300,9 @@ export const dashboardService = {
       return [];
     }
   },
-  getTeamWorkload: async () => {
+  getTeamWorkload: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/team-workload');
+      const response = await apiClient.get('/dashboard/team-workload', { params });
       return response.data;
     } catch {
       return [];
@@ -356,10 +356,14 @@ export const dashboardService = {
 // WebSocket Real-time Connection Helper
 export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) => {
   const token = localStorage.getItem('access_token');
+  if (!token) {
+    onStatusChange?.('offline');
+    return null;
+  }
   const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
   const urlObj = new URL('/api/v1/dashboard/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
   const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
-  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}?token=${encodeURIComponent(token)}`;
 
   try {
     onStatusChange?.('reconnecting');
@@ -385,7 +389,7 @@ export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) =>
     return ws;
   } catch (err) {
     onStatusChange?.('offline');
-    console.warn('WebSocket connection unavailable:', err);
+    if (onError) onError(err);
     return null;
   }
 };

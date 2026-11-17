@@ -153,7 +153,7 @@ export const Sidebar = ({
         setCurrentOrg((prev) => ({
           ...prev,
           name: workspace.name,
-          plan: prev?.plan || 'Standard',
+          plan: workspace.plan || prev?.plan || null,
         }));
       }
     });
@@ -216,9 +216,11 @@ export const Sidebar = ({
                   <span className="font-label-md text-label-md text-text-primary truncate max-w-[130px]">
                     {currentOrg?.name || 'Workspace'}
                   </span>
-                  <span className="font-label-sm text-label-sm text-primary capitalize">
-                    {currentOrg?.plan || 'Standard'}
-                  </span>
+                  {currentOrg?.plan ? (
+                    <span className="font-label-sm text-label-sm text-primary capitalize">
+                      {currentOrg.plan}
+                    </span>
+                  ) : null}
                 </div>
               </div>
               {organizations.length > 1 && (
@@ -243,7 +245,9 @@ export const Sidebar = ({
                       </span>
                       <span className="font-semibold text-text-primary truncate">{org.name}</span>
                     </div>
-                    <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan || 'Standard'}</span>
+                    {org.plan ? (
+                      <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan}</span>
+                    ) : null}
                   </div>
                 ))}
               </div>

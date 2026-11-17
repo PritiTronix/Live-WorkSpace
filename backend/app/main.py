@@ -21,10 +21,10 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             try:
-                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'Standard'"))
+                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50)"))
             except Exception:
                 try:
-                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50) DEFAULT 'Standard'"))
+                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50)"))
                 except Exception:
                     pass
         async with AsyncSessionLocal() as session:

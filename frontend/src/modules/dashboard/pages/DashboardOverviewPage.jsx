@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { dashboardService, connectDashboardWebSocket, authService } from '../../../services/api';
 import { useClock } from '../../../utils/greeting';
+import { pluralize } from '../../../utils/pluralize';
 import WelcomeModal from '../components/WelcomeModal';
 
 export const DashboardOverviewPage = () => {
@@ -9,10 +10,12 @@ export const DashboardOverviewPage = () => {
 
   // State
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
-  const [wsStatus, setWsStatus] = useState('reconnecting'); // 'connected' | 'reconnecting' | 'offline'
+  const [wsStatus, setWsStatus] = useState('offline'); // 'connected' | 'reconnecting' | 'offline'
 
-  // Filter chips
-  const [selectedPill, setSelectedPill] = useState({ id: 'all', type: 'all', label: 'All Teams' });
+  // Structured Filters: Grouped under labels (Team, Project, Period)
+  const [selectedTeam, setSelectedTeam] = useState('all');
+  const [selectedProject, setSelectedProject] = useState('all');
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [filterOptions, setFilterOptions] = useState({ teams: [], projects: [], date_ranges: [] });
 
   // Real-time clock and dynamic greeting (per-user, accurate time bands, localized date)
@@ -91,20 +94,52 @@ export const DashboardOverviewPage = () => {
     };
   }, [isExportMenuOpen]);
 
+  // Dynamic date range options computed from current date with exact tooltip strings
+  const periodOptions = useMemo(() => {
+    if (filterOptions.date_ranges && filterOptions.date_ranges.length > 0) {
+      return filterOptions.date_ranges;
+    }
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const quarter = Math.floor(now.getMonth() / 3) + 1;
+    const qMonths = [
+      ['Jan 1', 'Mar 31'],
+      ['Apr 1', 'Jun 30'],
+      ['Jul 1', 'Sep 30'],
+      ['Oct 1', 'Dec 31'],
+    ];
+    const qRange = `${qMonths[quarter - 1][0]} to ${qMonths[quarter - 1][1]}, ${now.getFullYear()}`;
+    return [
+      { id: 'today', label: 'Today', range: todayStr },
+      { id: 'this_week', label: 'This week', range: 'Current calendar week (Mon - Sun)' },
+      { id: 'this_month', label: 'This month', range: `${now.toLocaleDateString('en-US', { month: 'short' })} 1 to ${now.toLocaleDateString('en-US', { month: 'short' })} 30, ${now.getFullYear()}` },
+      { id: 'this_quarter', label: 'This quarter', range: qRange },
+    ];
+  }, [filterOptions.date_ranges]);
+
+  // Construct query parameters matching backend filter endpoints
+  const getFilterParams = useCallback((teamVal = selectedTeam, projVal = selectedProject, periodVal = selectedPeriod) => {
+    const params = {};
+    if (projVal && projVal !== 'all') {
+      params.project_id = projVal;
+    }
+    if (teamVal && teamVal !== 'all') {
+      params.team = teamVal;
+      params.department = teamVal;
+    }
+    if (periodVal && periodVal !== 'all') {
+      params.period = periodVal;
+    }
+    return params;
+  }, [selectedTeam, selectedProject, selectedPeriod]);
+
   // Handle Export Summary
   const handleExport = async (format) => {
     setIsExportMenuOpen(false);
     setIsExporting(true);
     setExportToast(null);
 
-    const params = {};
-    if (selectedPill.type === 'project') {
-      params.project_id = selectedPill.value;
-    } else if (selectedPill.type === 'department') {
-      params.department = selectedPill.value;
-    } else if (selectedPill.type === 'period') {
-      params.period = selectedPill.value;
-    }
+    const params = getFilterParams();
 
     try {
       await dashboardService.exportSummary(params, format);
@@ -128,15 +163,8 @@ export const DashboardOverviewPage = () => {
   };
 
   // Helper to fetch data with current filter
-  const fetchDashboardData = useCallback(async (filterObj = selectedPill) => {
-    const params = {};
-    if (filterObj.type === 'project') {
-      params.project_id = filterObj.value;
-    } else if (filterObj.type === 'department') {
-      params.department = filterObj.value;
-    } else if (filterObj.type === 'period') {
-      params.period = filterObj.value;
-    }
+  const fetchDashboardData = useCallback(async (paramsToUse) => {
+    const params = paramsToUse !== undefined ? paramsToUse : getFilterParams();
 
     try {
       const [
@@ -154,7 +182,7 @@ export const DashboardOverviewPage = () => {
         dashboardService.getTicketsSeverity(params),
         dashboardService.getSlaPerformance(params),
         dashboardService.getProjectProgress(params),
-        dashboardService.getTeamWorkload(),
+        dashboardService.getTeamWorkload(params),
         dashboardService.getPriorityTickets(params),
         dashboardService.getActivityTimeline(params),
       ]);
@@ -170,7 +198,7 @@ export const DashboardOverviewPage = () => {
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     }
-  }, [selectedPill]);
+  }, [getFilterParams]);
 
   useEffect(() => {
     // Current user profile
@@ -189,7 +217,7 @@ export const DashboardOverviewPage = () => {
     });
 
     // Initial load
-    fetchDashboardData(selectedPill);
+    fetchDashboardData(getFilterParams('all', 'all', 'all'));
 
     // WebSocket connection with live sync status
     const ws = connectDashboardWebSocket(
@@ -215,11 +243,6 @@ export const DashboardOverviewPage = () => {
     };
   }, []);
 
-  const handlePillClick = (pill) => {
-    setSelectedPill(pill);
-    fetchDashboardData(pill);
-  };
-
   const handleDismissWelcomeModal = async () => {
     setShowWelcomeModal(false);
     try {
@@ -241,20 +264,6 @@ export const DashboardOverviewPage = () => {
     if (selectedPriorityFilter === 'BREACHED') return (ticket.sla_text || '').includes('BREACHED');
     return true;
   });
-
-  // Compose dynamic filter chips: All Teams, DB teams, DB projects, Dynamic Date Ranges
-  const filterPills = [
-    { id: 'all', type: 'all', label: 'All Teams' },
-    ...(filterOptions?.teams?.length
-      ? filterOptions.teams.map((t) => ({ id: `dept_${t}`, type: 'department', value: t, label: t }))
-      : []),
-    ...(filterOptions?.projects?.length
-      ? filterOptions.projects.map((p) => ({ id: `proj_${p.id}`, type: 'project', value: p.id, label: p.name }))
-      : []),
-    ...(filterOptions?.date_ranges?.length
-      ? filterOptions.date_ranges.map((d) => ({ id: `period_${d.id}`, type: 'period', value: d.id, label: d.label }))
-      : []),
-  ];
 
   // Dynamic ticket severity percentages
   const totalActiveTickets = ticketsSeverity.total_active || 0;
@@ -347,22 +356,121 @@ export const DashboardOverviewPage = () => {
         </div>
       </div>
 
-      {/* Filter Dropdown Pills */}
-      <div className="flex gap-2.5 overflow-x-auto pb-1">
-        {filterPills.map((pill) => (
-          <button
-            key={pill.id}
-            onClick={() => handlePillClick(pill)}
-            className={`flex h-8 shrink-0 items-center justify-center gap-x-1.5 rounded-lg pl-3.5 pr-2.5 transition-colors cursor-pointer ${
-              selectedPill.id === pill.id
-                ? 'bg-btn-primary text-white shadow-sm font-semibold'
-                : 'bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b] font-medium'
-            }`}
-            type="button"
-          >
-            <span className="text-xs leading-normal">{pill.label}</span>
-          </button>
-        ))}
+      {/* Filter Row: Grouped under labels (Team, Project, Period) */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-3.5 rounded-xl bg-surface-card border border-[#d5d0e6] shadow-sm">
+        <div className="flex flex-wrap items-center gap-6">
+          {/* Team Filter Group */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#5d4f96] uppercase tracking-wider flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">groups</span>
+              Team:
+            </span>
+            <select
+              value={selectedTeam}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedTeam(val);
+                fetchDashboardData(getFilterParams(val, selectedProject, selectedPeriod));
+              }}
+              className="h-8 pl-2.5 pr-8 text-xs font-semibold rounded-lg bg-[#eae8f3] text-[#110e1b] border-none focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Teams</option>
+              {filterOptions.teams?.map((team) => (
+                <option key={team} value={team}>
+                  {team}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Project Filter Group */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#5d4f96] uppercase tracking-wider flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">folder</span>
+              Project:
+            </span>
+            <select
+              value={selectedProject}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedProject(val);
+                fetchDashboardData(getFilterParams(selectedTeam, val, selectedPeriod));
+              }}
+              className="h-8 pl-2.5 pr-8 text-xs font-semibold rounded-lg bg-[#eae8f3] text-[#110e1b] border-none focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"
+            >
+              <option value="all">All Projects</option>
+              {filterOptions.projects?.map((proj) => (
+                <option key={proj.id} value={proj.id}>
+                  {proj.name} ({proj.key})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Period Filter Group (Single-select with tooltips) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-[#5d4f96] uppercase tracking-wider flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">date_range</span>
+              Period:
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPeriod('all');
+                  fetchDashboardData(getFilterParams(selectedTeam, selectedProject, 'all'));
+                }}
+                className={`h-7 px-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  selectedPeriod === 'all'
+                    ? 'bg-btn-primary text-white shadow-sm'
+                    : 'bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b]'
+                }`}
+                title="All historical workspace activity"
+              >
+                All Time
+              </button>
+              {periodOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPeriod(opt.id);
+                    fetchDashboardData(getFilterParams(selectedTeam, selectedProject, opt.id));
+                  }}
+                  className={`h-7 px-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    selectedPeriod === opt.id
+                      ? 'bg-btn-primary text-white shadow-sm'
+                      : 'bg-[#eae8f3] hover:bg-[#dedbe8] text-[#110e1b]'
+                  }`}
+                  title={opt.range}
+                >
+                  <span>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Applied Filter Badge Indicator */}
+        <div className="flex items-center gap-2 text-xs text-text-secondary bg-[#f5f4fa] px-3 py-1 rounded-lg border border-border-subtle">
+          <span className="font-semibold text-text-primary">Applied:</span>
+          <span>
+            {selectedPeriod === 'all'
+              ? 'All Time'
+              : periodOptions.find((p) => p.id === selectedPeriod)?.range || selectedPeriod}
+          </span>
+          {(selectedTeam !== 'all' || selectedProject !== 'all') && (
+            <>
+              <span>•</span>
+              {selectedTeam !== 'all' && <span className="font-medium text-primary">Team: {selectedTeam}</span>}
+              {selectedProject !== 'all' && (
+                <span className="font-medium text-primary">
+                  Project: {filterOptions.projects?.find((p) => p.id === selectedProject)?.name || selectedProject}
+                </span>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Row 1: Primary 4 Metric Stat Cards */}
@@ -476,9 +584,9 @@ export const DashboardOverviewPage = () => {
           <span className="text-[#110e1b] tracking-tight text-3xl font-extrabold leading-tight font-['Plus_Jakarta_Sans']">
             {metrics.work_in_progress}
           </span>
-          {metrics.active_squads_count ? (
+          {(metrics.active_teams_count || metrics.active_squads_count) ? (
             <span className="text-[#5d4f96] text-xs font-medium leading-normal">
-              {metrics.active_squads_count} {metrics.active_squads_count === 1 ? 'squad active' : 'squads active'}
+              {pluralize(metrics.active_teams_count || metrics.active_squads_count, 'team')} active
             </span>
           ) : (
             <span className="text-xs text-transparent select-none">•</span>
@@ -547,12 +655,12 @@ export const DashboardOverviewPage = () => {
         </div>
       </div>
 
-      {/* Analytics & Squad Operations Section */}
+      {/* Analytics & Team Operations Section */}
       <div className="flex flex-col gap-5 pt-2">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-text-primary text-xl font-bold font-['Plus_Jakarta_Sans'] tracking-[-0.015em]">
-              Analytics & Squad Operations
+              Analytics & Team Operations
             </h2>
             <p className="text-text-secondary text-xs sm:text-sm">
               Real-time throughput, reliability health, and capacity allocation
@@ -824,8 +932,10 @@ export const DashboardOverviewPage = () => {
                       ></div>
                     </div>
                     <div className="flex justify-between text-[11px] text-text-secondary mt-1">
-                      <span>{proj.squads}</span>
-                      <span>Target: {proj.target}</span>
+                      <span>{proj.teams || proj.squads}</span>
+                      <span className={proj.is_overdue ? 'text-error font-semibold' : ''}>
+                        Target: {proj.target}
+                      </span>
                     </div>
                   </div>
                 ))
@@ -846,28 +956,28 @@ export const DashboardOverviewPage = () => {
                   Team Workload & Capacity
                 </h3>
               </div>
-              <span className="text-xs text-text-secondary">{teamWorkload.length} Squads Tracked</span>
+              <span className="text-xs text-text-secondary">{pluralize(teamWorkload.length, 'Team')} Tracked</span>
             </div>
 
             <div className="space-y-4">
               {teamWorkload.length > 0 ? (
-                teamWorkload.map((squad, idx) => (
+                teamWorkload.map((team, idx) => (
                   <div key={idx} className="p-3 rounded-lg border bg-surface-container-low border-border-subtle">
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-text-primary">{squad.name}</span>
-                      <span className="font-bold text-primary">{squad.status}</span>
+                      <span className="font-semibold text-text-primary">{team.name}</span>
+                      <span className="font-bold text-primary">{team.status}</span>
                     </div>
                     <div className="w-full bg-white rounded-full h-2">
                       <div
-                        className={`${squad.color} h-2 rounded-full`}
-                        style={{ width: `${squad.capacity}%` }}
+                        className={`${team.color} h-2 rounded-full`}
+                        style={{ width: `${team.capacity}%` }}
                       ></div>
                     </div>
-                    <p className="text-[11px] text-text-secondary mt-1.5">{squad.desc}</p>
+                    <p className="text-[11px] text-text-secondary mt-1.5">{team.desc}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-text-muted py-4 text-center">No squad workloads recorded.</p>
+                <p className="text-xs text-text-muted py-4 text-center">No team workloads recorded.</p>
               )}
             </div>
           </div>

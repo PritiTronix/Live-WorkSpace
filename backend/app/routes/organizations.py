@@ -57,7 +57,7 @@ async def create_organization(
         id=f"org_{uuid.uuid4().hex[:8]}",
         name=org_in.name.strip(),
         slug=org_in.slug.lower().strip(),
-        plan=org_in.plan or "Standard",
+        plan=org_in.plan,
         created_at=now,
     )
     db.add(new_org)
