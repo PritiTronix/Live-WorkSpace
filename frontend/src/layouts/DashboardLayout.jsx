@@ -4,7 +4,7 @@ import Sidebar from '../components/navigation/Sidebar';
 import GlobalTopBar from '../components/navigation/GlobalTopBar';
 import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
 import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
-import { notificationService, organizationService, dashboardService, connectDashboardWebSocket } from '../services/api';
+import {authService, notificationService, organizationService, dashboardService, connectDashboardWebSocket } from '../services/api';
 import CreateTaskModal from '../modules/tasks/components/CreateTaskModal';
 import { taskService } from '../modules/tasks/services/taskService';
 import CreateTicketModal from '../modules/tickets/components/CreateTicketModal';

@@ -7,7 +7,7 @@ import logging
 import secrets
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select, func
