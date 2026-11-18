@@ -5,14 +5,11 @@ Unit and integration tests proving multi-tenant scoping for:
 3. Project ticket counts (open_tickets, blocker_tickets, critical_tickets)
 4. Notification unread count (strictly scoped to current user AND current organization)
 5. Project creation RBAC enforcement (403 Forbidden for non-privileged roles)
-
-DO NOT RUN against shared database. These tests are written for isolated test environments.
 """
 import uuid
 import pytest
 from fastapi.testclient import TestClient
 from backend.app.main import create_application
-from backend.app.core.security import create_access_token
 
 
 @pytest.fixture
@@ -22,14 +19,37 @@ def client():
         yield c
 
 
-def make_auth_headers(user_id: str, role: str, org_id: str, email: str = "user@test.com"):
-    token = create_access_token(
-        subject=user_id,
-        role=role,
-        org_id=org_id,
-        email=email,
+def setup_user(client: TestClient, org_name: str, role: str, suffix: str, owner_headers=None):
+    email = f"user_{suffix}@enterprise-test.com"
+    password = "TestPassword123!"
+    reg_res = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": f"User {suffix}",
+            "email": email,
+            "password": password,
+            "organization_name": org_name,
+        },
     )
-    return {"Authorization": f"Bearer {token}"}
+    assert reg_res.status_code == 201, f"Registration failed: {reg_res.text}"
+    user_id = reg_res.json()["id"]
+
+    if role != "owner" and owner_headers:
+        patch_res = client.patch(
+            f"/api/v1/users/{user_id}/role",
+            headers=owner_headers,
+            json={"role": role},
+        )
+        assert patch_res.status_code == 200, f"Role patch failed: {patch_res.text}"
+
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_res.status_code == 200, f"Login failed: {login_res.text}"
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    return headers, user_id, email
 
 
 class TestProjectsAndNotificationsScoping:
@@ -37,50 +57,49 @@ class TestProjectsAndNotificationsScoping:
 
     def test_project_creation_rbac_403_for_unauthorized_roles(self, client):
         """Users with roles member, employee, viewer must receive 403 on project creation."""
-        org_id = f"org_{uuid.uuid4().hex[:6]}"
+        uid = uuid.uuid4().hex[:6]
+        org_name = f"Org RBAC 403 {uid}"
+        owner_headers, _, _ = setup_user(client, org_name, "owner", f"owner_{uid}")
 
         for forbidden_role in ["member", "employee", "viewer"]:
-            uid = f"usr_{forbidden_role}_{uuid.uuid4().hex[:4]}"
-            headers = make_auth_headers(uid, role=forbidden_role, org_id=org_id, email=f"{forbidden_role}@test.com")
-
+            headers, _, _ = setup_user(client, org_name, forbidden_role, f"{forbidden_role}_{uid}", owner_headers=owner_headers)
             res = client.post(
                 "/api/v1/projects",
                 headers=headers,
-                json={"name": "Forbidden Project", "key": "FORBID"},
+                json={"name": f"Forbidden Project {forbidden_role}", "key": f"F{forbidden_role[:3].upper()}"},
             )
             assert res.status_code == 403, f"Role {forbidden_role} should get 403, got {res.status_code}"
 
     def test_project_creation_allowed_for_privileged_roles(self, client):
         """Users with roles lead, manager, admin, owner must be allowed to create projects."""
-        org_id = f"org_{uuid.uuid4().hex[:6]}"
+        uid = uuid.uuid4().hex[:6]
+        org_name = f"Org Privileged {uid}"
+        owner_headers, _, _ = setup_user(client, org_name, "owner", f"owner_{uid}")
 
         for allowed_role in ["lead", "manager", "admin", "owner"]:
-            uid = f"usr_{allowed_role}_{uuid.uuid4().hex[:4]}"
-            headers = make_auth_headers(uid, role=allowed_role, org_id=org_id, email=f"{allowed_role}@test.com")
+            if allowed_role == "owner":
+                headers = owner_headers
+            else:
+                headers, _, _ = setup_user(client, org_name, allowed_role, f"{allowed_role}_{uid}", owner_headers=owner_headers)
 
             res = client.post(
                 "/api/v1/projects",
                 headers=headers,
-                json={"name": f"Project by {allowed_role}", "key": allowed_role[:4].upper()},
+                json={"name": f"Project by {allowed_role}", "key": f"P{allowed_role[:3].upper()}{uid[:2].upper()}"},
             )
             assert res.status_code == 201, f"Role {allowed_role} should get 201, got {res.status_code}: {res.text}"
 
     def test_project_task_counts_scoped_to_organization(self, client):
         """Verifies project task counts reflect only tasks belonging to the project and caller's organization."""
-        org_a = f"org_a_{uuid.uuid4().hex[:6]}"
-        org_b = f"org_b_{uuid.uuid4().hex[:6]}"
-
-        user_a = f"usr_a_{uuid.uuid4().hex[:4]}"
-        user_b = f"usr_b_{uuid.uuid4().hex[:4]}"
-
-        headers_a = make_auth_headers(user_a, role="lead", org_id=org_a, email="lead_a@orga.com")
-        headers_b = make_auth_headers(user_b, role="lead", org_id=org_b, email="lead_b@orgb.com")
+        uid = uuid.uuid4().hex[:6]
+        headers_a, _, _ = setup_user(client, f"Org A {uid}", "owner", f"a_{uid}")
+        headers_b, _, _ = setup_user(client, f"Org B {uid}", "owner", f"b_{uid}")
 
         # 1. Org A creates Project A
         p_a = client.post(
             "/api/v1/projects",
             headers=headers_a,
-            json={"name": "Org A Project", "key": "ORGA"},
+            json={"name": f"Org A Project {uid}", "key": f"OA{uid[:2].upper()}"},
         ).json()
         proj_a_id = p_a["id"]
 
@@ -88,7 +107,7 @@ class TestProjectsAndNotificationsScoping:
         p_b = client.post(
             "/api/v1/projects",
             headers=headers_b,
-            json={"name": "Org B Project", "key": "ORGB"},
+            json={"name": f"Org B Project {uid}", "key": f"OB{uid[:2].upper()}"},
         ).json()
         proj_b_id = p_b["id"]
 
@@ -96,12 +115,12 @@ class TestProjectsAndNotificationsScoping:
         client.post(
             "/api/v1/tasks",
             headers=headers_a,
-            json={"title": "Task A1 Todo", "status": "to_do", "project_id": proj_a_id, "priority": "medium"},
+            json={"title": f"Task A1 Todo {uid}", "status": "to_do", "project_id": proj_a_id, "priority": "medium"},
         )
         client.post(
             "/api/v1/tasks",
             headers=headers_a,
-            json={"title": "Task A2 Done", "status": "done", "project_id": proj_a_id, "priority": "low"},
+            json={"title": f"Task A2 Done {uid}", "status": "done", "project_id": proj_a_id, "priority": "low"},
         )
 
         # 4. Create tasks in Project B (Org B): 3 tasks
@@ -109,7 +128,7 @@ class TestProjectsAndNotificationsScoping:
             client.post(
                 "/api/v1/tasks",
                 headers=headers_b,
-                json={"title": f"Task B{i}", "status": "done", "project_id": proj_b_id, "priority": "high"},
+                json={"title": f"Task B{i} {uid}", "status": "done", "project_id": proj_b_id, "priority": "high"},
             )
 
         # 5. Verify Org A projects list metrics
@@ -128,17 +147,16 @@ class TestProjectsAndNotificationsScoping:
 
     def test_project_member_counts_scoped_to_organization(self, client):
         """Verifies member counts in project response reflect real members in caller's organization."""
-        org_id = f"org_{uuid.uuid4().hex[:6]}"
-        lead_id = f"usr_lead_{uuid.uuid4().hex[:4]}"
-        dev_id = f"usr_dev_{uuid.uuid4().hex[:4]}"
-
-        lead_headers = make_auth_headers(lead_id, role="lead", org_id=org_id, email="lead@org.com")
+        uid = uuid.uuid4().hex[:6]
+        org_name = f"Org Members {uid}"
+        lead_headers, lead_id, _ = setup_user(client, org_name, "owner", f"lead_{uid}")
+        _, dev_id, dev_email = setup_user(client, org_name, "developer", f"dev_{uid}", owner_headers=lead_headers)
 
         # 1. Create project
         proj = client.post(
             "/api/v1/projects",
             headers=lead_headers,
-            json={"name": "Roster Scoping Project", "key": "ROST"},
+            json={"name": f"Roster Scoping Project {uid}", "key": f"RO{uid[:2].upper()}"},
         ).json()
         project_id = proj["id"]
 
@@ -150,7 +168,7 @@ class TestProjectsAndNotificationsScoping:
         client.post(
             f"/api/v1/projects/{project_id}/members",
             headers=lead_headers,
-            json={"email": "dev@org.com", "user_id": dev_id, "role": "developer"},
+            json={"email": dev_email, "user_id": dev_id, "role": "developer"},
         )
 
         updated_proj = client.get(f"/api/v1/projects/{project_id}", headers=lead_headers).json()
@@ -158,25 +176,20 @@ class TestProjectsAndNotificationsScoping:
 
     def test_project_ticket_counts_scoped_to_organization(self, client):
         """Verifies ticket open count and attention indicator are scoped strictly to the project and organization."""
-        org_a = f"org_a_{uuid.uuid4().hex[:6]}"
-        org_b = f"org_b_{uuid.uuid4().hex[:6]}"
-
-        user_a = f"usr_a_{uuid.uuid4().hex[:4]}"
-        user_b = f"usr_b_{uuid.uuid4().hex[:4]}"
-
-        headers_a = make_auth_headers(user_a, role="lead", org_id=org_a, email="a@test.com")
-        headers_b = make_auth_headers(user_b, role="lead", org_id=org_b, email="b@test.com")
+        uid = uuid.uuid4().hex[:6]
+        headers_a, _, _ = setup_user(client, f"Tickets Org A {uid}", "owner", f"a_{uid}")
+        headers_b, _, _ = setup_user(client, f"Tickets Org B {uid}", "owner", f"b_{uid}")
 
         proj_a = client.post(
             "/api/v1/projects",
             headers=headers_a,
-            json={"name": "Tickets Org A", "key": "TOA"},
+            json={"name": f"Tickets Org A {uid}", "key": f"TA{uid[:2].upper()}"},
         ).json()
 
         proj_b = client.post(
             "/api/v1/projects",
             headers=headers_b,
-            json={"name": "Tickets Org B", "key": "TOB"},
+            json={"name": f"Tickets Org B {uid}", "key": f"TB{uid[:2].upper()}"},
         ).json()
 
         # Create 1 blocker ticket in Project A
@@ -184,7 +197,7 @@ class TestProjectsAndNotificationsScoping:
             "/api/v1/tickets",
             headers=headers_a,
             json={
-                "title": "Blocker in A",
+                "title": f"Blocker in A {uid}",
                 "severity": "blocker",
                 "status": "open",
                 "project_id": proj_a["id"],
@@ -197,7 +210,7 @@ class TestProjectsAndNotificationsScoping:
                 "/api/v1/tickets",
                 headers=headers_b,
                 json={
-                    "title": f"Critical in B {i}",
+                    "title": f"Critical in B {i} {uid}",
                     "severity": "critical",
                     "status": "open",
                     "project_id": proj_b["id"],
@@ -225,16 +238,13 @@ class TestProjectsAndNotificationsScoping:
         Verifies that /api/v1/notifications/unread-count returns only the authenticated
         caller's unread notifications within their tenant organization.
         """
-        org_a = f"org_notif_a_{uuid.uuid4().hex[:6]}"
-        org_b = f"org_notif_b_{uuid.uuid4().hex[:6]}"
+        uid = uuid.uuid4().hex[:6]
+        org_a = f"Org Notif A {uid}"
+        org_b = f"Org Notif B {uid}"
 
-        user_a1 = f"usr_a1_{uuid.uuid4().hex[:4]}"
-        user_a2 = f"usr_a2_{uuid.uuid4().hex[:4]}"
-        user_b1 = f"usr_b1_{uuid.uuid4().hex[:4]}"
-
-        headers_a1 = make_auth_headers(user_a1, role="member", org_id=org_a, email="a1@test.com")
-        headers_a2 = make_auth_headers(user_a2, role="member", org_id=org_a, email="a2@test.com")
-        headers_b1 = make_auth_headers(user_b1, role="member", org_id=org_b, email="b1@test.com")
+        headers_a1, _, _ = setup_user(client, org_a, "owner", f"a1_{uid}")
+        headers_a2, _, _ = setup_user(client, org_a, "member", f"a2_{uid}")
+        headers_b1, _, _ = setup_user(client, org_b, "owner", f"b1_{uid}")
 
         # Initial unread count for all must be 0
         res_a1 = client.get("/api/v1/notifications/unread-count", headers=headers_a1).json()

@@ -99,14 +99,20 @@ async def calculate_project_metrics(project_id: str, db: AsyncSession, organizat
     )
     row = (await db.execute(metrics_stmt)).one()
 
-    total_tasks = row.total_tasks or 0
-    completed_tasks = row.completed_tasks or 0
+    def _to_int(val):
+        try:
+            return int(val)
+        except (TypeError, ValueError):
+            return 0
+
+    total_tasks = _to_int(getattr(row, "total_tasks", 0))
+    completed_tasks = _to_int(getattr(row, "completed_tasks", 0))
     sprint_progress = round((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
-    open_tickets = row.open_tickets or 0
-    blocker_tickets = row.blocker_tickets or 0
-    critical_tickets = row.critical_tickets or 0
-    total_discussions = row.total_discussions or 0
-    total_files = row.total_files or 0
+    open_tickets = _to_int(getattr(row, "open_tickets", 0))
+    blocker_tickets = _to_int(getattr(row, "blocker_tickets", 0))
+    critical_tickets = _to_int(getattr(row, "critical_tickets", 0))
+    total_discussions = _to_int(getattr(row, "total_discussions", 0))
+    total_files = _to_int(getattr(row, "total_files", 0))
 
     attention_severity = None
     attention_text = None

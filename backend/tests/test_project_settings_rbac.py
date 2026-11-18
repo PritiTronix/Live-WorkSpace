@@ -7,13 +7,19 @@ Tests the permissions required to edit project settings:
 
 These tests use in-memory mock sessions and dependency injection; they do NOT run against or touch the shared database.
 """
+from datetime import datetime, timezone
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException, status
 
-from app.models.models import Project, User, ProjectMember
-from app.schemas.project import ProjectUpdate
-from app.routes.projects import update_project
+from backend.app.models import Project, User, ProjectMember
+from backend.app.schemas import ProjectUpdate
+from backend.app.routes.projects import update_project
+
+
+@pytest.fixture
+def now_utc():
+    return datetime.now(timezone.utc)
 
 
 @pytest.fixture
@@ -22,62 +28,82 @@ def org_id():
 
 
 @pytest.fixture
-def project_lead_user(org_id):
+def project_lead_user(org_id, now_utc):
     return User(
         id="user-lead-001",
         email="lead@company.com",
         full_name="Project Lead User",
         organization_id=org_id,
         role="member",
+        is_active=True,
+        email_verified=True,
+        onboarding_completed=True,
+        created_at=now_utc,
     )
 
 
 @pytest.fixture
-def org_admin_user(org_id):
+def org_admin_user(org_id, now_utc):
     return User(
         id="user-admin-002",
         email="admin@company.com",
         full_name="Org Admin User",
         organization_id=org_id,
         role="admin",
+        is_active=True,
+        email_verified=True,
+        onboarding_completed=True,
+        created_at=now_utc,
     )
 
 
 @pytest.fixture
-def org_owner_user(org_id):
+def org_owner_user(org_id, now_utc):
     return User(
         id="user-owner-003",
         email="owner@company.com",
         full_name="Org Owner User",
         organization_id=org_id,
         role="owner",
+        is_active=True,
+        email_verified=True,
+        onboarding_completed=True,
+        created_at=now_utc,
     )
 
 
 @pytest.fixture
-def regular_member_user(org_id):
+def regular_member_user(org_id, now_utc):
     return User(
         id="user-member-004",
         email="member@company.com",
         full_name="Regular Member User",
         organization_id=org_id,
         role="member",
+        is_active=True,
+        email_verified=True,
+        onboarding_completed=True,
+        created_at=now_utc,
     )
 
 
 @pytest.fixture
-def other_org_user():
+def other_org_user(now_utc):
     return User(
         id="user-other-005",
         email="outsider@other.com",
         full_name="Other Org User",
         organization_id="org-other-999",
         role="owner",
+        is_active=True,
+        email_verified=True,
+        onboarding_completed=True,
+        created_at=now_utc,
     )
 
 
 @pytest.fixture
-def sample_project(org_id, project_lead_user):
+def sample_project(org_id, project_lead_user, now_utc):
     proj = Project(
         id="proj-uuid-101",
         key="TEST",
@@ -86,6 +112,10 @@ def sample_project(org_id, project_lead_user):
         lead_id=project_lead_user.id,
         status="active",
         visibility="organization",
+        icon="folder",
+        color="blue",
+        is_archived=False,
+        created_at=now_utc,
     )
     proj.lead = project_lead_user
     proj.members = []

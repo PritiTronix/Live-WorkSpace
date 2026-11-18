@@ -459,13 +459,11 @@ async def create_ticket(
     for attempt in range(MAX_RETRIES):
         try:
             async with db.begin_nested():
-                # Query highest existing ticket number within organization's projects
+                # Query highest existing ticket number globally to adhere to global unique constraint
                 q = (
                     select(Ticket.ticket_number)
-                    .join(Ticket.project)
-                    .where(Project.organization_id == current_user.organization_id)
                     .order_by(desc(Ticket.created_at))
-                    .limit(200)
+                    .limit(500)
                 )
                 try:
                     if db.bind and db.bind.dialect.name == "postgresql":
@@ -483,7 +481,14 @@ async def create_ticket(
                                 max_num = val
                         except (IndexError, ValueError):
                             pass
-                tkt_num = f"TKT-{max_num + 1}"
+                candidate_num = max_num + 1 + attempt
+                while True:
+                    candidate_str = f"TKT-{candidate_num}"
+                    existing = await db.execute(select(Ticket.id).where(Ticket.ticket_number == candidate_str))
+                    if not existing.scalar():
+                        tkt_num = candidate_str
+                        break
+                    candidate_num += 1
 
                 new_ticket = Ticket(
                     ticket_number=tkt_num,
