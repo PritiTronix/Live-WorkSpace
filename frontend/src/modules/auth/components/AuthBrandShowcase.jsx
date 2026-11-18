@@ -31,7 +31,7 @@ export const AuthBrandShowcase = () => {
 
   return (
     <section
-      className="flex flex-col justify-between h-full min-h-0 py-1 w-full max-w-[620px]"
+      className="flex flex-col justify-between h-full min-h-0 w-full max-w-[620px] py-1"
       data-purpose="hero-showcase"
       aria-label="Product Showcase"
     >
@@ -53,26 +53,28 @@ export const AuthBrandShowcase = () => {
         }
       `}</style>
 
-      {/* ── Brand Header ── */}
-      <header className="flex items-center flex-shrink-0 mb-1 lg:mb-2" data-purpose="brand-header">
-        <AppLogo size="md" />
-      </header>
+      {/* ── Top Block: Brand Logo & Hero Copy ── */}
+      <div className="flex-shrink-0 space-y-3 sm:space-y-4" data-purpose="hero-top">
+        <header className="flex items-center flex-shrink-0" data-purpose="brand-header">
+          <AppLogo size="md" />
+        </header>
 
-      {/* ── Headline & Subtext ── */}
-      <div className="flex-shrink-0 space-y-1 lg:space-y-1.5" data-purpose="hero-copy">
-        <h1 className="font-headline text-2xl sm:text-3xl lg:text-4xl xl:text-[2.75rem] font-extrabold tracking-tight leading-[1.12]">
-          <span className="text-text-primary block">{AUTH_TEXT.headlineMain}</span>
-          <span className="text-btn-primary block">{AUTH_TEXT.headlineAccent}</span>
-        </h1>
-        <p className="font-body text-xs sm:text-sm lg:text-base text-text-secondary max-w-xl font-normal leading-relaxed line-clamp-2">
-          {AUTH_TEXT.subtext}
-        </p>
+        {/* ── Headline & Subtext (12-16px between headline and subtext) ── */}
+        <div className="space-y-3 sm:space-y-3.5" data-purpose="hero-copy">
+          <h1 className="font-headline text-2xl sm:text-3xl lg:text-[2.25rem] xl:text-[2.65rem] font-extrabold tracking-tight leading-[1.14]">
+            <span className="text-text-primary block">{AUTH_TEXT.headlineMain}</span>
+            <span className="text-btn-primary block">{AUTH_TEXT.headlineAccent}</span>
+          </h1>
+          <p className="font-body text-sm lg:text-base text-text-secondary max-w-xl font-normal leading-relaxed">
+            {AUTH_TEXT.subtext}
+          </p>
+        </div>
       </div>
 
-      {/* ── Decorative Laptop Dashboard Illustration ── */}
+      {/* ── Decorative Laptop Dashboard Illustration (Scales cleanly in available vertical space) ── */}
       <div
         aria-hidden="true"
-        className="flex-1 min-h-0 flex items-center justify-center my-auto relative w-full overflow-visible select-none pointer-events-none py-1"
+        className="flex-1 min-h-0 flex items-center justify-center my-auto relative w-full overflow-visible select-none pointer-events-none py-2"
         data-purpose="product-preview"
       >
         {/* Potted Plant Decoration (Left) */}

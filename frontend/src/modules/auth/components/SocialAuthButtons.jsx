@@ -21,7 +21,7 @@ export const SocialAuthButtons = () => {
               aria-disabled={!isAvailable}
               aria-label={`Continue with ${provider.name}${!isAvailable ? ` (${tooltip})` : ''}`}
               title={!isAvailable ? tooltip : `Continue with ${provider.name}`}
-              className={`w-full h-11 flex items-center justify-center rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-btn-primary/40 focus-visible:border-btn-primary ${
+              className={`w-full h-11 sm:h-12 flex items-center justify-center rounded-xl border transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-btn-primary/40 focus-visible:border-btn-primary ${
                 isAvailable
                   ? 'border-border-subtle bg-white hover:bg-canvas-lavender hover:border-slate-300 active:scale-[0.98] shadow-sm cursor-pointer'
                   : 'border-border-subtle bg-slate-50/80 text-text-muted opacity-60 cursor-not-allowed'

@@ -9,9 +9,14 @@ import { Outlet, useLocation } from 'react-router-dom';
  */
 export const AuthLayout = () => {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/auth/login' || location.pathname === '/auth/mfa-challenge';
+  const isFullCanvasAuth = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/signup',
+    '/auth/mfa-challenge',
+  ].includes(location.pathname);
 
-  if (isLoginPage) {
+  if (isFullCanvasAuth) {
     return <Outlet />;
   }
 
