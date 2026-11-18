@@ -1,11 +1,20 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 
 /**
  * AuthLayout
  * Layout for Authentication flows (Login, Register, Forgot Password, Reset Password, Onboarding)
+ * Scoped redesign: LoginPage renders its full dual-column canvas layout, while other auth pages
+ * retain their dedicated centered card layout.
  */
 export const AuthLayout = () => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/auth/login' || location.pathname === '/auth/mfa-challenge';
+
+  if (isLoginPage) {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F4FC] p-3 sm:p-6 lg:p-8">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-[#E5E5EF] p-5 sm:p-8">

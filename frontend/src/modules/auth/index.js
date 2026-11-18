@@ -7,4 +7,7 @@ export { VerifyEmailPage } from './pages/VerifyEmailPage';
 export { JoinOrgPage } from './pages/JoinOrgPage';
 export { LogoutModal } from './components/LogoutModal';
 export { WelcomeModal } from './components/WelcomeModal';
+export { AuthBrandShowcase } from './components/AuthBrandShowcase';
+export { SocialAuthButtons } from './components/SocialAuthButtons';
+export { AppLogo } from './components/AppLogo';
 
