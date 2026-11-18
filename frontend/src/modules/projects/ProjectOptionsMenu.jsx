@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { projectsService } from '../../services/projectsService';
+import { authService } from '../../services/api';
 
 /**
  * ProjectOptionsMenu (Screen 36 - Stitch ID 859f7eb7e2094d4881827d3a5eda8205)
@@ -101,10 +102,19 @@ export const ProjectOptionsMenu = ({
     }
   };
 
+  const currentUser = authService.getCurrentUserSync();
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const canEditProject = useMemo(() => {
+    if (!currentUser || !project) return false;
+    const isOrgAdmin = ['owner', 'admin'].includes(userRole);
+    const isProjectLead = Boolean(project.lead_id) && project.lead_id === currentUser.id;
+    return isOrgAdmin || isProjectLead;
+  }, [currentUser, userRole, project]);
+
   const isDeleteMatch = deleteInput.trim() === project?.name;
   const memberCount = project?.members?.length || 0;
-  const totalTasks = project?.metrics?.total_tasks ?? 42;
-  const openTickets = project?.metrics?.open_tickets ?? 3;
+  const totalTasks = project?.metrics?.total_tasks ?? 0;
+  const openTickets = project?.metrics?.open_tickets ?? 0;
 
   return (
     <>
@@ -122,24 +132,43 @@ export const ProjectOptionsMenu = ({
           </div>
 
           {/* Edit Project */}
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-text-primary hover:bg-canvas-lavender group transition-colors text-left"
-            onClick={() => {
-              onClose();
-              if (onEdit) onEdit(project);
-            }}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="material-symbols-outlined text-[18px] text-text-muted group-hover:text-primary transition-colors">
-                edit
+          {canEditProject ? (
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-text-primary hover:bg-canvas-lavender group transition-colors text-left"
+              onClick={() => {
+                onClose();
+                if (onEdit) onEdit(project);
+              }}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[18px] text-text-muted group-hover:text-primary transition-colors">
+                  edit
+                </span>
+                <span className="font-label-md text-label-md">Edit Project</span>
+              </div>
+              <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-text-secondary font-mono">
+                ⌘E
               </span>
-              <span className="font-label-md text-label-md">Edit Project</span>
-            </div>
-            <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-text-secondary font-mono">
-              ⌘E
-            </span>
-          </button>
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="Only project lead, organization admin, or owner can edit settings"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-text-muted opacity-50 cursor-not-allowed text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[18px] text-text-muted">
+                  edit
+                </span>
+                <span className="font-label-md text-label-md">Edit Project</span>
+              </div>
+              <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-text-muted font-mono">
+                ⌘E
+              </span>
+            </button>
+          )}
 
           {/* Manage Members */}
           <button

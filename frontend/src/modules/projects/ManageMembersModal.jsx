@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { projectsService } from '../../services/projectsService';
 import { authService } from '../../services/api';
 import Avatar from '../../components/common/Avatar';
+import { lockScroll, unlockScroll } from '../../utils/scrollLock';
 import {
   PROJECT_ROLES,
   ASSIGNABLE_PROJECT_ROLES,
@@ -51,6 +53,19 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
       projectsService.getUsers().then(setUsers).catch(console.error);
     }
   }, [project, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    lockScroll();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      unlockScroll();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const loadMembersData = async () => {
     try {
@@ -209,12 +224,17 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
     }, 400);
   };
 
-  return (
+  if (!isOpen) return null;
+
+  return createPortal(
     <div
       id="modalOverlay"
       className="fixed inset-0 z-50 flex items-center justify-center p-space-md md:p-space-xl bg-[#141529]/40 backdrop-blur-md transition-opacity duration-200 animate-in fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="relative w-full max-w-5xl max-h-[90vh] flex flex-col rounded-2xl bg-surface-card shadow-[0_16px_40px_rgba(20,21,41,0.14),0_4px_16px_rgba(104,72,232,0.08)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-border-subtle">
+      <div className="relative w-full max-w-5xl max-h-[90vh] max-h-[90dvh] flex flex-col rounded-2xl bg-surface-card shadow-[0_16px_40px_rgba(20,21,41,0.14),0_4px_16px_rgba(104,72,232,0.08)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-border-subtle">
         {/* MODAL HEADER */}
         <div className="px-space-xl pt-space-lg pb-space-md bg-surface-card flex items-start justify-between border-b border-surface-container">
           <div className="flex flex-col gap-1 text-left">
@@ -657,7 +677,8 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

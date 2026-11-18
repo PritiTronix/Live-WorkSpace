@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { filesService } from '../../../services/filesService';
+import { lockScroll, unlockScroll } from '../../../utils/scrollLock';
 
 export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = [] }) => {
   const triggerRef = useRef(null);
@@ -15,8 +16,7 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement;
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      lockScroll();
 
       const timer = setTimeout(() => {
         modalRef.current?.querySelector('button, input, select, textarea')?.focus();
@@ -24,7 +24,7 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
 
       return () => {
         clearTimeout(timer);
-        document.body.style.overflow = originalOverflow;
+        unlockScroll();
         if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
           triggerRef.current.focus();
         }

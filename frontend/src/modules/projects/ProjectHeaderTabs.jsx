@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import ManageMembersModal from './ManageMembersModal';
 import EditProjectModal from './EditProjectModal';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
 import Avatar from '../../components/common/Avatar';
+import { authService } from '../../services/api';
 
 /**
  * Screen 38 & 39: Project Workspace Header & Tabs
  * Visual Reference: Stitch Screen 38 (`976abc6cdd1148a69c6362009ec04775`) & Screen 39 (`e454a6f68a014fffbd96016044d1863d`)
  * Route: `/workspace/projects/:id/*`
  */
-export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem }) => {
+export const ProjectHeaderTabs = ({ project, onProjectUpdated }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showNewMenu, setShowNewMenu] = useState(false);
+
+  const currentUser = authService.getCurrentUserSync();
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const canEditProject = useMemo(() => {
+    if (!currentUser || !project) return false;
+    const isOrgAdmin = ['owner', 'admin'].includes(userRole);
+    const isProjectLead = Boolean(project.lead_id) && project.lead_id === currentUser.id;
+    return isOrgAdmin || isProjectLead;
+  }, [currentUser, userRole, project]);
 
   if (!project) return null;
 
@@ -161,74 +170,18 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                 </span>
               </button>
 
-              {/* Project Settings / Edit Button */}
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                aria-label="Project Settings"
-                className="h-10 px-3 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm border border-border-subtle transition-all"
-              >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
-                <span className="hidden sm:inline">Settings</span>
-              </button>
-
-              {/* Primary Dropdown Action (+ New Work Item) */}
-              <div className="relative inline-flex shadow-sm rounded-lg">
+              {/* Project Settings / Edit Button (RBAC: Lead, Admin, Owner only) */}
+              {canEditProject && (
                 <button
                   type="button"
-                  onClick={() => onOpenNewWorkItem && onOpenNewWorkItem('task')}
-                  className="h-10 px-4 rounded-l-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 transition-all shadow-[0_2px_8px_rgba(96,64,240,0.25)]"
+                  onClick={() => setShowEditModal(true)}
+                  aria-label="Project Settings"
+                  className="h-10 px-3 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm border border-border-subtle transition-all"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add_task</span>
-                  <span>New Work Item</span>
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="hidden sm:inline">Settings</span>
                 </button>
-                <button
-                  type="button"
-                  aria-label="Work item options"
-                  onClick={() => setShowNewMenu(!showNewMenu)}
-                  className="h-10 px-2 rounded-r-lg bg-primary hover:bg-primary-hover text-on-primary flex items-center justify-center transition-all border-l border-white/20"
-                >
-                  <span className="material-symbols-outlined text-[18px]">arrow_drop_down</span>
-                </button>
-
-                {showNewMenu && (
-                  <div className="absolute right-0 top-12 w-48 bg-surface-card rounded-lg shadow-xl border border-border-subtle py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        onOpenNewWorkItem && onOpenNewWorkItem('task');
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-primary">task_alt</span>
-                      <span>Create Task</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        onOpenNewWorkItem && onOpenNewWorkItem('ticket');
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-severity-blocker">confirmation_number</span>
-                      <span>File Ticket</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        navigate(`/workspace/projects/${id}/discussions`);
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-secondary">forum</span>
-                      <span>New Discussion</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Overflow Menu with Options Component from Screen 36 */}
               <ProjectOptionsMenu

@@ -27,6 +27,10 @@ import { isSidebarItemActive } from '../utils/navigation';
 export const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Detect active project context from URL when inside a project workspace
+  const projectPathMatch = location.pathname.match(/\/workspace\/projects\/([^/]+)/);
+  const currentProjectId = projectPathMatch ? projectPathMatch[1] : undefined;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 768 && window.innerWidth < 1180;
@@ -389,13 +393,17 @@ export const DashboardLayout = () => {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         onCreateTask={async (payload) => {
-          await taskService.create(payload);
+          await taskService.create({
+            ...payload,
+            project_id: payload.project_id || currentProjectId,
+          });
         }}
       />
 
       <CreateTicketModal
         isOpen={isCreateTicketModalOpen}
         onClose={() => setIsCreateTicketModalOpen(false)}
+        defaultProjectId={currentProjectId}
         onTicketCreated={() => {
           setIsCreateTicketModalOpen(false);
           window.dispatchEvent(new CustomEvent('ticket-created'));

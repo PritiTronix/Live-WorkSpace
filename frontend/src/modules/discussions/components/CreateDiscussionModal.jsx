@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { discussionsService } from '../../../services/discussionsService';
+import { lockScroll, unlockScroll } from '../../../utils/scrollLock';
 
 export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) => {
   const triggerRef = useRef(null);
@@ -19,8 +20,7 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement;
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      lockScroll();
 
       const timer = setTimeout(() => {
         modalRef.current?.querySelector('input, textarea, select')?.focus();
@@ -28,7 +28,7 @@ export const CreateDiscussionModal = ({ isOpen, onClose, onDiscussionCreated }) 
 
       return () => {
         clearTimeout(timer);
-        document.body.style.overflow = originalOverflow;
+        unlockScroll();
         if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
           triggerRef.current.focus();
         }

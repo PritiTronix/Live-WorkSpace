@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { projectsService } from '../../services/projectsService';
 import Avatar from '../../components/common/Avatar';
+import { lockScroll, unlockScroll } from '../../utils/scrollLock';
 
 const PRESET_ICONS = [
   'rocket_launch',
@@ -54,8 +55,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement;
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      lockScroll();
 
       const timer = setTimeout(() => {
         modalRef.current?.querySelector('input, select, textarea')?.focus();
@@ -63,7 +63,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
 
       return () => {
         clearTimeout(timer);
-        document.body.style.overflow = originalOverflow;
+        unlockScroll();
         if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
           triggerRef.current.focus();
         }

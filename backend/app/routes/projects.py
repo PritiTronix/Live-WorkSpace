@@ -654,6 +654,16 @@ async def update_project(
             detail=f"Project with ID '{project_id}' not found",
         )
 
+    # RBAC: Only project lead, organization admin, or owner can edit project settings
+    user_role = (current_user.role or "").lower()
+    is_org_admin = user_role in ("owner", "admin")
+    is_project_lead = project.lead_id == current_user.id
+    if not (is_org_admin or is_project_lead):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the project lead, organization admin, or owner can edit project settings.",
+        )
+
     update_data = project_update.model_dump(exclude_unset=True)
     contributor_ids = update_data.pop("contributor_ids", None)
 
