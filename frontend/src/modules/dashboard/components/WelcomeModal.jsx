@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { lockScroll, unlockScroll } from '../../../utils/scrollLock';
 import {
   X,
   Sparkles,
@@ -84,8 +85,7 @@ export const WelcomeModal = ({
     if (!isOpen) return;
 
     triggerRef.current = document.activeElement;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    lockScroll();
 
     const focusTimer = setTimeout(() => {
       const focusable = modalRef.current?.querySelector(
@@ -100,7 +100,7 @@ export const WelcomeModal = ({
 
     return () => {
       clearTimeout(focusTimer);
-      document.body.style.overflow = originalOverflow;
+      unlockScroll();
       if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
         triggerRef.current.focus();
       }

@@ -4,12 +4,13 @@ import { authService } from '../../services/api';
 import NotificationDropdown from '../../modules/notifications/components/NotificationDropdown';
 import LogoutModal from '../../modules/auth/components/LogoutModal';
 import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
+import Avatar from '../common/Avatar';
 
 export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
-  activeBreadcrumbs = ['Live Workspace'],
+  activeBreadcrumbs = [authService.getCurrentUserSync()?.organization?.name || ''],
   unreadNotifications = 0,
   slaBreachCount = 0,
   isCollapsed = false,
@@ -33,6 +34,14 @@ export const GlobalTopBar = ({
         if (userData.presence) setPresence(userData.presence);
       }
     });
+
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setUser((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
   }, []);
 
   // Close dropdowns on outside click
@@ -145,40 +154,22 @@ export const GlobalTopBar = ({
         <div className="flex items-center gap-space-xs">
           {/* Notification Bell */}
           <div ref={notifRef} className="relative">
-            {slaBreachCount > 0 ? (
-              <button
-                id="notif-bell-btn"
-                aria-label="Active Breach Notifications"
-                onClick={() => setIsNotifOpen((prev) => !prev)}
-                className={`relative w-10 h-10 rounded-lg bg-error-container text-severity-blocker flex items-center justify-center shadow-sm hover:bg-error-container/80 transition-colors ${isNotifOpen ? 'ring-2 ring-severity-blocker' : ''}`}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[20px] animate-bounce">
-                  notifications_active
+            <button
+              id="notif-bell-btn"
+              aria-label="Notifications"
+              onClick={() => setIsNotifOpen((prev) => !prev)}
+              className={`relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer ${
+                isNotifOpen ? 'bg-canvas-lavender text-primary' : ''
+              }`}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              {unreadNotifications > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-btn-primary text-on-primary font-label-sm text-[10px] leading-none flex items-center justify-center font-bold">
+                  {unreadNotifications}
                 </span>
-                <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-severity-blocker opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-4 w-4 bg-severity-blocker text-on-error font-label-sm text-[9px] items-center justify-center font-bold">
-                    {slaBreachCount}
-                  </span>
-                </span>
-              </button>
-            ) : (
-              <button
-                id="notif-bell-btn"
-                aria-label="Notifications"
-                onClick={() => setIsNotifOpen((prev) => !prev)}
-                className={`relative w-10 h-10 rounded-lg hover:bg-canvas-lavender text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors ${isNotifOpen ? 'bg-canvas-lavender text-primary' : ''}`}
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[20px]">notifications</span>
-                {unreadNotifications > 0 && (
-                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-severity-blocker text-on-primary font-label-sm text-[10px] leading-none flex items-center justify-center font-bold">
-                    {unreadNotifications}
-                  </span>
-                )}
-              </button>
-            )}
+              )}
+            </button>
 
             {/* Notification Dropdown */}
             <NotificationDropdown
@@ -225,17 +216,12 @@ export const GlobalTopBar = ({
             }`}
           >
             <div className="relative">
-              {user.avatar_url ? (
-                <img
-                  alt={user.full_name || 'User'}
-                  className="w-8 h-8 rounded-full object-cover group-hover:opacity-90 transition-opacity"
-                  src={user.avatar_url}
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center">
-                  {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
+              <Avatar
+                src={user.avatar_url}
+                name={user.full_name}
+                size="md"
+                className="group-hover:opacity-90 transition-opacity"
+              />
               <span
                 className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${getPresenceColor(
                   presence
@@ -256,10 +242,10 @@ export const GlobalTopBar = ({
             <div className="absolute right-0 top-12 w-72 rounded-xl bg-surface-card shadow-xl p-space-sm space-y-space-sm z-50 border border-border-subtle animate-in fade-in zoom-in-95 duration-150">
               <div className="p-space-sm rounded-lg bg-canvas-main flex items-center gap-space-sm">
                 <div className="relative">
-                  <img
-                    alt={user.full_name}
-                    className="w-10 h-10 rounded-full object-cover"
+                  <Avatar
                     src={user.avatar_url}
+                    name={user.full_name}
+                    size="lg"
                   />
                   <span
                     className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${getPresenceColor(

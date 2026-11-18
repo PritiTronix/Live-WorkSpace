@@ -215,6 +215,10 @@ All backend packages are installed strictly inside the `myenv` virtual environme
 - `python-dotenv` (`>=1.0.1`) $\rightarrow$ Parses `.env` configuration files for local development.
 - `httpx` (`>=0.27.0`) $\rightarrow$ Asynchronous HTTP client for FastAPI endpoint testing.
 - `pytest` (`>=8.2.0`) $\rightarrow$ Unit and integration test runner.
+- `pytest-asyncio` (`>=0.23.0`) $\rightarrow$ Native asynchronous fixture and coroutine test execution for pytest.
+- `reportlab` (`>=4.0.0`) $\rightarrow$ PDF generation engine for executive dashboard exports.
+- `tzdata` (`>=2024.1`) $\rightarrow$ IANA time zone database provider for cross-timezone greeting & SLA analytics.
+- `aiosqlite` (`>=0.20.0`) $\rightarrow$ Asynchronous SQLite driver for isolated backend testing.
 
 ---
 

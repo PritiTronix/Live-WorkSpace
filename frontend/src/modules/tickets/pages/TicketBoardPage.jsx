@@ -5,6 +5,7 @@ import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES } from '../constants/ticketConstants';
 import ErrorState from '../../design-system/components/ErrorState';
+import Avatar from '../../../components/common/Avatar';
 
 /**
  * Screen 62: Ticket Board View (Prompt 38)
@@ -176,11 +177,14 @@ export const TicketBoardPage = () => {
                                   warning
                                 </span>
                               )}
-                              <img
-                                className="w-5 h-5 rounded-full object-cover ring-1 ring-border-subtle"
-                                src={t.assignee?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W"}
-                                alt=""
-                              />
+                              {t.assignee && (
+                                <Avatar
+                                  src={t.assignee.avatar_url}
+                                  name={t.assignee.full_name}
+                                  size="xs"
+                                  ring="ring-1 ring-border-subtle"
+                                />
+                              )}
                             </div>
                           </div>
                         </article>

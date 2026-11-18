@@ -9,7 +9,7 @@ from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base, AsyncSessionLocal, get_db
 from backend.app.seed import seed_initial_data_if_empty
-from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, DevQueryLoggingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,24 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             try:
-                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'Standard'"))
+                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50)"))
             except Exception:
                 try:
-                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50) DEFAULT 'Standard'"))
+                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50)"))
                 except Exception:
                     pass
+            for col_name, col_type in [
+                ("display_name", "VARCHAR(255)"),
+                ("phone", "VARCHAR(50)"),
+                ("slack_handle", "VARCHAR(100)"),
+            ]:
+                try:
+                    await conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+                except Exception:
+                    try:
+                        await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                    except Exception:
+                        pass
         async with AsyncSessionLocal() as session:
             await seed_initial_data_if_empty(session)
             await session.commit()
@@ -62,6 +74,9 @@ def create_application() -> FastAPI:
     # Enterprise Security Headers Middleware
     application.add_middleware(SecurityHeadersMiddleware)
 
+    # Development-only request duration and query count logger
+    application.add_middleware(DevQueryLoggingMiddleware)
+
     # Brute-force & Credential Stuffing Protection Middleware
     application.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
 
@@ -73,6 +88,7 @@ def create_application() -> FastAPI:
     os.makedirs(os.path.join(uploads_dir, "tickets"), exist_ok=True)
     os.makedirs(os.path.join(uploads_dir, "files"), exist_ok=True)
     os.makedirs(os.path.join(uploads_dir, "tasks"), exist_ok=True)
+    os.makedirs(os.path.join(uploads_dir, "avatars"), exist_ok=True)
 
     @application.get("/health", tags=["Health"])
     async def health_check():

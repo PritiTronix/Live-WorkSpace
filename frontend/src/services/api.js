@@ -48,6 +48,56 @@ apiClient.interceptors.response.use(
   }
 );
 
+/**
+ * Shared API Error Helper
+ * Maps HTTP and network errors to consistent user-facing error messages:
+ * - 422: 'The filter is not valid'
+ * - 429: 'Too many requests. Please wait a moment and try again.'
+ * - 5xx: 'An unexpected server error occurred. Please retry.' (503: 'Service temporarily unavailable. Please retry.')
+ * - Connection failure (no response): 'Cannot reach the server'
+ * Never labels a non-503 error as 503.
+ */
+export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error occurred.') => {
+  if (!error) return defaultMessage;
+
+  // Timeout error: ECONNABORTED or message contains timeout
+  if (
+    error.code === 'ECONNABORTED' ||
+    (typeof error.message === 'string' && error.message.toLowerCase().includes('timeout'))
+  ) {
+    return 'The server took too long to respond. Please retry.';
+  }
+
+  // Failed connection: no response from server, network down, or connection error
+  if (!error.response) {
+    return 'Cannot reach the server';
+  }
+
+  const statusCode = error.response.status;
+
+  if (statusCode === 422) {
+    return 'The filter is not valid';
+  }
+
+  if (statusCode === 429) {
+    return 'Too many requests. Please wait a moment and try again.';
+  }
+
+  if (statusCode >= 500 && statusCode <= 599) {
+    if (statusCode === 503) {
+      return 'Service temporarily unavailable. Please retry.';
+    }
+    return 'An unexpected server error occurred. Please retry.';
+  }
+
+  const detail = error.response.data?.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail.trim();
+  }
+
+  return error.message || defaultMessage;
+};
+
 // Fallback user context
 export const DEFAULT_USER = {
   id: '',
@@ -300,9 +350,9 @@ export const dashboardService = {
       return [];
     }
   },
-  getTeamWorkload: async () => {
+  getTeamWorkload: async (params = {}) => {
     try {
-      const response = await apiClient.get('/dashboard/team-workload');
+      const response = await apiClient.get('/dashboard/team-workload', { params });
       return response.data;
     } catch {
       return [];
@@ -356,10 +406,14 @@ export const dashboardService = {
 // WebSocket Real-time Connection Helper
 export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) => {
   const token = localStorage.getItem('access_token');
+  if (!token) {
+    onStatusChange?.('offline');
+    return null;
+  }
   const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
   const urlObj = new URL('/api/v1/dashboard/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
   const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
-  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}?token=${encodeURIComponent(token)}`;
 
   try {
     onStatusChange?.('reconnecting');
@@ -385,7 +439,7 @@ export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) =>
     return ws;
   } catch (err) {
     onStatusChange?.('offline');
-    console.warn('WebSocket connection unavailable:', err);
+    if (onError) onError(err);
     return null;
   }
 };

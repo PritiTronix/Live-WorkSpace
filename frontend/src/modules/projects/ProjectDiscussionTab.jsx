@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
+import Avatar from '../../components/common/Avatar';
 
 /**
  * Screen 43: Project Discussion Tab
@@ -206,10 +207,11 @@ export const ProjectDiscussionTab = () => {
                   {/* Discussion Header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-space-sm">
-                      <img
-                        className="w-10 h-10 rounded-full object-cover ring-1 ring-border-subtle"
-                        src={d.author?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg"}
-                        alt={d.author?.full_name || 'Author'}
+                      <Avatar
+                        src={d.author?.avatar_url}
+                        name={d.author?.full_name || 'Project Member'}
+                        size="lg"
+                        ring="ring-1 ring-border-subtle"
                       />
                       <div>
                         <div className="flex items-center gap-2">

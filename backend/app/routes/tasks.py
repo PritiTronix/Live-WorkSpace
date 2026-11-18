@@ -243,14 +243,21 @@ async def create_task(
             )
 
     # Generate sequential project-specific task number or org-level task number
+    prefix = project.key if project else "TASK"
     if project:
         count_res = await db.execute(select(func.count(Task.id)).where(Task.project_id == payload.project_id))
-        count = count_res.scalar() or 0
-        task_number = f"{project.key}-{101 + count}"
     else:
         count_res = await db.execute(select(func.count(Task.id)).where(Task.organization_id == current_user.organization_id))
-        count = count_res.scalar() or 0
-        task_number = f"TASK-{101 + count}"
+    count = count_res.scalar() or 0
+
+    candidate_num = 101 + count
+    while True:
+        candidate_str = f"{prefix}-{candidate_num}"
+        existing = await db.execute(select(Task.id).where(Task.task_number == candidate_str))
+        if not existing.scalar():
+            task_number = candidate_str
+            break
+        candidate_num += 1
 
     now = datetime.now(timezone.utc)
     new_task = Task(

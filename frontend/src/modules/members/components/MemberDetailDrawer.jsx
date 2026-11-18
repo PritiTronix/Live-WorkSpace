@@ -18,6 +18,7 @@ import {
 import { membersService } from '../../../services/membersService';
 import { projectsService } from '../../../services/projectsService';
 import { authService } from '../../../services/api';
+import Avatar from '../../../components/common/Avatar';
 
 export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData, onMemberUpdated }) => {
   const navigate = useNavigate();
@@ -231,17 +232,14 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData, onMemb
 
           <div className="flex items-start gap-4">
             <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-xs bg-[#eeecff] dark:bg-[#2e2f41] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center justify-center font-extrabold text-2xl text-[#6040F0]">
-                {member?.avatar_url ? (
-                  <img
-                    src={member.avatar_url}
-                    alt={member.full_name || 'Member'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  member?.full_name ? member.full_name.charAt(0).toUpperCase() : 'M'
-                )}
-              </div>
+              <Avatar
+                src={member?.avatar_url}
+                name={member?.full_name || 'Member'}
+                size="xl"
+                shape="rounded-2xl"
+                ring="border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs"
+                className="w-16 h-16 text-2xl"
+              />
               <span
                 className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full shadow-xs ring-2 ring-white dark:ring-[#1a1b32] ${
                   member?.is_active !== false ? 'bg-[#28C078]' : 'bg-[#9C9CA9]'

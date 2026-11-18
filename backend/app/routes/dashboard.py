@@ -36,6 +36,7 @@ from reportlab.pdfgen import canvas
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
 from backend.app.models import Project, Task, Ticket, ProjectActivity, User, Organization
+from backend.app.services.sla import is_active_sla_breach
 from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
@@ -55,7 +56,8 @@ class DashboardMetrics(BaseModel):
     open_tickets: int = 0
     triage_count: Optional[int] = None
     work_in_progress: int = 0
-    active_squads_count: Optional[int] = None
+    active_teams_count: Optional[int] = None
+    active_squads_count: Optional[int] = None  # Alias for backward-compatibility
     on_hold: int = 0
     on_hold_subtext: Optional[str] = None
     sla_breached: int = 0
@@ -99,14 +101,18 @@ class ProjectProgressItem(BaseModel):
     id: str
     title: str
     progress: int
-    squads: str
+    teams: str
+    squads: str  # Alias for backward-compatibility
     target: str
+    is_overdue: bool = False
     status_color: str
 
 
 class TeamWorkloadItem(BaseModel):
     name: str
-    capacity: int
+    capacity: int  # Returns availability (100 - utilization)
+    availability: Optional[int] = None
+    utilization: Optional[int] = None
     status: str
     color: str
     desc: str
@@ -146,23 +152,59 @@ class DashboardFiltersResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Helpers for Filtering
+# Helpers
 # ---------------------------------------------------------------------------
 
+def pluralize(count: int, singular: str, plural: Optional[str] = None) -> str:
+    """Return '1 member' or '2 members' using single shared rule."""
+    p = plural if plural else f"{singular}s"
+    return f"{count} {singular if count == 1 else p}"
+
+
+def calculate_team_capacity(active_items: int, member_count: int) -> dict:
+    """
+    Capacity & Availability Formula:
+    - Baseline capacity assumption: 5 active concurrent items (tasks/tickets) per team member represents 100% workload utilization.
+    - Utilization = min(100, round((active_items / (member_count * 5)) * 100)) if member_count > 0 else 0
+    - Availability is 100% minus utilization (no work means 100% available).
+    - When active_items == 0, utilization is 0%, meaning availability is 100%.
+    - Returns availability percentage, utilization percentage, status text, and color badge.
+    """
+    safe_members = max(1, member_count)
+    utilization = min(100, int(round((active_items / (safe_members * 5.0)) * 100))) if member_count > 0 else 0
+    availability = max(0, 100 - utilization)
+
+    if utilization >= 85:
+        status_text = f"{availability}% Available (High Load)"
+        color = "bg-severity-critical"
+    elif utilization >= 40:
+        status_text = f"{availability}% Available (Optimal)"
+        color = "bg-primary-container"
+    else:
+        status_text = f"{availability}% Available"
+        color = "bg-status-resolved"
+
+    return {
+        "utilization": utilization,
+        "availability": availability,
+        "status": status_text,
+        "color": color,
+    }
+
+
 def _get_period_start(period: Optional[str], now: datetime) -> Optional[datetime]:
-    if not period:
+    if not period or period.lower().strip() in ("all", "all_time", "all-time", ""):
         return None
     p = period.lower().strip()
     if p in ("today",):
         return now.replace(hour=0, minute=0, second=0, microsecond=0)
     if p in ("this sprint", "this_sprint", "this week", "this_week"):
-        # Monday of current week
         days_since_monday = now.weekday()
         start = now - timedelta(days=days_since_monday)
         return start.replace(hour=0, minute=0, second=0, microsecond=0)
     if p in ("this month", "this_month"):
         return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    if "q" in p or "quarter" in p:
+    if "q" in p or "quarter" in p or p in ("this quarter", "this_quarter"):
         quarter_month = ((now.month - 1) // 3) * 3 + 1
         return now.replace(month=quarter_month, day=1, hour=0, minute=0, second=0, microsecond=0)
     return None
@@ -180,8 +222,9 @@ async def get_dashboard_filters(
     """Returns available departments, active projects, and dynamic date ranges from real organization data."""
     org_id = current_user.organization_id
     now = datetime.now(timezone.utc)
+    today = now.date()
 
-    # 1. Real departments in organization - deduplicated and case-normalized
+    # 1. Real departments in organization - deduplicated and normalized (trimmed, case-insensitive)
     dept_res = await db.execute(
         select(User.department)
         .where(User.organization_id == org_id, User.department.isnot(None))
@@ -207,14 +250,27 @@ async def get_dashboard_filters(
         for row in proj_res.all()
     ]
 
-    # 3. Dynamic date ranges computed from today's date (no fake sprint)
-    quarter = ((now.month - 1) // 3) + 1
-    year = now.year
+    # 3. Dynamic date ranges computed from today's date
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    import calendar
+    _, last_day = calendar.monthrange(today.year, today.month)
+    month_start = today.replace(day=1)
+    month_end = today.replace(day=last_day)
+
+    quarter = ((today.month - 1) // 3) + 1
+    quarter_start_month = (quarter - 1) * 3 + 1
+    quarter_end_month = quarter_start_month + 2
+    _, q_last_day = calendar.monthrange(today.year, quarter_end_month)
+    quarter_start = today.replace(month=quarter_start_month, day=1)
+    quarter_end = today.replace(month=quarter_end_month, day=q_last_day)
+
     date_ranges = [
-        {"id": "today", "label": "Today"},
-        {"id": "this_week", "label": "This Week"},
-        {"id": "this_month", "label": "This Month"},
-        {"id": "this_quarter", "label": f"Q{quarter} {year}"},
+        {"id": "today", "label": "Today", "range": today.strftime("%b %d, %Y")},
+        {"id": "this_week", "label": "This week", "range": f"{week_start.strftime('%b %d')} to {week_end.strftime('%b %d, %Y')}"},
+        {"id": "this_month", "label": "This month", "range": f"{month_start.strftime('%b %d')} to {month_end.strftime('%b %d, %Y')}"},
+        {"id": "this_quarter", "label": "This quarter", "range": f"{quarter_start.strftime('%b %d')} to {quarter_end.strftime('%b %d, %Y')}"},
     ]
 
     return DashboardFiltersResponse(
@@ -273,7 +329,10 @@ async def get_dashboard_metrics(
     if period_start:
         tasks_q = tasks_q.where(Task.created_at >= period_start)
     if eff_department:
-        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     task_res = await db.execute(tasks_q)
     tasks = task_res.scalars().all()
@@ -300,22 +359,24 @@ async def get_dashboard_metrics(
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
     if eff_department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
 
-    open_tickets = sum(1 for t in tickets if (t.status or "").lower() in ("open", "wip"))
+    open_tickets = sum(1 for t in tickets if (t.status or "").lower() == "open")
     wip_tickets = sum(1 for t in tickets if (t.status or "").lower() == "wip")
-    wip_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_progress")
-    work_in_progress = wip_tickets + wip_tasks
+    work_in_progress = wip_tickets
 
     on_hold_count = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
 
     # Triage count: tickets that are Open and unassigned
     triage_count = sum(1 for t in tickets if (t.status or "").lower() == "open" and not t.assignee_id)
 
-    # Active squads count: distinct active projects with WIP items
+    # Active teams count: distinct active projects with WIP items
     active_project_ids = set()
     for t in tickets:
         if (t.status or "").lower() in ("open", "wip"):
@@ -323,28 +384,15 @@ async def get_dashboard_metrics(
     for tk in tasks:
         if (tk.status or "").lower() == "in_progress" and tk.project_id:
             active_project_ids.add(tk.project_id)
-    active_squads_count = len(active_project_ids) if active_project_ids else (1 if work_in_progress > 0 else 0)
+    active_teams_count = len(active_project_ids) if active_project_ids else (1 if work_in_progress > 0 else 0)
 
-    # SLA calculations from real SLA timers/deadlines
+    # SLA calculations from centralized active breach definition
+    breached_count = sum(1 for t in tickets if is_active_sla_breach(t, now))
     tickets_with_timers = [t for t in tickets if t.deadline is not None]
     total_timers = len(tickets_with_timers)
-
-    breached_count = 0
     if total_timers > 0:
-        for t in tickets_with_timers:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if (t.status or "").lower() in ("resolved", "closed"):
-                if t.updated_at:
-                    up = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
-                    if up > dl:
-                        breached_count += 1
-            else:
-                if now > dl:
-                    breached_count += 1
         compliance_rate = round(((total_timers - breached_count) / total_timers) * 100.0, 1)
     else:
-        # Fallback to blocker count for breached count if no deadlines exist
-        breached_count = sum(1 for t in tickets if (t.severity or "").lower() == "blocker" and (t.status or "").lower() not in ("resolved", "closed"))
         compliance_rate = None  # None indicates no timers exist, displays "—"
 
     return DashboardMetrics(
@@ -353,11 +401,12 @@ async def get_dashboard_metrics(
         total_tasks=total_tasks,
         tasks_completion_rate=tasks_completion_rate,
         my_tasks=my_tasks,
-        my_tasks_due_today=my_tasks_due_today,
+        my_tasks_due_today=my_tasks_due_today if my_tasks_due_today > 0 else None,
         open_tickets=open_tickets,
         triage_count=triage_count if triage_count > 0 else None,
         work_in_progress=work_in_progress,
-        active_squads_count=active_squads_count if active_squads_count > 0 else None,
+        active_teams_count=active_teams_count if active_teams_count > 0 else None,
+        active_squads_count=active_teams_count if active_teams_count > 0 else None,
         on_hold=on_hold_count,
         on_hold_subtext=None,
         sla_breached=breached_count,
@@ -380,14 +429,18 @@ async def get_tasks_breakdown(
     eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
+    org_id = current_user.organization_id
 
-    tasks_q = select(Task.status).where(Task.organization_id == current_user.organization_id)
+    tasks_q = select(Task.status).where(Task.organization_id == org_id)
     if eff_project_id:
         tasks_q = tasks_q.where(Task.project_id == eff_project_id)
     if period_start:
         tasks_q = tasks_q.where(Task.created_at >= period_start)
     if eff_department:
-        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     t_res = await db.execute(tasks_q)
     statuses = [(s or "").lower() for s in t_res.scalars().all() if s]
@@ -426,12 +479,13 @@ async def get_tickets_severity(
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
     twenty_four_hours_ago = now - timedelta(hours=24)
+    org_id = current_user.organization_id
 
     tickets_q = (
         select(Ticket)
         .join(Ticket.project)
         .where(
-            Project.organization_id == current_user.organization_id,
+            Project.organization_id == org_id,
             Ticket.status.notin_(["resolved", "closed"]),
         )
     )
@@ -440,7 +494,10 @@ async def get_tickets_severity(
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
     if eff_department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     res = await db.execute(tickets_q)
     active_tickets = res.scalars().all()
@@ -485,23 +542,52 @@ async def get_sla_performance(
     eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
+    org_id = current_user.organization_id
 
-    tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == current_user.organization_id)
+    tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == org_id)
     if eff_project_id:
         tickets_q = tickets_q.where(Ticket.project_id == eff_project_id)
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
     if eff_department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     res = await db.execute(tickets_q)
     tickets = res.scalars().all()
 
     timed_tickets = [t for t in tickets if t.deadline is not None]
+    seven_days_ago = now - timedelta(days=7)
+    fourteen_days_ago = now - timedelta(days=14)
+
+    # Previous baseline period (7 to 14 days ago)
+    prev_timed = [
+        t for t in timed_tickets
+        if t.created_at and fourteen_days_ago <= (t.created_at if t.created_at.tzinfo else t.created_at.replace(tzinfo=timezone.utc)) < seven_days_ago
+    ]
+
     if timed_tickets:
-        breached = sum(1 for t in timed_tickets if (t.status or "").lower() not in ("resolved", "closed") and (t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)) < now)
+        breached = sum(
+            1 for t in timed_tickets
+            if (t.status or "").lower() not in ("resolved", "closed")
+            and (t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)) < now
+        )
         adherence = round(((len(timed_tickets) - breached) / len(timed_tickets) * 100), 1)
-        adherence_delta = "+1.8%" if adherence >= 90 else "-2.4%"
+
+        # Only compute adherence_delta if a valid previous baseline exists
+        if prev_timed:
+            prev_breached = sum(
+                1 for t in prev_timed
+                if (t.status or "").lower() not in ("resolved", "closed")
+                and (t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)) < seven_days_ago
+            )
+            prev_adherence = round(((len(prev_timed) - prev_breached) / len(prev_timed) * 100), 1)
+            delta = round(adherence - prev_adherence, 1)
+            adherence_delta = f"{'+' if delta >= 0 else ''}{delta}%"
+        else:
+            adherence_delta = None
     else:
         adherence = None
         adherence_delta = None
@@ -537,10 +623,28 @@ async def get_sla_performance(
             diff_mins = max(1, int((u_at - c_at).total_seconds() / 60))
             mttr_durations.append(diff_mins)
 
+    # Prior week baseline for MTTR
+    prev_resolved = [
+        t for t in resolved_tickets
+        if t.updated_at and fourteen_days_ago <= (t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)) < seven_days_ago
+    ]
+    prev_mttr_durations = []
+    for t in prev_resolved:
+        if t.created_at and t.updated_at:
+            c_at = t.created_at if t.created_at.tzinfo else t.created_at.replace(tzinfo=timezone.utc)
+            u_at = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
+            diff_mins = max(1, int((u_at - c_at).total_seconds() / 60))
+            prev_mttr_durations.append(diff_mins)
+
     if mttr_durations:
         avg_mins = sum(mttr_durations) // len(mttr_durations)
         average_mttr = f"{avg_mins}m" if avg_mins < 60 else f"{avg_mins // 60}h"
-        mttr_delta = "nominal"
+        if prev_mttr_durations:
+            prev_avg = sum(prev_mttr_durations) // len(prev_mttr_durations)
+            diff = avg_mins - prev_avg
+            mttr_delta = f"{'+' if diff >= 0 else ''}{diff}m vs last week"
+        else:
+            mttr_delta = None
     else:
         average_mttr = "—"
         mttr_delta = None
@@ -558,17 +662,32 @@ async def get_sla_performance(
 @router.get("/project-progress", response_model=List[ProjectProgressItem], summary="Get active project progress metrics")
 async def get_project_progress(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
+    period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get active projects with real calculated task completion progress."""
+    """Get active projects with real calculated task completion progress strictly matching Tasks page."""
+    org_id = current_user.organization_id
+    eff_project_id = project_id or project
+    eff_department = department or team
+    now = datetime.now(timezone.utc)
+    today = now.date()
+
     query = (
         select(Project)
         .options(selectinload(Project.tasks), selectinload(Project.members))
-        .where(Project.organization_id == current_user.organization_id, Project.is_archived.is_(False))
+        .where(Project.organization_id == org_id, Project.is_archived.is_(False))
     )
-    if project_id:
-        query = query.where(Project.id == project_id)
+    if eff_project_id:
+        query = query.where(Project.id == eff_project_id)
+    if eff_department:
+        query = query.join(Project.members).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
     query = query.order_by(Project.created_at.asc()).limit(6)
 
     p_res = await db.execute(query)
@@ -576,100 +695,130 @@ async def get_project_progress(
 
     items = []
     for p in projects:
-        total_tasks = len(p.tasks) if p.tasks else 0
-        done_tasks = sum(1 for t in p.tasks if (t.status or "").lower() == "done") if p.tasks else 0
+        # Load tasks strictly for this project and tenant
+        p_tasks = [t for t in p.tasks if getattr(t, "organization_id", org_id) == org_id]
+        total_tasks = len(p_tasks)
+        done_tasks = sum(1 for t in p_tasks if (t.status or "").lower() == "done")
         prog = int(round(done_tasks / total_tasks * 100)) if total_tasks > 0 else 0
-        target = p.target_date.strftime("%b %d") if p.target_date else "Flexible"
-        squads = f"{len(p.members)} members assigned" if p.members else "Team assigned"
+
+        # Target date with year, marked overdue when past today
+        if p.target_date:
+            target_dt = p.target_date.date() if hasattr(p.target_date, "date") else p.target_date
+            is_overdue = target_dt < today
+            date_str = p.target_date.strftime("%b %d, %Y")
+            target = f"{date_str} (Overdue)" if is_overdue else date_str
+        else:
+            is_overdue = False
+            target = "Flexible"
+
+        member_count = len(p.members) if p.members else 0
+        teams_str = f"{pluralize(member_count, 'member')} assigned" if member_count > 0 else "Team assigned"
+
         items.append(
             ProjectProgressItem(
                 id=p.id,
                 title=p.name,
                 progress=prog,
-                squads=squads,
+                teams=teams_str,
+                squads=teams_str,
                 target=target,
+                is_overdue=is_overdue,
                 status_color=p.color or "bg-btn-primary",
             )
         )
     return items
 
 
-@router.get("/team-workload", response_model=List[TeamWorkloadItem], summary="Get team squad workload and capacity")
+@router.get("/team-workload", response_model=List[TeamWorkloadItem], summary="Get team workload and capacity")
 async def get_team_workload(
+    project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
+    period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Aggregate member workloads by real departments across the organization."""
+    """Aggregate member workloads by normalized teams across the organization."""
     org_id = current_user.organization_id
+    eff_project_id = project_id or project
+    eff_department = department or team
+    now = datetime.now(timezone.utc)
+    period_start = _get_period_start(period, now)
 
-    # Fetch users with active items
-    u_res = await db.execute(
-        select(User).where(User.organization_id == org_id)
-    )
+    # Fetch users in organization
+    user_q = select(User).where(User.organization_id == org_id)
+    if eff_department:
+        user_q = user_q.where(User.department.ilike(eff_department.strip()))
+    u_res = await db.execute(user_q)
     users = u_res.scalars().all()
     if not users:
         return []
 
-    # Active tasks in org
-    t_res = await db.execute(
-        select(Task.assignee_id).where(
-            Task.organization_id == org_id,
-            Task.status.notin_(["done", "cancelled"])
-        )
+    # Active tasks in org matching filters
+    t_q = select(Task.assignee_id).where(
+        Task.organization_id == org_id,
+        Task.status.notin_(["done", "cancelled"])
     )
+    if eff_project_id:
+        t_q = t_q.where(Task.project_id == eff_project_id)
+    if period_start:
+        t_q = t_q.where(Task.created_at >= period_start)
+    t_res = await db.execute(t_q)
     active_tasks = t_res.scalars().all()
 
-    # Active tickets in org
-    tk_res = await db.execute(
-        select(Ticket.assignee_id).join(Ticket.project).where(
-            Project.organization_id == org_id,
-            Ticket.status.notin_(["resolved", "closed"])
-        )
+    # Active tickets in org matching filters
+    tk_q = select(Ticket.assignee_id).join(Ticket.project).where(
+        Project.organization_id == org_id,
+        Ticket.status.notin_(["resolved", "closed"])
     )
+    if eff_project_id:
+        tk_q = tk_q.where(Ticket.project_id == eff_project_id)
+    if period_start:
+        tk_q = tk_q.where(Ticket.created_at >= period_start)
+    tk_res = await db.execute(tk_q)
     active_tickets = tk_res.scalars().all()
 
-    # Group by department
+    # Group by normalized department name (trim, lowercase so Engineering and engineering are one team)
     dept_map: Dict[str, List[User]] = {}
+    dept_display: Dict[str, str] = {}
     for u in users:
-        dept = u.department or "Engineering"
-        dept_map.setdefault(dept, []).append(u)
+        raw_dept = (u.department or "General").strip()
+        if not raw_dept:
+            raw_dept = "General"
+        norm_key = raw_dept.lower()
+        if norm_key not in dept_display:
+            dept_display[norm_key] = raw_dept.title()
+        dept_map.setdefault(norm_key, []).append(u)
 
-    color_palette = ["bg-primary-container", "bg-status-resolved", "bg-[#3888F8]"]
     workloads = []
+    # Sort teams by member count descending then name
+    sorted_teams = sorted(dept_map.items(), key=lambda x: (-len(x[1]), x[0]))
 
-    for idx, (dept_name, dept_users) in enumerate(dept_map.items()):
+    for norm_key, dept_users in sorted_teams:
         dept_user_ids = {u.id for u in dept_users}
         dept_tasks_count = sum(1 for a_id in active_tasks if a_id in dept_user_ids)
         dept_tickets_count = sum(1 for a_id in active_tickets if a_id in dept_user_ids)
         total_items = dept_tasks_count + dept_tickets_count
 
-        # Compute capacity: items per user
-        items_per_user = total_items / max(1, len(dept_users))
-        capacity = min(100, max(20, int(round(items_per_user * 15 + 30))))
+        member_count = len(dept_users)
+        capacity_info = calculate_team_capacity(total_items, member_count)
 
-        if capacity > 85:
-            status_text = f"{capacity}% Overload Warning"
-            color = "bg-severity-critical"
-        elif capacity >= 60:
-            status_text = f"{capacity}% Optimal"
-            color = color_palette[idx % len(color_palette)]
-        else:
-            status_text = f"{capacity}% Available"
-            color = "bg-status-resolved"
-
-        desc = f"{len(dept_users)} Members • {total_items} active items"
+        desc = f"{pluralize(member_count, 'Member')} • {pluralize(total_items, 'active item')}"
 
         workloads.append(
             TeamWorkloadItem(
-                name=dept_name,
-                capacity=capacity,
-                status=status_text,
-                color=color,
+                name=dept_display[norm_key],
+                capacity=capacity_info["availability"],
+                availability=capacity_info["availability"],
+                utilization=capacity_info["utilization"],
+                status=capacity_info["status"],
+                color=capacity_info["color"],
                 desc=desc,
             )
         )
 
-    return workloads[:4]
+    return workloads
 
 
 @router.get("/priority-tickets", response_model=List[PriorityTicketItem], summary="Get priority tickets requiring attention")
@@ -687,13 +836,14 @@ async def get_priority_tickets(
     eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
+    org_id = current_user.organization_id
 
     query = (
         select(Ticket)
         .options(selectinload(Ticket.assignee), selectinload(Ticket.project))
         .join(Ticket.project)
         .where(
-            Project.organization_id == current_user.organization_id,
+            Project.organization_id == org_id,
             Ticket.status.notin_(["resolved", "closed"]),
             Ticket.severity.in_(["blocker", "critical", "major"]),
         )
@@ -703,7 +853,10 @@ async def get_priority_tickets(
     if period_start:
         query = query.where(Ticket.created_at >= period_start)
     if eff_department:
-        query = query.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+        query = query.join(User, Ticket.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     res = await db.execute(query.order_by(desc(Ticket.created_at)).limit(5))
     tickets = res.scalars().all()
@@ -768,18 +921,35 @@ async def get_priority_tickets(
 @router.get("/activity-timeline", response_model=List[ActivityTimelineItem], summary="Get recent activity log events")
 async def get_activity_timeline(
     project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    department: Optional[str] = Query(None),
+    team: Optional[str] = Query(None),
+    period: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Recent project and ticket activities within current tenant."""
+    org_id = current_user.organization_id
+    eff_project_id = project_id or project
+    eff_department = department or team
+    now = datetime.now(timezone.utc)
+    period_start = _get_period_start(period, now)
+
     query = (
         select(ProjectActivity)
         .options(selectinload(ProjectActivity.actor), selectinload(ProjectActivity.project))
         .join(ProjectActivity.project)
-        .where(Project.organization_id == current_user.organization_id)
+        .where(Project.organization_id == org_id)
     )
-    if project_id:
-        query = query.where(ProjectActivity.project_id == project_id)
+    if eff_project_id:
+        query = query.where(ProjectActivity.project_id == eff_project_id)
+    if period_start:
+        query = query.where(ProjectActivity.created_at >= period_start)
+    if eff_department:
+        query = query.join(ProjectActivity.actor).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
 
     res = await db.execute(query.order_by(desc(ProjectActivity.created_at)).limit(10))
     activities = res.scalars().all()
@@ -938,7 +1108,10 @@ async def export_workspace_summary(
     if period_start:
         tasks_q = tasks_q.where(Task.created_at >= period_start)
     if eff_department:
-        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tasks_q = tasks_q.join(User, Task.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
     task_res = await db.execute(tasks_q)
     tasks = task_res.scalars().all()
     total_tasks = len(tasks)
@@ -960,7 +1133,10 @@ async def export_workspace_summary(
     if period_start:
         tickets_q = tickets_q.where(Ticket.created_at >= period_start)
     if eff_department:
-        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(User.department.ilike(eff_department))
+        tickets_q = tickets_q.join(User, Ticket.assignee_id == User.id).where(
+            User.organization_id == org_id,
+            User.department.ilike(eff_department.strip())
+        )
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
 
@@ -977,33 +1153,20 @@ async def export_workspace_summary(
     minor_count = sum(1 for t in active_tickets if (t.severity or "").lower() == "minor")
 
     twenty_four_hours_ago = now_utc - timedelta(hours=24)
-    violations_24h = 0
-    for t in active_tickets:
-        if t.deadline:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if twenty_four_hours_ago <= dl <= now_utc:
-                violations_24h += 1
-        elif (t.severity or "").lower() == "blocker":
-            violations_24h += 1
+    violations_24h = sum(
+        1 for t in active_tickets
+        if is_active_sla_breach(t, now_utc)
+        and t.deadline
+        and twenty_four_hours_ago <= (t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)) <= now_utc
+    )
 
-    # SLA Breached and compliance
+    # SLA Breached and compliance from centralized active breach definition
+    breached_count = sum(1 for t in tickets if is_active_sla_breach(t, now_utc))
     tickets_with_timers = [t for t in tickets if t.deadline is not None]
     if tickets_with_timers:
-        breached_count = 0
-        for t in tickets_with_timers:
-            dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if (t.status or "").lower() in ("resolved", "closed"):
-                if t.updated_at:
-                    up = t.updated_at if t.updated_at.tzinfo else t.updated_at.replace(tzinfo=timezone.utc)
-                    if up > dl:
-                        breached_count += 1
-            else:
-                if now_utc > dl:
-                    breached_count += 1
         compliance_rate_val = round(((len(tickets_with_timers) - breached_count) / len(tickets_with_timers)) * 100.0, 1)
         compliance_rate_str = f"{compliance_rate_val}%"
     else:
-        breached_count = blocker_count
         compliance_rate_str = "—"
 
     # Per-project breakdown
@@ -1444,7 +1607,7 @@ async def dashboard_websocket_endpoint(
     if not user:
         return
 
-    target_ws = workspace_id or user.organization_id
+    target_ws = user.organization_id
     await ws_manager.connect(websocket, target_ws)
     await websocket.send_text(
         json.dumps({"type": "CONNECTION_ESTABLISHED", "payload": {"workspace_id": target_ws}})

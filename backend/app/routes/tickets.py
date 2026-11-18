@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.app.core.config import settings
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
+from backend.app.services.sla import is_active_sla_breach, check_ticket_sla_breach
 from backend.app.models import (
     Ticket,
     Project,
@@ -142,32 +143,25 @@ async def get_critical_priority_issues(
     critical = []
     major = []
 
-    sla_breached_count = 0
+    # Active SLA breach defined once: deadline in past and status not resolved or closed
+    sla_breached_count = sum(1 for t in all_tickets if is_active_sla_breach(t, now))
 
     for t in all_tickets:
-        is_breached = False
+        is_breached = is_active_sla_breach(t, now)
         is_approaching = False
 
-        if t.status not in ("resolved", "closed"):
-            if t.deadline:
-                t_deadline = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-                diff_sec = (t_deadline - now).total_seconds()
-                if diff_sec < 0:
-                    is_breached = True
-                elif diff_sec < 3600:  # within 1 hour
-                    is_approaching = True
-            elif t.severity == "blocker":
-                is_breached = True
-
-        if is_breached:
-            sla_breached_count += 1
+        if (t.status or "").lower() not in ("resolved", "closed") and t.deadline and not is_breached:
+            t_deadline = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
+            diff_sec = (t_deadline - now).total_seconds()
+            if 0 <= diff_sec < 3600:
+                is_approaching = True
 
         # Check sla_status filter if specified
         if sla_status and sla_status.lower() != "all":
             flt = sla_status.lower()
             if flt == "breached" and not is_breached:
                 continue
-            elif flt == "approaching" and not (is_approaching or is_breached):
+            elif flt == "approaching" and not is_approaching:
                 continue
             elif flt == "stable" and (is_breached or is_approaching):
                 continue
@@ -210,13 +204,14 @@ async def get_ticket_stats(
     res = await db.execute(query)
     tickets = res.scalars().all()
 
+    now = datetime.now(timezone.utc)
     total = len(tickets)
-    open_count = sum(1 for t in tickets if t.status == "open")
-    wip_count = sum(1 for t in tickets if t.status == "wip")
-    on_hold_count = sum(1 for t in tickets if t.status == "on_hold")
-    resolved_count = sum(1 for t in tickets if t.status == "resolved")
-    closed_count = sum(1 for t in tickets if t.status == "closed")
-    sla_breached = sum(1 for t in tickets if t.severity == "blocker" and t.status not in ("resolved", "closed"))
+    open_count = sum(1 for t in tickets if (t.status or "").lower() == "open")
+    wip_count = sum(1 for t in tickets if (t.status or "").lower() == "wip")
+    on_hold_count = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
+    resolved_count = sum(1 for t in tickets if (t.status or "").lower() == "resolved")
+    closed_count = sum(1 for t in tickets if (t.status or "").lower() == "closed")
+    sla_breached = sum(1 for t in tickets if is_active_sla_breach(t, now))
 
     return TicketStats(
         total=total,
@@ -229,40 +224,110 @@ async def get_ticket_stats(
     )
 
 
-@router.get("/board")
-async def get_ticket_board(
-    project_id: Optional[str] = Query(None),
-    severity: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """Screen 62: Tickets grouped by status columns for the Kanban board."""
+def normalize_ticket_status(val: Optional[str]) -> Optional[str]:
+    if not val or val.lower() == "all":
+        return None
+    normalized = val.lower().strip()
+    if normalized in ("wip", "in_progress", "in-progress", "inprogress"):
+        return "wip"
+    if normalized in ("on_hold", "on-hold", "onhold"):
+        return "on_hold"
+    return normalized
+
+
+def normalize_ticket_severity(val: Optional[str]) -> Optional[str]:
+    if not val or val.lower() == "all":
+        return None
+    return val.lower().strip()
+
+
+async def get_filtered_tickets_query(
+    db: AsyncSession,
+    organization_id: str,
+    project_id: Optional[str] = None,
+    severity: Optional[str] = None,
+    status: Optional[str] = None,
+    assignee_id: Optional[str] = None,
+    search: Optional[str] = None,
+    sla: Optional[str] = None,
+    sla_status: Optional[str] = None,
+) -> List[Ticket]:
+    """
+    Unified filtering logic for List, Board, and Priority ticket endpoints.
+    Strictly scoped to the user's organization.
+    Eagerly loads all nested relationships required by TicketRead.
+    """
     query = (
         select(Ticket)
         .options(
             selectinload(Ticket.assignee),
             selectinload(Ticket.reporter),
             selectinload(Ticket.project),
-            selectinload(Ticket.comments),
-            selectinload(Ticket.attachments),
-            selectinload(Ticket.activities),
+            selectinload(Ticket.comments).selectinload(TicketComment.author),
+            selectinload(Ticket.attachments).selectinload(TicketAttachment.uploader),
+            selectinload(Ticket.activities).selectinload(TicketActivity.actor),
         )
         .join(Ticket.project)
-        .where(Project.organization_id == current_user.organization_id)
+        .where(Project.organization_id == organization_id)
     )
 
     if project_id and project_id.lower() != "all":
         query = query.where(Ticket.project_id == project_id)
-    if severity and severity.lower() != "all":
-        query = query.where(Ticket.severity == severity.lower())
-    if search:
+
+    norm_sev = normalize_ticket_severity(severity)
+    if norm_sev:
+        query = query.where(Ticket.severity == norm_sev)
+
+    norm_status = normalize_ticket_status(status)
+    if norm_status == "active":
+        query = query.where(Ticket.status.notin_(["resolved", "closed"]))
+    elif norm_status:
+        query = query.where(Ticket.status == norm_status)
+
+    if assignee_id and assignee_id.lower() != "all":
+        query = query.where(Ticket.assignee_id == assignee_id)
+
+    if search and search.strip():
         s = f"%{search.strip()}%"
         query = query.where(Ticket.title.ilike(s) | Ticket.ticket_number.ilike(s))
 
     query = query.order_by(desc(Ticket.created_at))
     res = await db.execute(query)
     tickets = res.scalars().all()
+
+    effective_sla = (sla or sla_status or "").lower()
+    if effective_sla == "breached":
+        now = datetime.now(timezone.utc)
+        tickets = [t for t in tickets if is_active_sla_breach(t, now)]
+
+    return tickets
+
+
+@router.get("/board")
+async def get_ticket_board(
+    project_id: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    status_filter: Optional[str] = Query(None),
+    assignee_id: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    sla: Optional[str] = Query(None),
+    sla_status: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Screen 62: Tickets grouped by status columns for the Kanban board."""
+    tickets = await get_filtered_tickets_query(
+        db=db,
+        organization_id=current_user.organization_id,
+        project_id=project_id,
+        severity=severity,
+        status=status or status_filter,
+        assignee_id=assignee_id,
+        search=search,
+        sla=sla,
+        sla_status=sla_status,
+    )
 
     board: Dict[str, List] = {
         "open": [],
@@ -273,8 +338,11 @@ async def get_ticket_board(
     }
 
     for t in tickets:
-        status_key = t.status.lower() if t.status.lower() in board else "open"
-        board[status_key].append(TicketRead.model_validate(t))
+        status_key = (t.status or "").lower()
+        if status_key in board:
+            board[status_key].append(TicketRead.model_validate(t))
+        else:
+            board["open"].append(TicketRead.model_validate(t))
 
     return board
 
@@ -282,37 +350,28 @@ async def get_ticket_board(
 @router.get("/priority")
 async def get_ticket_priority(
     project_id: Optional[str] = Query(None),
+    severity: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None),
+    assignee_id: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    sla: Optional[str] = Query(None),
+    sla_status: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 63: Tickets grouped by priority swimlanes/sections."""
-    query = (
-        select(Ticket)
-        .options(
-            selectinload(Ticket.assignee),
-            selectinload(Ticket.reporter),
-            selectinload(Ticket.project),
-            selectinload(Ticket.comments),
-            selectinload(Ticket.attachments),
-            selectinload(Ticket.activities),
-        )
-        .join(Ticket.project)
-        .where(Project.organization_id == current_user.organization_id)
+    tickets = await get_filtered_tickets_query(
+        db=db,
+        organization_id=current_user.organization_id,
+        project_id=project_id,
+        severity=severity,
+        status=status or status_filter,
+        assignee_id=assignee_id,
+        search=search,
+        sla=sla,
+        sla_status=sla_status,
     )
-
-    if project_id and project_id.lower() != "all":
-        query = query.where(Ticket.project_id == project_id)
-    if status_filter and status_filter.lower() != "all":
-        query = query.where(Ticket.status == status_filter.lower())
-    if search:
-        s = f"%{search.strip()}%"
-        query = query.where(Ticket.title.ilike(s) | Ticket.ticket_number.ilike(s))
-
-    query = query.order_by(desc(Ticket.created_at))
-    res = await db.execute(query)
-    tickets = res.scalars().all()
 
     priority_groups: Dict[str, List] = {
         "blocker": [],
@@ -322,8 +381,11 @@ async def get_ticket_priority(
     }
 
     for t in tickets:
-        p_key = t.severity.lower() if t.severity.lower() in priority_groups else "major"
-        priority_groups[p_key].append(TicketRead.model_validate(t))
+        p_key = (t.severity or "").lower()
+        if p_key in priority_groups:
+            priority_groups[p_key].append(TicketRead.model_validate(t))
+        else:
+            priority_groups["major"].append(TicketRead.model_validate(t))
 
     return priority_groups
 
@@ -336,39 +398,23 @@ async def list_tickets(
     status: Optional[str] = Query(None, description="Filter by status (open, wip, on_hold, resolved, closed)"),
     assignee_id: Optional[str] = Query(None, description="Filter by assignee ID"),
     search: Optional[str] = Query(None, description="Search in title or ticket number"),
+    sla: Optional[str] = Query(None, description="Filter by SLA status: breached"),
+    sla_status: Optional[str] = Query(None, description="Alias for sla filter: breached"),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Screen 61: List tickets for dashboard table with filtering."""
-    query = (
-        select(Ticket)
-        .options(
-            selectinload(Ticket.assignee),
-            selectinload(Ticket.reporter),
-            selectinload(Ticket.project),
-            selectinload(Ticket.comments),
-            selectinload(Ticket.attachments),
-            selectinload(Ticket.activities),
-        )
-        .join(Ticket.project)
-        .where(Project.organization_id == current_user.organization_id)
+    return await get_filtered_tickets_query(
+        db=db,
+        organization_id=current_user.organization_id,
+        project_id=project_id,
+        severity=severity,
+        status=status,
+        assignee_id=assignee_id,
+        search=search,
+        sla=sla,
+        sla_status=sla_status,
     )
-
-    if project_id and project_id.lower() != "all":
-        query = query.where(Ticket.project_id == project_id)
-    if severity and severity.lower() != "all":
-        query = query.where(Ticket.severity == severity.lower())
-    if status and status.lower() != "all":
-        query = query.where(Ticket.status == status.lower())
-    if assignee_id and assignee_id.lower() != "all":
-        query = query.where(Ticket.assignee_id == assignee_id)
-    if search:
-        s = f"%{search.strip()}%"
-        query = query.where(Ticket.title.ilike(s) | Ticket.ticket_number.ilike(s))
-
-    query = query.order_by(desc(Ticket.created_at))
-    res = await db.execute(query)
-    return res.scalars().all()
 
 
 @router.post("", response_model=TicketRead, status_code=status.HTTP_201_CREATED)
@@ -413,13 +459,11 @@ async def create_ticket(
     for attempt in range(MAX_RETRIES):
         try:
             async with db.begin_nested():
-                # Query highest existing ticket number within organization's projects
+                # Query highest existing ticket number globally to adhere to global unique constraint
                 q = (
                     select(Ticket.ticket_number)
-                    .join(Ticket.project)
-                    .where(Project.organization_id == current_user.organization_id)
                     .order_by(desc(Ticket.created_at))
-                    .limit(200)
+                    .limit(500)
                 )
                 try:
                     if db.bind and db.bind.dialect.name == "postgresql":
@@ -437,7 +481,14 @@ async def create_ticket(
                                 max_num = val
                         except (IndexError, ValueError):
                             pass
-                tkt_num = f"TKT-{max_num + 1}"
+                candidate_num = max_num + 1 + attempt
+                while True:
+                    candidate_str = f"TKT-{candidate_num}"
+                    existing = await db.execute(select(Ticket.id).where(Ticket.ticket_number == candidate_str))
+                    if not existing.scalar():
+                        tkt_num = candidate_str
+                        break
+                    candidate_num += 1
 
                 new_ticket = Ticket(
                     ticket_number=tkt_num,

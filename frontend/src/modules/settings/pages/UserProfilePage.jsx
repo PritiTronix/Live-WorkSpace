@@ -13,17 +13,14 @@ import {
   Calendar,
   CheckCircle2,
   TrendingUp,
-  ArrowDown,
   Layers,
-  AlertTriangle,
   Flame,
-  BadgeAlert,
   Server,
   Lock,
   MessageSquare,
   Phone,
-  MapPin,
-  ExternalLink,
+  Building,
+  Shield,
   Laptop
 } from 'lucide-react';
 import { apiClient } from '../../../services/api';
@@ -56,11 +53,63 @@ export const UserProfilePage = () => {
     fetchProfile();
   }, []);
 
+  // Listen to profile updates for instant reactivity
+  useEffect(() => {
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setUser((prev) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
+  }, []);
+
   const triggerToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 3500);
+  };
+
+  // Compute real current quarter label
+  const now = new Date();
+  const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+  const currentQuarterLabel = `Q${currentQuarter} ${now.getFullYear()}`;
+
+  // Parse user's real browser & OS for current session
+  const getDeviceAndBrowser = () => {
+    if (typeof navigator === 'undefined') return { os: 'Desktop', browser: 'Browser' };
+    const ua = navigator.userAgent;
+    let os = 'Unknown OS';
+    if (ua.indexOf('Win') !== -1) os = 'Windows';
+    else if (ua.indexOf('Mac') !== -1) os = 'macOS';
+    else if (ua.indexOf('Linux') !== -1) os = 'Linux';
+    else if (ua.indexOf('Android') !== -1) os = 'Android';
+    else if (ua.indexOf('like Mac') !== -1) os = 'iOS';
+
+    let browser = 'Browser';
+    if (ua.indexOf('Firefox') !== -1) browser = 'Firefox';
+    else if (ua.indexOf('Edg') !== -1) browser = 'Edge';
+    else if (ua.indexOf('Chrome') !== -1) browser = 'Chrome';
+    else if (ua.indexOf('Safari') !== -1) browser = 'Safari';
+
+    return { os, browser };
+  };
+
+  const { os: clientOs, browser: clientBrowser } = getDeviceAndBrowser();
+
+  const displayName = user?.display_name || user?.full_name || 'Team Member';
+  const initialLetter = user?.full_name ? user.full_name.trim().charAt(0).toUpperCase() : 'U';
+
+  const opVelocity = user?.operational_velocity;
+  const activeQueue = user?.active_queue;
+  const orgInfo = user?.organization;
+
+  const severityColor = (sev) => {
+    const s = (sev || '').toLowerCase();
+    if (s === 'blocker' || s === 'critical') return 'bg-[#F55354]/15 text-[#F55354] border-[#F55354]/20';
+    if (s === 'major' || s === 'high') return 'bg-[#F8A040]/15 text-[#F8A040] border-[#F8A040]/20';
+    return 'bg-[#3888F8]/15 text-[#3888F8] border-[#3888F8]/20';
   };
 
   return (
@@ -89,28 +138,28 @@ export const UserProfilePage = () => {
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="h-10 px-4 rounded-lg bg-[#6040F0] hover:bg-[#5639D8] text-white text-sm font-semibold flex items-center gap-2 shadow-xs transition-all active:scale-95"
+              className="h-10 px-4 rounded-lg bg-[#6040F0] hover:bg-[#5639D8] text-white text-sm font-semibold flex items-center gap-2 shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Edit3 className="w-4 h-4" />
               <span>Edit Profile</span>
             </button>
             <button
               onClick={() => setIsPasswordModalOpen(true)}
-              className="h-10 px-4 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#141529] dark:text-white text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-2 shadow-xs transition-all"
+              className="h-10 px-4 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#141529] dark:text-white text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-2 shadow-xs transition-all cursor-pointer"
             >
               <Key className="w-4 h-4 text-[#9C9CA9]" />
               <span>Change Password</span>
             </button>
             <button
               onClick={() => navigate('/workspace/settings/notifications')}
-              className="h-10 px-3.5 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-1.5 shadow-xs transition-colors"
+              className="h-10 px-3.5 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Notifications</span>
             </button>
             <button
               onClick={() => navigate('/workspace/settings/appearance')}
-              className="h-10 px-3.5 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-1.5 shadow-xs transition-colors"
+              className="h-10 px-3.5 rounded-lg bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-sm font-semibold border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
               <Palette className="w-4 h-4" />
               <span className="hidden sm:inline">Theme</span>
@@ -123,7 +172,7 @@ export const UserProfilePage = () => {
           <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-[#6040F0]/10 blur-3xl pointer-events-none"></div>
           <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              {/* Avatar with micro badge */}
+              {/* Avatar with initials fallback */}
               <div className="relative group">
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shadow-md ring-4 ring-[#F5F4FC] dark:ring-[#242542] bg-[#eeecff] dark:bg-[#2e2f41]">
                   {user?.avatar_url ? (
@@ -134,37 +183,46 @@ export const UserProfilePage = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-extrabold text-3xl text-[#6040F0]">
-                      {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'A'}
+                      {initialLetter}
                     </div>
                   )}
                 </div>
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-[#6040F0] hover:bg-[#5639D8] text-white shadow-md transition-transform active:scale-90"
-                  title="Upload new photo"
+                  className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-[#6040F0] hover:bg-[#5639D8] text-white shadow-md transition-transform active:scale-90 cursor-pointer"
+                  title="Update profile photo"
                 >
                   <Camera className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Name & Organization Metadata */}
+              {/* Name & Metadata */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h2 className="text-xl sm:text-2xl font-extrabold text-[#141529] dark:text-white">
-                    {user?.full_name || 'Alex Rivera'}
+                    {displayName}
                   </h2>
-                  <span className="px-3 py-0.5 rounded-full bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] text-xs font-bold">
-                    {user?.title || 'Incident Lead (Principal SRE)'}
-                  </span>
+                  {user?.title && (
+                    <span className="px-3 py-0.5 rounded-full bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] text-xs font-bold">
+                      {user.title}
+                    </span>
+                  )}
+                  {user?.role && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#F5F4FC] dark:bg-[#242542] text-[#5C5C70] dark:text-[#cabeff] text-xs font-semibold capitalize border border-[#E5E5EF] dark:border-[#2e2f41]">
+                      {user.role}
+                    </span>
+                  )}
                 </div>
-                <p className="text-sm text-[#5C5C70] dark:text-[#a0a0b8] flex items-center gap-1.5 font-medium">
-                  <Server className="w-4 h-4 text-[#9C9CA9]" />
-                  <span>{user?.department || 'Infrastructure & Reliability Engineering'}</span>
-                </p>
+                {user?.department && (
+                  <p className="text-sm text-[#5C5C70] dark:text-[#a0a0b8] flex items-center gap-1.5 font-medium">
+                    <Server className="w-4 h-4 text-[#9C9CA9]" />
+                    <span>{user.department}</span>
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1 text-[#9C9CA9] text-xs">
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5" />
-                    <span>{user?.email || ''}</span>
+                    <span>{user?.email || '—'}</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
@@ -179,23 +237,25 @@ export const UserProfilePage = () => {
                             month: 'short',
                             year: 'numeric',
                           })
-                        : 'March 2023'}
+                        : '—'}
                     </span>
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Status Badges */}
+            {/* Real Account Authentication Status Badge */}
             <div className="flex items-center gap-3 self-start lg:self-center bg-[#F5F4FC] dark:bg-[#242542] px-4 py-3 rounded-xl border border-[#E5E5EF] dark:border-[#2e2f41]">
               <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1a1b32] flex items-center justify-center text-[#28C078] shadow-xs">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-[#141529] dark:text-white">
-                  Hardware 2FA Active
+                  Account Active
                 </span>
-                <span className="text-xs text-[#9C9CA9]">YubiKey 5C NFC Verified</span>
+                <span className="text-xs text-[#9C9CA9]">
+                  {user?.email_verified ? 'Email Verified • Standard Access' : 'Standard Password Authentication'}
+                </span>
               </div>
             </div>
           </div>
@@ -205,7 +265,7 @@ export const UserProfilePage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Column 1: Personal Work & Operational Summary (7 Cols) */}
           <div className="lg:col-span-7 flex flex-col space-y-6">
-            {/* Metrics Strip */}
+            {/* Operational Velocity - Real Scoped Data */}
             <div className="bg-white dark:bg-[#1a1b32] rounded-2xl p-6 border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#E5E5EF] dark:border-[#2e2f41]">
                 <div className="flex items-center gap-2">
@@ -215,53 +275,61 @@ export const UserProfilePage = () => {
                   </h3>
                 </div>
                 <span className="text-xs text-[#9C9CA9] uppercase font-bold tracking-wider">
-                  Current Quarter
+                  {currentQuarterLabel}
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                {/* SLA Adherence */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col justify-between">
                   <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
                     SLA Adherence
                   </span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-[#141529] dark:text-white">
-                      99.1%
-                    </span>
-                    <span className="text-xs font-bold text-[#28C078] flex items-center">
-                      <TrendingUp className="w-3.5 h-3.5 mr-0.5" /> +0.4%
+                      {opVelocity?.sla_adherence !== null && opVelocity?.sla_adherence !== undefined
+                        ? `${opVelocity.sla_adherence}%`
+                        : '—'}
                     </span>
                   </div>
                   <div className="w-full bg-[#E5E5EF] dark:bg-[#1a1b32] rounded-full h-1.5 mt-3 overflow-hidden">
-                    <div className="bg-[#28C078] h-1.5 rounded-full" style={{ width: '99.1%' }}></div>
+                    <div
+                      className="bg-[#28C078] h-1.5 rounded-full"
+                      style={{
+                        width: opVelocity?.sla_adherence !== null && opVelocity?.sla_adherence !== undefined
+                          ? `${Math.min(100, Math.max(0, opVelocity.sla_adherence))}%`
+                          : '0%',
+                      }}
+                    ></div>
                   </div>
                 </div>
 
+                {/* Mean Time to Resolve */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col justify-between">
                   <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
                     Mean Time to Resolve
                   </span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-[#141529] dark:text-white">
-                      1h 12m
-                    </span>
-                    <span className="text-xs font-bold text-[#28C078] flex items-center">
-                      <ArrowDown className="w-3.5 h-3.5 mr-0.5" /> -18m
+                      {opVelocity?.mttr_formatted || '—'}
                     </span>
                   </div>
                   <span className="text-xs text-[#9C9CA9] mt-3">Target: &lt; 2h 00m</span>
                 </div>
 
+                {/* Incidents Resolved */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col justify-between">
                   <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
                     Incidents Resolved
                   </span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-[#141529] dark:text-white">
-                      121
+                      {opVelocity?.incidents_resolved_count !== undefined
+                        ? opVelocity.incidents_resolved_count
+                        : '—'}
                     </span>
                     <span className="text-xs font-bold text-[#6040F0]">P1 / P2</span>
                   </div>
-                  <span className="text-xs text-[#9C9CA9] mt-3">Zero unmitigated breaches</span>
+                  <span className="text-xs text-[#9C9CA9] mt-3">{currentQuarterLabel}</span>
                 </div>
               </div>
             </div>
@@ -276,7 +344,7 @@ export const UserProfilePage = () => {
                   </h3>
                 </div>
                 <span className="text-xs font-bold text-[#6040F0] bg-[#eeecff] dark:bg-[#2e2f41] px-2.5 py-1 rounded-full">
-                  18 Items Assigned
+                  {activeQueue?.total_assigned ?? 0} Items Assigned
                 </span>
               </div>
 
@@ -288,8 +356,12 @@ export const UserProfilePage = () => {
                     </span>
                     <span className="w-2 h-2 rounded-full bg-[#3888F8]"></span>
                   </div>
-                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">4</span>
-                  <span className="text-xs text-[#9C9CA9] mt-0.5">2 high priority</span>
+                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">
+                    {activeQueue?.open_tickets_count ?? 0}
+                  </span>
+                  <span className="text-xs text-[#9C9CA9] mt-0.5">
+                    {activeQueue?.high_priority_tickets_count ?? 0} high priority
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] flex flex-col border border-[#E5E5EF] dark:border-[#2e2f41]">
@@ -299,57 +371,54 @@ export const UserProfilePage = () => {
                     </span>
                     <span className="w-2 h-2 rounded-full bg-[#F8A040]"></span>
                   </div>
-                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">2</span>
-                  <span className="text-xs text-[#9C9CA9] mt-0.5">Awaiting CAB signoff</span>
+                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">
+                    {activeQueue?.rcas_count ?? 0}
+                  </span>
+                  <span className="text-xs text-[#9C9CA9] mt-0.5">Under Review</span>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] flex flex-col border border-[#E5E5EF] dark:border-[#2e2f41]">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
-                      Sprint Tasks
+                      Active Tasks
                     </span>
                     <span className="w-2 h-2 rounded-full bg-[#6848E8]"></span>
                   </div>
-                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">12</span>
-                  <span className="text-xs text-[#9C9CA9] mt-0.5">Sprint 24-Q2.4</span>
+                  <span className="text-2xl font-extrabold text-[#141529] dark:text-white mt-1">
+                    {activeQueue?.tasks_count ?? 0}
+                  </span>
+                  <span className="text-xs text-[#9C9CA9] mt-0.5">Assigned to you</span>
                 </div>
               </div>
 
-              {/* Task List Preview */}
+              {/* Task & Ticket List Preview */}
               <div className="mt-4 pt-4 space-y-2.5">
-                <div
-                  onClick={() => navigate('/workspace/tickets/critical')}
-                  className="p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] transition-colors flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F55354]/15 text-[#F55354]">
-                      BLOCKER
-                    </span>
-                    <span className="text-xs font-semibold text-[#141529] dark:text-white">
-                      INC-8492: US-East-1 Ingress Packet Drop Mitigated
-                    </span>
+                {activeQueue?.top_items && activeQueue.top_items.length > 0 ? (
+                  activeQueue.top_items.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => navigate(item.url)}
+                      className="p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] transition-colors flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 pr-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${severityColor(item.severity)}`}>
+                          {item.severity}
+                        </span>
+                        <span className="text-xs font-semibold text-[#141529] dark:text-white truncate">
+                          <span className="font-mono font-bold text-[#6040F0] mr-1">{item.item_number}:</span>
+                          {item.title}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff] bg-[#E5E5EF]/60 dark:bg-[#2e2f41] px-2.5 py-0.5 rounded-full shrink-0">
+                        {item.status}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] text-center text-xs text-[#9C9CA9] border border-[#E5E5EF] dark:border-[#2e2f41]">
+                    No active tickets, tasks, or RCAs assigned.
                   </div>
-                  <span className="text-xs font-semibold text-[#6848E8] bg-[#6848E8]/10 px-2 py-0.5 rounded-full">
-                    In Review
-                  </span>
-                </div>
-
-                <div
-                  onClick={() => navigate('/workspace/tickets')}
-                  className="p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] transition-colors flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#F8A040]/15 text-[#F8A040]">
-                      CRITICAL
-                    </span>
-                    <span className="text-xs font-semibold text-[#141529] dark:text-white">
-                      RCA-1102: Postgres RDS Connection Spike Post-Migration
-                    </span>
-                  </div>
-                  <span className="text-xs font-semibold text-[#F8A040] bg-[#F8A040]/10 px-2 py-0.5 rounded-full">
-                    Signoff Pending
-                  </span>
-                </div>
+                )}
               </div>
             </div>
 
@@ -364,38 +433,44 @@ export const UserProfilePage = () => {
               <div className="space-y-3 pt-3">
                 <div className="p-3.5 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-white dark:bg-[#1a1b32] text-[#6040F0] shadow-xs">
-                    <Flame className="w-5 h-5 text-[#F55354]" />
+                    <Shield className="w-5 h-5 text-[#6040F0]" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[#141529] dark:text-white">
-                      Primary On-Call Incident Commander
+                    <span className="text-sm font-bold text-[#141529] dark:text-white capitalize">
+                      {user?.role ? `${user.role} Role Permissions` : 'Member Role'}
                     </span>
                     <span className="text-xs text-[#5C5C70] dark:text-[#a0a0b8] mt-0.5">
-                      Authoritative commander for Severity 0 and Severity 1 enterprise outages across Tier-1 microservices.
+                      {user?.role === 'owner'
+                        ? 'Full administrative control over workspace governance, billing, member invites, and security policies.'
+                        : user?.role === 'admin'
+                        ? 'Administrative privileges over project configurations, user roles, incident assignments, and SLA settings.'
+                        : 'Standard workspace permissions to manage assigned projects, create tasks, resolve tickets, and author RCAs.'}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-white dark:bg-[#1a1b32] text-[#6040F0] shadow-xs">
-                    <ShieldCheck className="w-5 h-5 text-[#28C078]" />
+                {user?.on_call_role ? (
+                  <div className="p-3.5 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1a1b32] text-[#6040F0] shadow-xs">
+                      <Flame className="w-5 h-5 text-[#F55354]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-[#141529] dark:text-white">
+                        {user.on_call_role}
+                      </span>
+                      <span className="text-xs text-[#5C5C70] dark:text-[#a0a0b8] mt-0.5">
+                        Active on-call escalation authority for operational incidents.
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[#141529] dark:text-white">
-                      RCA Governance Signatory
-                    </span>
-                    <span className="text-xs text-[#5C5C70] dark:text-[#a0a0b8] mt-0.5">
-                      Final technical review authority on corrective actions, timeline fidelity, and preventative infra guardrails.
-                    </span>
-                  </div>
-                </div>
+                ) : null}
               </div>
             </div>
           </div>
 
           {/* Column 2: Account, Security & Work Environment (5 Cols) */}
           <div className="lg:col-span-5 flex flex-col space-y-6">
-            {/* Authentication & Security Information */}
+            {/* Authentication & Security Information - Strictly Real Data */}
             <div className="bg-white dark:bg-[#1a1b32] rounded-2xl p-6 border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs">
               <div className="flex items-center justify-between pb-4 border-b border-[#E5E5EF] dark:border-[#2e2f41]">
                 <div className="flex items-center gap-2">
@@ -404,25 +479,26 @@ export const UserProfilePage = () => {
                     Security &amp; Auth
                   </h3>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#28C078]/15 text-[#28C078]">
-                  COMPLIANT
-                </span>
               </div>
 
               <div className="space-y-3.5 pt-3">
+                {/* Real Authentication Method */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
-                      Authentication Protocol
+                      Authentication Method
                     </span>
-                    <span className="text-xs font-bold text-[#28C078]">SAML 2.0</span>
+                    <span className="text-xs font-bold text-[#6040F0]">Standard Auth</span>
                   </div>
                   <p className="text-sm font-bold text-[#141529] dark:text-white">
-                    Single Sign-On (Okta SAML 2.0)
+                    Email &amp; Password
                   </p>
-                  <span className="text-xs text-[#9C9CA9]">Enforced by Corporate IT • 90-day key rotation cycle</span>
+                  <span className="text-xs text-[#9C9CA9]">
+                    Protected by salted bcrypt hashes and cryptographic session tokens
+                  </span>
                 </div>
 
+                {/* Real Current Session */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
@@ -432,30 +508,40 @@ export const UserProfilePage = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-[#28C078]"></span> Current
                     </span>
                   </div>
-                  <p className="text-sm font-bold text-[#141529] dark:text-white">
-                    macOS Sonoma • Chrome 124
+                  <p className="text-sm font-bold text-[#141529] dark:text-white flex items-center gap-2">
+                    <Laptop className="w-4 h-4 text-[#9C9CA9]" />
+                    <span>{clientOs} • {clientBrowser}</span>
                   </p>
-                  <span className="text-xs text-[#9C9CA9]">IP 198.51.100.42 • Session started 18m ago</span>
+                  <span className="text-xs text-[#9C9CA9]">
+                    {user?.last_active_at
+                      ? `Last active ${new Date(user.last_active_at).toLocaleTimeString()}`
+                      : 'Active now'}
+                  </span>
                 </div>
 
+                {/* Real Organization Information */}
                 <div className="p-4 rounded-xl bg-[#F5F4FC] dark:bg-[#242542] border border-[#E5E5EF] dark:border-[#2e2f41] flex flex-col gap-1.5">
                   <span className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff]">
-                    Enterprise Organization
+                    Workspace Organization
                   </span>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-[#141529] dark:text-white">Tronix365 Enterprise</p>
+                    <p className="text-sm font-bold text-[#141529] dark:text-white">
+                      {orgInfo?.name || 'Workspace'}
+                    </p>
                     <code className="px-2 py-0.5 bg-white dark:bg-[#1a1b32] rounded text-xs text-[#6040F0] font-mono font-bold border border-[#E5E5EF] dark:border-[#2e2f41]">
-                      ORG-99214
+                      {orgInfo?.id ? `ORG-${orgInfo.id.slice(0, 8).toUpperCase()}` : '—'}
                     </code>
                   </div>
-                  <span className="text-xs text-[#9C9CA9]">Tenant: tronix365-prod-us01.cloud</span>
+                  <span className="text-xs text-[#9C9CA9] capitalize">
+                    {orgInfo?.plan ? `${orgInfo.plan} Plan` : 'Standard Plan'}
+                  </span>
                 </div>
               </div>
 
               <div className="pt-4 mt-2">
                 <button
                   onClick={() => setIsPasswordModalOpen(true)}
-                  className="w-full py-2.5 px-4 rounded-lg bg-[#F5F4FC] dark:bg-[#242542] hover:bg-[#eeecff] dark:hover:bg-[#2e2f41] text-[#6040F0] text-sm font-bold flex items-center justify-center gap-2 border border-[#E5E5EF] dark:border-[#2e2f41] transition-colors"
+                  className="w-full py-2.5 px-4 rounded-lg bg-[#F5F4FC] dark:bg-[#242542] hover:bg-[#eeecff] dark:hover:bg-[#2e2f41] text-[#6040F0] text-sm font-bold flex items-center justify-center gap-2 border border-[#E5E5EF] dark:border-[#2e2f41] transition-colors cursor-pointer"
                 >
                   <Key className="w-4 h-4" />
                   <span>Update Security Credentials</span>
@@ -474,7 +560,7 @@ export const UserProfilePage = () => {
                 </div>
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="text-[#6040F0] hover:text-[#5639D8] text-xs font-bold flex items-center gap-1"
+                  className="text-[#6040F0] hover:text-[#5639D8] text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   <span>Edit</span>
@@ -482,45 +568,42 @@ export const UserProfilePage = () => {
               </div>
 
               <div className="space-y-3 pt-3">
+                {/* Slack Handle */}
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41]">
                   <div className="flex items-center gap-3">
                     <MessageSquare className="w-5 h-5 text-[#9C9CA9]" />
                     <div className="flex flex-col">
                       <span className="text-[11px] text-[#9C9CA9]">Slack Handle</span>
                       <span className="text-xs font-bold text-[#141529] dark:text-white">
-                        @{user?.email ? user.email.split('@')[0] : 'alex.rivera'}
+                        {user?.slack_handle
+                          ? `@${user.slack_handle}`
+                          : user?.email
+                          ? `@${user.email.split('@')[0]}`
+                          : '—'}
                       </span>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#28C078]/15 text-[#28C078]">
-                    ON CALL
-                  </span>
+                  {user?.on_call_role && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#28C078]/15 text-[#28C078]">
+                      ON CALL
+                    </span>
+                  )}
                 </div>
 
+                {/* Escalation Phone */}
                 <div className="flex items-center justify-between p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41]">
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-[#9C9CA9]" />
                     <div className="flex flex-col">
-                      <span className="text-[11px] text-[#9C9CA9]">Escalation Pager</span>
+                      <span className="text-[11px] text-[#9C9CA9]">Escalation Phone</span>
                       <span className="text-xs font-bold text-[#141529] dark:text-white">
-                        +1 (555) 392-8810
+                        {user?.phone || 'Not configured'}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[11px] text-[#9C9CA9]">SMS &amp; Voice Alert</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-xl bg-[#F9F9FB] dark:bg-[#141529] border border-[#E5E5EF] dark:border-[#2e2f41]">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-[#9C9CA9]" />
-                    <div className="flex flex-col">
-                      <span className="text-[11px] text-[#9C9CA9]">Location / Hub</span>
-                      <span className="text-xs font-bold text-[#141529] dark:text-white">
-                        Boston HQ (Tech Center 4)
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-[#9C9CA9]">Hybrid</span>
+                  <span className="text-[11px] text-[#9C9CA9]">
+                    {user?.phone ? 'E.164 Verified' : 'Optional'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -534,7 +617,7 @@ export const UserProfilePage = () => {
         onClose={() => setIsEditModalOpen(false)}
         user={user}
         onProfileUpdated={(updated) => {
-          setUser(updated);
+          setUser((prev) => ({ ...prev, ...updated }));
           triggerToast('Profile information successfully updated.');
         }}
       />
@@ -558,4 +641,3 @@ export const UserProfilePage = () => {
 };
 
 export default UserProfilePage;
-

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { projectsService } from '../../services/projectsService';
+import Avatar from '../../components/common/Avatar';
+import { lockScroll, unlockScroll } from '../../utils/scrollLock';
 
 const PRESET_ICONS = [
   'rocket_launch',
@@ -44,7 +46,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   });
   const [visibility, setVisibility] = useState('org');
   const [status, setStatus] = useState('Active');
-  const [slaTier, setSlaTier] = useState('Standard SaaS Tier 1');
+  const [slaTier, setSlaTier] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [calendarDay, setCalendarDay] = useState(15);
@@ -53,8 +55,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement;
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      lockScroll();
 
       const timer = setTimeout(() => {
         modalRef.current?.querySelector('input, select, textarea')?.focus();
@@ -62,7 +63,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
 
       return () => {
         clearTimeout(timer);
-        document.body.style.overflow = originalOverflow;
+        unlockScroll();
         if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
           triggerRef.current.focus();
         }
@@ -185,13 +186,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
 
   if (!isOpen || typeof document === 'undefined') return null;
 
-  const leadUser = users.find((u) => u.id === leadId) || users[0] || {
-    id: 'usr_01',
-    full_name: 'Aarav Mehta',
-    email: 'pm@acmetech.io',
-    avatar_url:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCe-SbKuUESsousQ9i3b_RDVm3cYWNiS_l2pHH9E-gMi2pDrgcNYrEgabY5Gh2utxHJJhLf6wR775B6LJX6jdiM3WiWZ612hrA7-tMdMhMSu7fVPxMlFMJL7edR5yqt0gipkePHd18ngCI8mY7_cJ-9lFUaKz294vaz9qzKJtxY43i2QdRojVKcyqqa4YFhQNpew4f1jyKNJ0rytDk4k5BQi2iK4bZrZXtvHhfp7DdL',
-  };
+  const leadUser = users.find((u) => u.id === leadId) || users[0] || null;
 
   const suggestedUsers = users.filter(
     (u) =>
@@ -398,10 +393,10 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                 <div className="relative">
                   <div className="w-full h-11 px-3 bg-surface-card rounded-lg flex items-center justify-between shadow-sm border border-border-subtle">
                     <div className="flex items-center gap-space-sm">
-                      <img
-                        className="w-7 h-7 rounded-full object-cover"
-                        src={leadUser.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCe-SbKuUESsousQ9i3b_RDVm3cYWNiS_l2pHH9E-gMi2pDrgcNYrEgabY5Gh2utxHJJhLf6wR775B6LJX6jdiM3WiWZ612hrA7-tMdMhMSu7fVPxMlFMJL7edR5yqt0gipkePHd18ngCI8mY7_cJ-9lFUaKz294vaz9qzKJtxY43i2QdRojVKcyqqa4YFhQNpew4f1jyKNJ0rytDk4k5BQi2iK4bZrZXtvHhfp7DdL'}
-                        alt={leadUser.full_name}
+                      <Avatar
+                        src={leadUser?.avatar_url}
+                        name={leadUser?.full_name || 'Project Lead'}
+                        size="sm"
                       />
                       <div className="flex items-center gap-2">
                         <select
@@ -781,7 +776,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                 <div className="h-10 px-3 bg-canvas-lavender/60 rounded-lg flex items-center justify-between border border-border-subtle/50">
                   <div className="flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[18px] text-text-secondary">speed</span>
-                    <span className="font-label-md text-label-md text-text-primary">{slaTier}</span>
+                    <span className="font-label-md text-label-md text-text-primary">{slaTier || 'Custom / None'}</span>
                   </div>
                   <span className="font-label-sm text-label-sm text-status-resolved font-bold">99.8% Goal</span>
                 </div>

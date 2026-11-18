@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import ManageMembersModal from './ManageMembersModal';
 import EditProjectModal from './EditProjectModal';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
+import Avatar from '../../components/common/Avatar';
+import { authService } from '../../services/api';
 
 /**
  * Screen 38 & 39: Project Workspace Header & Tabs
  * Visual Reference: Stitch Screen 38 (`976abc6cdd1148a69c6362009ec04775`) & Screen 39 (`e454a6f68a014fffbd96016044d1863d`)
  * Route: `/workspace/projects/:id/*`
  */
-export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem }) => {
+export const ProjectHeaderTabs = ({ project, onProjectUpdated }) => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showNewMenu, setShowNewMenu] = useState(false);
+
+  const currentUser = authService.getCurrentUserSync();
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const canEditProject = useMemo(() => {
+    if (!currentUser || !project) return false;
+    const isOrgAdmin = ['owner', 'admin'].includes(userRole);
+    const isProjectLead = Boolean(project.lead_id) && project.lead_id === currentUser.id;
+    return isOrgAdmin || isProjectLead;
+  }, [currentUser, userRole, project]);
 
   if (!project) return null;
 
@@ -24,20 +34,40 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
   const members = project.members || [];
   const metrics = project.metrics || {};
 
-  const sprintProgress = metrics.sprint_progress ?? 78;
-  const totalTasks = metrics.total_tasks ?? 42;
-  const completedTasks = metrics.completed_tasks ?? 33;
+  const totalTasks = metrics.total_tasks ?? 0;
+  const completedTasks = metrics.completed_tasks ?? 0;
+  const sprintProgress = metrics.sprint_progress ?? (totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0);
   const blockerTickets = metrics.blocker_tickets ?? 0;
   const openTickets = metrics.open_tickets ?? 0;
+  const totalDiscussions = metrics.total_discussions ?? 0;
+  const totalFiles = metrics.total_files ?? 0;
 
-  // Tabs defined in Stitch Screen 38
+  const getRemainingTime = (targetDate) => {
+    if (!targetDate) return null;
+    const target = new Date(targetDate);
+    if (isNaN(target.getTime())) return null;
+    const now = new Date();
+    const diffMs = target.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) {
+      return `Overdue by ${Math.abs(diffDays)}d`;
+    }
+    if (diffDays === 0) return 'Due today';
+    if (diffDays < 7) return `${diffDays}d left`;
+    const weeks = Math.round(diffDays / 7);
+    return `${weeks}w left`;
+  };
+
+  const cadenceRemaining = getRemainingTime(project.target_date);
+
+  // Tabs with real record counts
   const tabs = [
     { key: 'overview', label: 'Overview', icon: 'dashboard', path: `/workspace/projects/${id}/overview` },
     { key: 'board', label: 'Board', icon: 'view_kanban', badge: totalTasks, path: `/workspace/projects/${id}/board` },
     { key: 'tickets', label: 'Tickets', icon: 'confirmation_number', badge: openTickets, path: `/workspace/projects/${id}/tickets` },
     { key: 'timeline', label: 'Timeline', icon: 'calendar_month', path: `/workspace/projects/${id}/timeline` },
-    { key: 'discussions', label: 'Discussion', icon: 'forum', badge: 12, path: `/workspace/projects/${id}/discussions` },
-    { key: 'files', label: 'Files', icon: 'attach_file', badge: 28, path: `/workspace/projects/${id}/files` },
+    { key: 'discussions', label: 'Discussion', icon: 'forum', badge: totalDiscussions, path: `/workspace/projects/${id}/discussions` },
+    { key: 'files', label: 'Files', icon: 'attach_file', badge: totalFiles, path: `/workspace/projects/${id}/files` },
     { key: 'activity', label: 'Activity', icon: 'history', path: `/workspace/projects/${id}/activity` },
   ];
 
@@ -66,9 +96,11 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                     </span>
                   </div>
                 </div>
-                <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-text-primary text-surface-card font-label-sm text-[9px] rounded font-bold shadow-sm">
-                  v2.0
-                </span>
+                {project.version && (
+                  <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 bg-text-primary text-surface-card font-label-sm text-[9px] rounded font-bold shadow-sm">
+                    {project.version}
+                  </span>
+                )}
               </div>
 
               {/* Title, Pills & Narrative */}
@@ -99,17 +131,21 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                     {project.status === 'active' ? 'Active Sprint' : project.status}
                   </span>
 
-                  {/* SLA Tag */}
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-severity-blocker/10 text-severity-blocker">
-                    <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
-                    {project.sla_tier || 'Tier 1 Mission-Critical'}
-                  </span>
+                  {/* SLA Tag (Only if real custom tier exists) */}
+                  {project.sla_tier && project.sla_tier !== 'Standard SaaS Tier 1' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-severity-blocker/10 text-severity-blocker">
+                      <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
+                      {project.sla_tier}
+                    </span>
+                  )}
 
-                  {/* Security Tag */}
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-medium bg-canvas-lavender text-secondary">
-                    <span className="material-symbols-outlined text-[14px]">shield</span>
-                    {project.visibility === 'restricted' ? 'Restricted Access' : 'SOC2 Isolated'}
-                  </span>
+                  {/* Security/Visibility Tag */}
+                  {project.visibility && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-medium bg-canvas-lavender text-secondary">
+                      <span className="material-symbols-outlined text-[14px]">shield</span>
+                      {project.visibility === 'restricted' ? 'Restricted Access' : project.visibility === 'organization' ? 'Organization Scope' : project.visibility}
+                    </span>
+                  )}
                 </div>
 
                 {/* Narrative Paragraph */}
@@ -130,78 +166,22 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                 <span className="material-symbols-outlined text-primary text-[18px]">group_add</span>
                 <span>Members</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-primary-fixed text-primary text-[11px] font-bold">
-                  {members.length || 1}
+                  {members.length}
                 </span>
               </button>
 
-              {/* Project Settings / Edit Button */}
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                aria-label="Project Settings"
-                className="h-10 px-3 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm border border-border-subtle transition-all"
-              >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
-                <span className="hidden sm:inline">Settings</span>
-              </button>
-
-              {/* Primary Dropdown Action (+ New Work Item) */}
-              <div className="relative inline-flex shadow-sm rounded-lg">
+              {/* Project Settings / Edit Button (RBAC: Lead, Admin, Owner only) */}
+              {canEditProject && (
                 <button
                   type="button"
-                  onClick={() => onOpenNewWorkItem && onOpenNewWorkItem('task')}
-                  className="h-10 px-4 rounded-l-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 transition-all shadow-[0_2px_8px_rgba(96,64,240,0.25)]"
+                  onClick={() => setShowEditModal(true)}
+                  aria-label="Project Settings"
+                  className="h-10 px-3 rounded-lg bg-surface-container-lowest hover:bg-canvas-lavender text-text-secondary hover:text-text-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm border border-border-subtle transition-all"
                 >
-                  <span className="material-symbols-outlined text-[18px]">add_task</span>
-                  <span>New Work Item</span>
+                  <span className="material-symbols-outlined text-[18px]">tune</span>
+                  <span className="hidden sm:inline">Settings</span>
                 </button>
-                <button
-                  type="button"
-                  aria-label="Work item options"
-                  onClick={() => setShowNewMenu(!showNewMenu)}
-                  className="h-10 px-2 rounded-r-lg bg-primary hover:bg-primary-hover text-on-primary flex items-center justify-center transition-all border-l border-white/20"
-                >
-                  <span className="material-symbols-outlined text-[18px]">arrow_drop_down</span>
-                </button>
-
-                {showNewMenu && (
-                  <div className="absolute right-0 top-12 w-48 bg-surface-card rounded-lg shadow-xl border border-border-subtle py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        onOpenNewWorkItem && onOpenNewWorkItem('task');
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-primary">task_alt</span>
-                      <span>Create Task</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        onOpenNewWorkItem && onOpenNewWorkItem('ticket');
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-severity-blocker">confirmation_number</span>
-                      <span>File Ticket</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewMenu(false);
-                        navigate(`/workspace/projects/${id}/discussions`);
-                      }}
-                      className="w-full px-3 py-2 text-left font-body-sm text-body-sm text-text-primary hover:bg-canvas-lavender flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-secondary">forum</span>
-                      <span>New Discussion</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Overflow Menu with Options Component from Screen 36 */}
               <ProjectOptionsMenu
@@ -217,11 +197,17 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
             {/* Metric 1: Project Leadership & Lead Architect */}
             <div className="flex items-center gap-space-md min-w-0">
               <div className="relative flex-shrink-0">
-                <img
-                  className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-border-subtle"
-                  src={lead.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg"}
-                  alt={lead.full_name || "Project Lead"}
-                />
+                {lead.avatar_url ? (
+                  <img
+                    className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-border-subtle"
+                    src={lead.avatar_url}
+                    alt={lead.full_name || "Project Lead"}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-canvas-lavender text-primary flex items-center justify-center font-bold text-sm shadow-sm">
+                    {lead.full_name ? lead.full_name.slice(0, 2).toUpperCase() : 'PL'}
+                  </div>
+                )}
                 <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-status-resolved shadow-sm ring-2 ring-surface-card" />
               </div>
               <div className="flex flex-col min-w-0">
@@ -229,11 +215,13 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                   Project Lead
                 </span>
                 <span className="font-label-lg text-label-lg text-text-primary truncate font-bold">
-                  {lead.full_name || 'Aarav Mehta'}
+                  {lead.full_name || 'Unassigned'}
                 </span>
-                <span className="font-body-sm text-body-sm text-text-secondary truncate">
-                  {lead.title || 'Principal Cloud Architect'}
-                </span>
+                {lead.title ? (
+                  <span className="font-body-sm text-body-sm text-text-secondary truncate">
+                    {lead.title}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -244,23 +232,27 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
                   Contributors
                 </span>
                 <span className="font-label-sm text-label-sm text-primary font-bold">
-                  {members.length || 11} active
+                  {members.length} {members.length === 1 ? 'member' : 'members'}
                 </span>
               </div>
               <div className="flex items-center -space-x-2.5 overflow-hidden py-0.5">
                 {members.slice(0, 5).map((mem, idx) => (
-                  <img
-                    key={mem.id || idx}
-                    className="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover"
-                    src={mem.user?.avatar_url || lead.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W"}
-                    alt={mem.user?.full_name || "Member"}
-                    title={mem.user?.full_name || "Contributor"}
-                  />
+                  <div key={mem.id || idx} className="relative">
+                    <Avatar
+                      src={mem.user?.avatar_url}
+                      name={mem.user?.full_name || 'Member'}
+                      size="md"
+                      ring="ring-2 ring-surface-card"
+                    />
+                  </div>
                 ))}
                 {members.length > 5 && (
                   <span className="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-surface-card bg-primary-fixed text-primary font-label-sm text-label-sm font-bold shadow-xs">
                     +{members.length - 5}
                   </span>
+                )}
+                {members.length === 0 && (
+                  <span className="text-text-muted text-xs italic">No members assigned</span>
                 )}
               </div>
             </div>
@@ -283,7 +275,9 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
               </div>
               <div className="flex items-center justify-between font-body-sm text-body-sm text-text-secondary">
                 <span>{completedTasks} / {totalTasks} tasks done</span>
-                <span className="font-medium text-text-primary">4 weeks left</span>
+                {cadenceRemaining && (
+                  <span className="font-medium text-text-primary">{cadenceRemaining}</span>
+                )}
               </div>
             </div>
 

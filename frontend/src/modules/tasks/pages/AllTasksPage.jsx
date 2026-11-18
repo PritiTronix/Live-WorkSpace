@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import useTasks from '../hooks/useTasks';
 import TaskRow from '../components/TaskRow';
 import TaskDetailDrawer from '../components/TaskDetailDrawer';
@@ -18,6 +19,11 @@ import {
  * creation modal, and contextual task detail drawer.
  */
 export const AllTasksPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStatus = searchParams.get('status') || '';
+  const urlPriority = searchParams.get('priority') || '';
+  const urlSearch = searchParams.get('search') || '';
+
   const {
     tasks,
     total,
@@ -31,7 +37,34 @@ export const AllTasksPage = () => {
     deleteTask,
     updateFilter,
     resetFilters,
-  } = useTasks();
+  } = useTasks({
+    initialFilters: {
+      status: urlStatus,
+      priority: urlPriority,
+      search: urlSearch,
+    },
+  });
+
+  // Sync state when URL params change
+  useEffect(() => {
+    const st = searchParams.get('status') || '';
+    if (st !== (filters.status || '')) {
+      updateFilter('status', st);
+    }
+  }, [searchParams]);
+
+  const handleStatusFilterChange = (val) => {
+    updateFilter('status', val);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!val) {
+        next.delete('status');
+      } else {
+        next.set('status', val);
+      }
+      return next;
+    }, { replace: true });
+  };
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -88,7 +121,7 @@ export const AllTasksPage = () => {
             {/* Status Filter */}
             <select
               value={filters.status || ''}
-              onChange={(e) => updateFilter('status', e.target.value)}
+              onChange={(e) => handleStatusFilterChange(e.target.value)}
               className="h-10 px-3 rounded-xl border border-border-subtle bg-canvas-main text-text-primary font-label-md text-label-md focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">All Statuses</option>
