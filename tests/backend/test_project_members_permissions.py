@@ -45,7 +45,7 @@ class TestProjectMembersPermissionsAndCounts:
         """Verifies that project members list and project header counts are equal and consistent."""
         org_id = "org_test_01"
         lead_id = "user_lead_01"
-        lead_headers = make_auth_headers(lead_id, role="member", org_id=org_id, email="lead@org01.com")
+        lead_headers = make_auth_headers(lead_id, role="lead", org_id=org_id, email="lead@org01.com")
 
         # 1. Create a project
         create_res = client.post(
@@ -93,7 +93,7 @@ class TestProjectMembersPermissionsAndCounts:
         lead_id = "user_lead_02"
         dev_id = "user_dev_02"
 
-        lead_headers = make_auth_headers(lead_id, role="member", org_id=org_id, email="lead@org02.com")
+        lead_headers = make_auth_headers(lead_id, role="lead", org_id=org_id, email="lead@org02.com")
         dev_headers = make_auth_headers(dev_id, role="developer", org_id=org_id, email="dev@org02.com")
 
         # 1. Project Lead creates project

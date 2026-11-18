@@ -71,7 +71,7 @@ class Project(Base):
     icon: Mapped[str] = mapped_column(String(50), default="rocket_launch")
     color: Mapped[str] = mapped_column(String(50), default="bg-btn-primary")
     visibility: Mapped[str] = mapped_column(String(50), default="organization")  # organization, restricted
-    sla_tier: Mapped[str] = mapped_column(String(100), default="Standard SaaS Tier 1")
+    sla_tier: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, default=None)
     lead_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     target_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

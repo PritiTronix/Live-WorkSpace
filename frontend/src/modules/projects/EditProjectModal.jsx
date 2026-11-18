@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { projectsService } from '../../services/projectsService';
+import Avatar from '../../components/common/Avatar';
 
 const PRESET_ICONS = ['rocket_launch', 'hub', 'speed', 'terminal', 'database', 'shield'];
 
@@ -60,15 +61,7 @@ export const EditProjectModal = ({ project, isOpen, onClose, onProjectUpdated })
 
   if (!isOpen || !project) return null;
 
-  const leadUser =
-    users.find((u) => u.id === leadId) ||
-    project.lead || {
-      id: 'usr_01',
-      full_name: 'Aarav Mehta',
-      email: 'aarav@acmetech.io',
-      avatar_url:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDCSsSO9O-YlZhdXyu3ox-84Q3IQ9BUkJ9USRIbzc4orOhRA2PPmOpMekrDAKmWioHsw3P3-FaGTZIche2D8yP6RefNhs0aeyRF88_R9GEnc7F1il3ODSOEqk4narimxEbAoKFnkibIdtPgOutK8IAjuf3hW07t5WWU5awieyWE95Jd_mN288k7kEEK0JWVXB9wMk7TO2JPUboBXmllk5t3ct9y-aAlPo37MLCGkB7g',
-    };
+  const leadUser = users.find((u) => u.id === leadId) || project.lead || null;
 
   const handleResetForm = () => {
     setName(project.name || '');
@@ -367,10 +360,10 @@ export const EditProjectModal = ({ project, isOpen, onClose, onProjectUpdated })
               </label>
               <div className="h-10 px-3 bg-canvas-main hover:bg-canvas-lavender rounded-lg flex items-center justify-between shadow-sm transition-colors border border-border-subtle">
                 <div className="flex items-center gap-2.5">
-                  <img
-                    className="w-6 h-6 rounded-full object-cover shadow-sm"
-                    src={leadUser.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCSsSO9O-YlZhdXyu3ox-84Q3IQ9BUkJ9USRIbzc4orOhRA2PPmOpMekrDAKmWioHsw3P3-FaGTZIche2D8yP6RefNhs0aeyRF88_R9GEnc7F1il3ODSOEqk4narimxEbAoKFnkibIdtPgOutK8IAjuf3hW07t5WWU5awieyWE95Jd_mN288k7kEEK0JWVXB9wMk7TO2JPUboBXmllk5t3ct9y-aAlPo37MLCGkB7g'}
-                    alt={leadUser.full_name}
+                  <Avatar
+                    src={leadUser?.avatar_url}
+                    name={leadUser?.full_name || 'Project Lead'}
+                    size="xs"
                   />
                   <select
                     className="font-label-md text-label-md text-text-primary font-semibold bg-transparent outline-none cursor-pointer"

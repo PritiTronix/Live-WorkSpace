@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
+import Avatar from '../../components/common/Avatar';
 
 /**
  * Screen 41: Project Kanban Board
@@ -264,17 +265,12 @@ export const ProjectKanbanTab = () => {
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              {t.assignee ? (
-                                <img
-                                  className="w-6 h-6 rounded-full object-cover"
-                                  src={t.assignee.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuBnY9OXem7tY-WC7GGIxR_JEkjBZZxyuBB-0mDqrUE6lOeiD0P2SWK26K-s-lUh0dGTZQxOlxTGW32Ij8iX-yKRMXgzDt0JPxqs-W4ENCsT_-YF18QAkuRBiF1NWi2xyCndsZyOaB-aGeYQAJAQDzEst5nV9N0oxnz6Rvo0NjCyG9e7INBNDHklHz4AE2P5GSv5kMzjbQLQU9LlePz0mmrDeSZ-Q7RXH6M0-8zNYTNg"}
-                                  alt={t.assignee.full_name}
-                                  title={t.assignee.full_name}
+                              {t.assignee && (
+                                <Avatar
+                                  src={t.assignee.avatar_url}
+                                  name={t.assignee.full_name}
+                                  size="xs"
                                 />
-                              ) : (
-                                <div className="w-6 h-6 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">
-                                  DK
-                                </div>
                               )}
                             </div>
                           </div>

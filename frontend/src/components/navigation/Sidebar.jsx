@@ -7,6 +7,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { authService, organizationService } from '../../services/api';
 import HelpSupportModal from '../modals/HelpSupportModal';
 import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
+import Avatar from '../common/Avatar';
 import { TICKET_VIEWS, PRIORITY_ISSUES_NAV } from '../../modules/tickets/constants/ticketConstants';
 import { isSidebarItemActive } from '../../utils/navigation';
 
@@ -415,17 +416,11 @@ export const Sidebar = ({
           >
             <div className="flex items-center gap-space-sm min-w-0">
               <div className="relative flex-shrink-0">
-                {currentUser?.avatar_url ? (
-                  <img
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
-                    src={currentUser.avatar_url}
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center">
-                    {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                )}
+                <Avatar
+                  src={currentUser?.avatar_url}
+                  name={currentUser?.full_name}
+                  size="md"
+                />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
               </div>
               <div className="flex flex-col text-left min-w-0">
@@ -445,21 +440,12 @@ export const Sidebar = ({
         {isCollapsed && (
           <div className="flex justify-center pt-space-sm">
             <NavLink to="/workspace/settings/profile" className="relative">
-              {currentUser?.avatar_url ? (
-                <img
-                  alt="Profile"
-                  className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  src={currentUser.avatar_url}
-                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
-                />
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
-                >
-                  {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
+              <Avatar
+                src={currentUser?.avatar_url}
+                name={currentUser?.full_name}
+                size="md"
+                className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
             </NavLink>
           </div>

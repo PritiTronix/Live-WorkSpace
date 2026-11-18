@@ -18,6 +18,7 @@ import {
 import { membersService } from '../../../services/membersService';
 import InviteMemberModal from '../components/InviteMemberModal';
 import MemberDetailDrawer from '../components/MemberDetailDrawer';
+import Avatar from '../../../components/common/Avatar';
 
 export const TeamMembersPage = () => {
   const [members, setMembers] = useState([]);
@@ -528,17 +529,14 @@ export const TeamMembersPage = () => {
                     {/* Header: Avatar, Status, Role badge */}
                     <div className="flex items-start justify-between mb-3">
                       <div className="relative">
-                        <div className="w-14 h-14 rounded-xl overflow-hidden shadow-xs bg-[#eeecff] dark:bg-[#2e2f41] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center justify-center font-extrabold text-xl text-[#6040F0]">
-                          {m.avatar_url ? (
-                            <img
-                              src={m.avatar_url}
-                              alt={m.full_name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            m.full_name ? m.full_name.charAt(0).toUpperCase() : 'U'
-                          )}
-                        </div>
+                        <Avatar
+                          src={m.avatar_url}
+                          name={m.full_name}
+                          size="xl"
+                          shape="rounded-xl"
+                          ring="border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs"
+                          className="w-14 h-14 text-xl"
+                        />
                         <span
                           className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full shadow-xs ring-2 ring-white dark:ring-[#1a1b32] ${
                             isActive ? 'bg-[#28C078]' : 'bg-[#9C9CA9]'
@@ -642,13 +640,12 @@ export const TeamMembersPage = () => {
                       onClick={() => openMemberDetail(m)}
                     >
                       <td className="px-5 py-3.5 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg overflow-hidden bg-[#eeecff] dark:bg-[#2e2f41] flex items-center justify-center font-bold text-[#6040F0]">
-                          {m.avatar_url ? (
-                            <img src={m.avatar_url} alt={m.full_name} className="w-full h-full object-cover" />
-                          ) : (
-                            m.full_name ? m.full_name.charAt(0).toUpperCase() : 'U'
-                          )}
-                        </div>
+                        <Avatar
+                          src={m.avatar_url}
+                          name={m.full_name}
+                          size="md"
+                          shape="rounded-lg"
+                        />
                         <div className="flex flex-col">
                           <span className="font-bold text-[#141529] dark:text-white">{m.full_name || 'Team Member'}</span>
                           <span className="text-[11px] text-[#9C9CA9]">{m.email}</span>

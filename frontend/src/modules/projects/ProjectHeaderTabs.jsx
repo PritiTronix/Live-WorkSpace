@@ -3,6 +3,7 @@ import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import ManageMembersModal from './ManageMembersModal';
 import EditProjectModal from './EditProjectModal';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
+import Avatar from '../../components/common/Avatar';
 
 /**
  * Screen 38 & 39: Project Workspace Header & Tabs
@@ -283,23 +284,14 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated, onOpenNewWorkItem
               </div>
               <div className="flex items-center -space-x-2.5 overflow-hidden py-0.5">
                 {members.slice(0, 5).map((mem, idx) => (
-                  mem.user?.avatar_url ? (
-                    <img
-                      key={mem.id || idx}
-                      className="inline-block h-8 w-8 rounded-full ring-2 ring-surface-card object-cover"
-                      src={mem.user.avatar_url}
-                      alt={mem.user?.full_name || "Member"}
-                      title={mem.user?.full_name || "Contributor"}
+                  <div key={mem.id || idx} className="relative">
+                    <Avatar
+                      src={mem.user?.avatar_url}
+                      name={mem.user?.full_name || 'Member'}
+                      size="md"
+                      ring="ring-2 ring-surface-card"
                     />
-                  ) : (
-                    <div
-                      key={mem.id || idx}
-                      className="inline-flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-surface-card bg-canvas-lavender text-primary font-label-sm text-xs font-bold"
-                      title={mem.user?.full_name || "Contributor"}
-                    >
-                      {mem.user?.full_name ? mem.user.full_name.slice(0, 2).toUpperCase() : 'U'}
-                    </div>
-                  )
+                  </div>
                 ))}
                 {members.length > 5 && (
                   <span className="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-surface-card bg-primary-fixed text-primary font-label-sm text-label-sm font-bold shadow-xs">

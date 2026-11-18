@@ -9,7 +9,7 @@ from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base, AsyncSessionLocal, get_db
 from backend.app.seed import seed_initial_data_if_empty
-from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, DevQueryLoggingMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,9 @@ def create_application() -> FastAPI:
 
     # Enterprise Security Headers Middleware
     application.add_middleware(SecurityHeadersMiddleware)
+
+    # Development-only request duration and query count logger
+    application.add_middleware(DevQueryLoggingMiddleware)
 
     # Brute-force & Credential Stuffing Protection Middleware
     application.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)

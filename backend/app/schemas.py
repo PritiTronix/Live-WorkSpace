@@ -262,7 +262,7 @@ class ProjectBase(BaseSchema):
     icon: str = "rocket_launch"
     color: str = "bg-btn-primary"
     visibility: str = "organization"
-    sla_tier: str = "Standard SaaS Tier 1"
+    sla_tier: Optional[str] = None
     lead_id: Optional[str] = None
     start_date: Optional[datetime] = None
     target_date: Optional[datetime] = None
@@ -277,7 +277,7 @@ class ProjectCreate(BaseSchema):
     icon: Optional[str] = "rocket_launch"
     color: Optional[str] = "bg-btn-primary"
     visibility: Optional[str] = "organization"
-    sla_tier: Optional[str] = "Standard SaaS Tier 1"
+    sla_tier: Optional[str] = None
     lead_id: Optional[str] = None
     start_date: Optional[datetime] = None
     target_date: Optional[datetime] = None

@@ -55,9 +55,9 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",")]
         return v
 
-    @field_validator("DATABASE_URL", mode="before")
+    @field_validator("DATABASE_URL", "DATABASE_URL_POOLED", mode="before")
     @classmethod
-    def assemble_async_db_url(cls, v: str) -> str:
+    def assemble_async_db_url(cls, v: Optional[str]) -> Optional[str]:
         if not v:
             return v
         url = v.strip().strip('"').strip("'")

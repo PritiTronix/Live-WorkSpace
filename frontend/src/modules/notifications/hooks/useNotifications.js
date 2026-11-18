@@ -32,12 +32,18 @@ export const useNotifications = ({ autoConnect = true } = {}) => {
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
+    }
   }, []);
 
   const markAllRead = useCallback(async () => {
     await notificationService.markAllRead();
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
+    }
   }, []);
 
   // WebSocket handler

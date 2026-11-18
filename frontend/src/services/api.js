@@ -60,7 +60,15 @@ apiClient.interceptors.response.use(
 export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error occurred.') => {
   if (!error) return defaultMessage;
 
-  // Failed connection: no response from server, network down, or timeout
+  // Timeout error: ECONNABORTED or message contains timeout
+  if (
+    error.code === 'ECONNABORTED' ||
+    (typeof error.message === 'string' && error.message.toLowerCase().includes('timeout'))
+  ) {
+    return 'The server took too long to respond. Please retry.';
+  }
+
+  // Failed connection: no response from server, network down, or connection error
   if (!error.response) {
     return 'Cannot reach the server';
   }

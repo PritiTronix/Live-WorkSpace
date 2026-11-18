@@ -127,7 +127,13 @@ export const DashboardLayout = () => {
       }
     });
 
+    const handleNotifUpdate = () => {
+      refreshBadges();
+    };
+    window.addEventListener('notifications-updated', handleNotifUpdate);
+
     return () => {
+      window.removeEventListener('notifications-updated', handleNotifUpdate);
       if (ws) ws.close();
     };
   }, [location.pathname]);

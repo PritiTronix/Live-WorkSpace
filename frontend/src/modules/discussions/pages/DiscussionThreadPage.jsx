@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { discussionsService } from '../../../services/discussionsService';
 import { DEFAULT_USER } from '../../../services/api';
+import Avatar from '../../../components/common/Avatar';
 
 export const DiscussionThreadPage = () => {
   const { id } = useParams();
@@ -104,9 +105,9 @@ export const DiscussionThreadPage = () => {
   }
 
   const author = discussion.author || {
-    full_name: 'Dr. Elena Chen',
-    title: 'Lead Architect',
-    avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCKZkjlUzdakR8zSJONe4nd58FOjcocnDo5hJSj61HfQ4u9ilprlBAmLMMSZgqOSRJFgkdNLSVBbxtB1GreNe3GrNenlEawfsAK31jG5j58m4tXDUX5ZXQaARFgeQ98V2xVjVYwaa3FASqyLnVnjlDbhMDAI7PkuvNf8AhBfkeNXQqHUtF3FCg_8HnFmVtbh5gcWB2kjkzLHzxQ0hnu_J2zA86K0uKdtOnCcnO-m88',
+    full_name: 'Team Member',
+    title: 'Author',
+    avatar_url: '',
   };
 
   const comments = discussion.comments || [];
@@ -171,10 +172,12 @@ export const DiscussionThreadPage = () => {
           {/* Post Author Header */}
           <div className="flex items-start justify-between gap-space-md">
             <div className="flex items-center gap-3">
-              <img
-                src={author.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuDCKZkjlUzdakR8zSJONe4nd58FOjcocnDo5hJSj61HfQ4u9ilprlBAmLMMSZgqOSRJFgkdNLSVBbxtB1GreNe3GrNenlEawfsAK31jG5j58m4tXDUX5ZXQaARFgeQ98V2xVjVYwaa3FASqyLnVnjlDbhMDAI7PkuvNf8AhBfkeNXQqHUtF3FCg_8HnFmVtbh5gcWB2kjkzLHzxQ0hnu_J2zA86K0uKdtOnCcnO-m88'}
-                alt={author.full_name}
-                className="w-12 h-12 rounded-xl object-cover shadow-sm ring-2 ring-primary-fixed"
+              <Avatar
+                src={author.avatar_url}
+                name={author.full_name}
+                size="xl"
+                shape="rounded-xl"
+                ring="ring-2 ring-primary-fixed shadow-sm"
               />
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
@@ -329,10 +332,12 @@ export const DiscussionThreadPage = () => {
                 key={comment.id}
                 className="p-4 rounded-xl bg-canvas-main hover:bg-canvas-lavender/40 border border-border-subtle transition-colors flex gap-3.5"
               >
-                <img
-                  src={commentAuthor.avatar_url || DEFAULT_USER.avatar_url}
-                  alt={commentAuthor.full_name}
-                  className="w-9 h-9 rounded-lg object-cover shrink-0"
+                <Avatar
+                  src={commentAuthor.avatar_url}
+                  name={commentAuthor.full_name}
+                  size="md"
+                  shape="rounded-lg"
+                  className="shrink-0"
                 />
                 <div className="flex flex-col flex-1">
                   <div className="flex items-baseline justify-between">

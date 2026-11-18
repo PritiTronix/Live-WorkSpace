@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectsService } from '../../services/projectsService';
 import { authService } from '../../services/api';
+import Avatar from '../../components/common/Avatar';
 import {
   PROJECT_ROLES,
   ASSIGNABLE_PROJECT_ROLES,
@@ -414,17 +415,11 @@ export const ManageMembersModal = ({ project, isOpen, onClose, onMembersUpdated 
                       {/* Avatar & Details */}
                       <div className="col-span-5 flex items-center gap-space-sm min-w-0 pr-2">
                         <div className="relative flex-shrink-0">
-                          {member.user?.avatar_url ? (
-                            <img
-                              className="w-10 h-10 rounded-full object-cover"
-                              src={member.user.avatar_url}
-                              alt={member.user.full_name || 'Member'}
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-canvas-lavender text-primary flex items-center justify-center font-bold">
-                              {member.user?.full_name?.slice(0, 2).toUpperCase() || 'U'}
-                            </div>
-                          )}
+                          <Avatar
+                            src={member.user?.avatar_url}
+                            name={member.user?.full_name || 'Member'}
+                            size="lg"
+                          />
                         </div>
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">

@@ -5,6 +5,7 @@ import TicketViewSwitcher from '../components/TicketViewSwitcher';
 import CreateTicketModal from '../components/CreateTicketModal';
 import { STATUS_CONFIG, SEVERITY_CONFIG } from '../constants/ticketConstants';
 import ErrorState from '../../design-system/components/ErrorState';
+import Avatar from '../../../components/common/Avatar';
 
 /**
  * Screen 61: Ticket Management Dashboard (Prompts 36 & 37)
@@ -528,10 +529,11 @@ export const TicketsDashboardPage = () => {
                       {/* Assignee Avatar */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <img
-                            className="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle"
-                            src={t.assignee?.avatar_url || "https://lh3.googleusercontent.com/aida-public/AB6AXuAmt0YGYVVOxPr4ec8yeLMlH3eFipVV14C1qMrM6ZWl_Q3CsXSe8erXqQl5aoC-hylXdMtlpm7vAxewtZVSavdi540cHwdI20sNUsCMCCuak-zOLUoAcw0tZ70DFuiIx8Gb3wEnQn4Dk5w51h-GTXmS7PCFEawLwniAxRH1k2msgs1oH4D8Wa8mKn_ucl6LFJ6K4rpqwTBjlPjHt5Cq9qIpjIgWgzOnHZ7pEjeLmA8W"}
-                            alt=""
+                          <Avatar
+                            src={t.assignee?.avatar_url}
+                            name={t.assignee?.full_name || 'Unassigned'}
+                            size="xs"
+                            ring="ring-1 ring-border-subtle"
                           />
                           <span className="text-text-secondary truncate text-xs">
                             {t.assignee?.full_name || 'Unassigned'}
