@@ -12,6 +12,7 @@ import ProjectTimelineTab from '../modules/projects/ProjectTimelineTab';
 import ProjectDiscussionTab from '../modules/projects/ProjectDiscussionTab';
 import ProjectFilesTab from '../modules/projects/ProjectFilesTab';
 import ProjectActivityTab from '../modules/projects/ProjectActivityTab';
+import ProjectTicketsTab from '../modules/projects/ProjectTicketsTab';
 import {
   TicketsDashboardPage,
   TicketBoardPage,
@@ -115,7 +116,7 @@ export const AppRoutes = () => {
           <Route path="discussions" element={<ProjectDiscussionTab />} />
           <Route path="files" element={<ProjectFilesTab />} />
           <Route path="activity" element={<ProjectActivityTab />} />
-          <Route path="tickets" element={<ProjectOverviewTab />} />
+          <Route path="tickets" element={<ProjectTicketsTab />} />
         </Route>
 
         {/* Task Management Routes (Screens 30-35 / Batch 3) */}

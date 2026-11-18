@@ -7,13 +7,15 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 from backend.app.core.config import settings
 
+db_url = settings.DATABASE_URL_POOLED or settings.DATABASE_URL
+
 engine_kwargs = {
     "echo": settings.DEBUG,
     "future": True,
     "pool_pre_ping": True,
 }
 
-if "postgresql" in settings.DATABASE_URL:
+if "postgresql" in (db_url or ""):
     engine_kwargs.update({
         "pool_size": 10,
         "max_overflow": 20,
@@ -22,7 +24,7 @@ if "postgresql" in settings.DATABASE_URL:
     })
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     **engine_kwargs,
 )
 

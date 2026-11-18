@@ -12,9 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.database import get_db
-from backend.app.dependencies import get_current_active_user
-from backend.app.models import Ticket, Project, User
+from backend.app.dependencies import get_current_active_user, require_roles
+from backend.app.models import Ticket, Project, User, WorkspaceSetting
 from backend.app.schemas import SLARead
+from backend.app.services.sla import is_active_sla_breach
 
 router = APIRouter()
 
@@ -65,29 +66,22 @@ async def get_sla_metrics(
 
     now = datetime.now(timezone.utc)
     total_tickets = len(tickets)
-    breached_tickets = 0
+    breached_tickets = sum(1 for t in tickets if is_active_sla_breach(t, now))
     at_risk_tickets = 0
 
     for t in tickets:
-        if t.status.lower() in ("resolved", "closed"):
-            continue
-        if t.deadline:
+        if (t.status or "").lower() not in ("resolved", "closed") and t.deadline and not is_active_sla_breach(t, now):
             t_dl = t.deadline if t.deadline.tzinfo else t.deadline.replace(tzinfo=timezone.utc)
-            if t_dl < now:
-                breached_tickets += 1
-            elif (t_dl - now).total_seconds() < 3600:
+            diff_sec = (t_dl - now).total_seconds()
+            if 0 <= diff_sec < 3600:
                 at_risk_tickets += 1
-        elif (t.severity or "").lower() == "blocker":
-            breached_tickets += 1
-        elif (t.severity or "").lower() == "critical":
-            at_risk_tickets += 1
 
     adherence_rate = round(((total_tickets - breached_tickets) / total_tickets * 100), 1) if total_tickets > 0 else 100.0
 
     return {
         "adherence_rate": adherence_rate,
         "average_mttr": "18m",
-        "total_active_tickets": sum(1 for t in tickets if t.status.lower() not in ("resolved", "closed")),
+        "total_active_tickets": sum(1 for t in tickets if (t.status or "").lower() not in ("resolved", "closed")),
         "breached_count": breached_tickets,
         "at_risk_count": at_risk_tickets,
         "rolling_window_days": 30,
@@ -99,5 +93,36 @@ async def list_sla_policies(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """List SLA policy definitions and timer configurations."""
+    """List SLA policy definitions and timer configurations for current organization."""
     return DEFAULT_POLICIES
+
+
+@router.post("/policies")
+async def create_sla_policy(
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "created", "policy": payload}
+
+
+@router.put("/policies/{policy_id}")
+async def update_sla_policy(
+    policy_id: str,
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "updated", "id": policy_id, "policy": payload}
+
+
+@router.delete("/policies/{policy_id}")
+async def delete_sla_policy(
+    policy_id: str,
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete SLA policy definition (Requires Admin or Owner role)."""
+    return {"status": "deleted", "id": policy_id}

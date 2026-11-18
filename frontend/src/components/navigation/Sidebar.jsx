@@ -7,49 +7,57 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { authService, organizationService } from '../../services/api';
 import HelpSupportModal from '../modals/HelpSupportModal';
 import KeyboardShortcutsModal from '../modals/KeyboardShortcutsModal';
+import Avatar from '../common/Avatar';
 import { TICKET_VIEWS, PRIORITY_ISSUES_NAV } from '../../modules/tickets/constants/ticketConstants';
+import { isSidebarItemActive } from '../../utils/navigation';
 
 const getInitials = (str) => {
-  if (!str) return 'W';
+  if (!str) return '';
   const parts = str.trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return str.slice(0, 2).toUpperCase();
 };
 
 /** Single nav link with optional badge and tooltip for collapsed state */
-const NavItem = ({ to, icon, label, badge, isCollapsed, end = false }) => (
-  <NavLink
-    to={to}
-    end={end}
-    title={isCollapsed ? label : undefined}
-    className={({ isActive }) =>
-      `relative flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
+const NavItem = ({ to, icon, label, badge, isCollapsed }) => {
+  const location = useLocation();
+  const isActive = isSidebarItemActive(location.pathname, to);
+
+  return (
+    <NavLink
+      to={to}
+      title={isCollapsed ? label : undefined}
+      className={`relative flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
         isActive
           ? 'bg-canvas-lavender text-primary font-semibold'
           : 'text-text-secondary hover:bg-canvas-lavender hover:text-text-primary'
-      }`
-    }
-  >
-    <div className="flex items-center gap-space-sm">
-      <span className="material-symbols-outlined text-[18px]">{icon}</span>
-      {!isCollapsed && <span className="font-label-md text-label-md">{label}</span>}
-    </div>
-    {!isCollapsed && badge > 0 && (
-      <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold leading-none">
-        {badge > 99 ? '99+' : badge}
-      </span>
-    )}
-    {isCollapsed && badge > 0 && (
-      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-severity-blocker" />
-    )}
-  </NavLink>
-);
+      }`}
+    >
+      <div className="flex items-center gap-space-sm">
+        <span className="material-symbols-outlined text-[18px]">{icon}</span>
+        {!isCollapsed && <span className="font-label-md text-label-md">{label}</span>}
+      </div>
+      {!isCollapsed && badge > 0 && (
+        <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-bold leading-none">
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
+      {isCollapsed && badge > 0 && (
+        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-severity-blocker" />
+      )}
+    </NavLink>
+  );
+};
 
 /** Collapsible sub-section for nested items (e.g. Tickets views) */
 const ExpandableNavItem = ({ to, icon, label, isCollapsed, children }) => {
   const location = useLocation();
-  const isParentActive = location.pathname.startsWith(to);
+  const isParentActive = isSidebarItemActive(location.pathname, to);
   const [open, setOpen] = useState(isParentActive);
+
+  useEffect(() => {
+    if (isParentActive) setOpen(true);
+  }, [isParentActive]);
 
   return (
     <div>
@@ -119,9 +127,13 @@ export const Sidebar = ({
   isMobile = false,
   onOpenShortcuts,
 }) => {
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
   const [organizations, setOrganizations] = useState([]);
-  const [currentOrg, setCurrentOrg] = useState(null);
+  const [currentOrg, setCurrentOrg] = useState(() => {
+    const user = authService.getCurrentUserSync();
+    return user?.organization ? { name: user.organization.name, plan: user.organization.plan } : null;
+  });
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
@@ -130,7 +142,16 @@ export const Sidebar = ({
   useEffect(() => {
     let mounted = true;
     authService.getCurrentUser().then((user) => {
-      if (mounted && user) setCurrentUser(user);
+      if (mounted && user) {
+        setCurrentUser(user);
+        if (user.organization?.name) {
+          setCurrentOrg((prev) => ({
+            ...prev,
+            name: user.organization.name,
+            plan: user.organization.plan || prev?.plan || null,
+          }));
+        }
+      }
     });
 
     organizationService.list().then((orgs) => {
@@ -145,7 +166,7 @@ export const Sidebar = ({
         setCurrentOrg((prev) => ({
           ...prev,
           name: workspace.name,
-          plan: prev?.plan || 'Standard',
+          plan: workspace.plan || prev?.plan || null,
         }));
       }
     });
@@ -154,6 +175,26 @@ export const Sidebar = ({
       mounted = false;
     };
   }, []);
+
+  // Live profile updates without page refresh
+  useEffect(() => {
+    const handleProfileUpdated = (e) => {
+      if (e.detail) {
+        setCurrentUser((prev) => ({ ...prev, ...e.detail }));
+        if (e.detail.organization?.name) {
+          setCurrentOrg((prev) => ({
+            ...prev,
+            name: e.detail.organization.name,
+            plan: e.detail.organization.plan || prev?.plan || null,
+          }));
+        }
+      }
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
+    return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
+  }, []);
+
+  const organizationName = currentOrg?.name || currentUser?.organization?.name || '';
 
   return (
     <aside
@@ -166,15 +207,12 @@ export const Sidebar = ({
         <div className="flex items-center justify-between pb-space-sm">
           <div className="flex items-center gap-space-sm">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm font-bold shadow-sm flex-shrink-0">
-              {getInitials(currentOrg?.name || 'Live Workspace')}
+              {getInitials(organizationName)}
             </div>
             {!isCollapsed && (
               <div className="flex flex-col">
-                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">
-                  Live Workspace
-                </span>
-                <span className="font-label-sm text-label-sm text-text-muted truncate max-w-[130px]">
-                  {currentOrg?.name || 'Workspace'}
+                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none truncate max-w-[170px]">
+                  {organizationName}
                 </span>
               </div>
             )}
@@ -202,15 +240,17 @@ export const Sidebar = ({
             >
               <div className="flex items-center gap-space-sm min-w-0">
                 <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
-                  {getInitials(currentOrg?.name || 'Workspace')}
+                  {getInitials(organizationName)}
                 </span>
                 <div className="flex flex-col text-left min-w-0">
                   <span className="font-label-md text-label-md text-text-primary truncate max-w-[130px]">
-                    {currentOrg?.name || 'Workspace'}
+                    {organizationName}
                   </span>
-                  <span className="font-label-sm text-label-sm text-primary capitalize">
-                    {currentOrg?.plan || 'Standard'}
-                  </span>
+                  {currentOrg?.plan ? (
+                    <span className="font-label-sm text-label-sm text-primary capitalize">
+                      {currentOrg.plan}
+                    </span>
+                  ) : null}
                 </div>
               </div>
               {organizations.length > 1 && (
@@ -235,7 +275,9 @@ export const Sidebar = ({
                       </span>
                       <span className="font-semibold text-text-primary truncate">{org.name}</span>
                     </div>
-                    <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan || 'Standard'}</span>
+                    {org.plan ? (
+                      <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan}</span>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -323,9 +365,9 @@ export const Sidebar = ({
               <NavLink
                 to={PRIORITY_ISSUES_NAV.route}
                 title={isCollapsed ? PRIORITY_ISSUES_NAV.label : undefined}
-                className={({ isActive }) =>
+                className={
                   `flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
-                    isActive
+                    isSidebarItemActive(location.pathname, PRIORITY_ISSUES_NAV.route)
                       ? 'bg-canvas-lavender text-primary font-semibold'
                       : 'text-text-secondary hover:bg-canvas-lavender hover:text-text-primary'
                   }`
@@ -374,17 +416,11 @@ export const Sidebar = ({
           >
             <div className="flex items-center gap-space-sm min-w-0">
               <div className="relative flex-shrink-0">
-                {currentUser?.avatar_url ? (
-                  <img
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
-                    src={currentUser.avatar_url}
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center">
-                    {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                )}
+                <Avatar
+                  src={currentUser?.avatar_url}
+                  name={currentUser?.full_name}
+                  size="md"
+                />
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
               </div>
               <div className="flex flex-col text-left min-w-0">
@@ -404,21 +440,12 @@ export const Sidebar = ({
         {isCollapsed && (
           <div className="flex justify-center pt-space-sm">
             <NavLink to="/workspace/settings/profile" className="relative">
-              {currentUser?.avatar_url ? (
-                <img
-                  alt="Profile"
-                  className="w-9 h-9 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  src={currentUser.avatar_url}
-                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
-                />
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-full bg-primary-container text-primary font-bold text-xs flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  title={`${currentUser?.full_name || 'Team Member'} — ${currentUser?.role || 'member'}`}
-                >
-                  {currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
+              <Avatar
+                src={currentUser?.avatar_url}
+                name={currentUser?.full_name}
+                size="md"
+                className="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-status-resolved ring-2 ring-surface-sidebar"></span>
             </NavLink>
           </div>

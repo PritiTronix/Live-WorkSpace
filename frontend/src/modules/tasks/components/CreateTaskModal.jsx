@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useEffect } from 'react';
+import Modal from '../../design-system/components/Modal';
 import {
   TASK_STATUS_OPTIONS,
   TASK_STATUS_LABEL,
@@ -14,7 +14,7 @@ import {
 
 /**
  * CreateTaskModal (Prompt 32)
- * Clean, production modal for creating tasks.
+ * Clean, production modal for creating tasks using shared Modal component.
  * STRICT RULE: All form fields start EMPTY. Selects start on placeholder options.
  */
 export const CreateTaskModal = ({
@@ -22,9 +22,6 @@ export const CreateTaskModal = ({
   onClose,
   onCreateTask,
 }) => {
-  const modalRef = useRef(null);
-  const triggerRef = useRef(null);
-
   // All fields start strictly EMPTY
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -36,13 +33,9 @@ export const CreateTaskModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Reset form to empty on open/close & focus management
+  // Reset form to empty on open/close
   useEffect(() => {
     if (isOpen) {
-      triggerRef.current = document.activeElement;
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-
       setTitle('');
       setDescription('');
       setStatus('');
@@ -52,49 +45,27 @@ export const CreateTaskModal = ({
       setDueDate('');
       setErrorMessage('');
       setIsSubmitting(false);
-
-      const timer = setTimeout(() => {
-        modalRef.current?.querySelector('input, select, textarea, button')?.focus();
-      }, 50);
-
-      return () => {
-        clearTimeout(timer);
-        document.body.style.overflow = originalOverflow;
-        if (triggerRef.current && typeof triggerRef.current.focus === 'function') {
-          triggerRef.current.focus();
-        }
-      };
     }
   }, [isOpen]);
 
-  // Escape key handler
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen || typeof document === 'undefined') return null;
+  const hasUnsavedChanges = Boolean(
+    title.trim() || description.trim() || status || priority || taskType || storyPoints || dueDate
+  );
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    setErrorMessage('');
+
     if (!title.trim()) {
-      setErrorMessage('Task title is required.');
+      setErrorMessage('Task title is required');
       return;
     }
 
-    setIsSubmitting(true);
-    setErrorMessage('');
-
     try {
+      setIsSubmitting(true);
       const payload = {
         title: title.trim(),
         description: description.trim() || null,
-        // Fallback to standard defaults if user leaves them on placeholder
         status: status || TASK_STATUS.TODO,
         priority: priority || TASK_PRIORITY.MEDIUM,
         task_type: taskType || TASK_TYPE.FEATURE,
@@ -112,204 +83,175 @@ export const CreateTaskModal = ({
     }
   };
 
-  const modalContent = (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Create Task"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#141529]/50 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
-    >
-      <div
-        ref={modalRef}
-        className="w-full max-w-xl bg-surface-card rounded-2xl shadow-2xl border border-border-subtle overflow-hidden z-50 animate-in zoom-in-95 duration-150"
-        role="dialog"
-        aria-label="Create Task"
+  const footer = (
+    <div className="flex items-center justify-end gap-3 w-full">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={isSubmitting}
+        className="px-4 py-2.5 rounded-xl border border-border-subtle text-text-secondary hover:bg-canvas-lavender font-label-md text-label-md transition-colors"
       >
-        {/* Modal Header */}
-        <div className="px-6 py-4 bg-canvas-lavender/50 border-b border-border-subtle flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-btn-primary text-on-primary flex items-center justify-center shadow-xs">
-              <span className="material-symbols-outlined text-[18px]">add_task</span>
-            </div>
-            <div>
-              <h3 className="font-headline-sm text-headline-sm text-text-primary">Create Task</h3>
-              <p className="font-body-sm text-body-sm text-text-muted">
-                Add an operational or feature work item
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
-        </div>
-
-        {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          {errorMessage && (
-            <div className="p-3 rounded-xl bg-error-container/40 text-error font-body-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px]">error</span>
-              <span>{errorMessage}</span>
-            </div>
-          )}
-
-          {/* Title */}
-          <div>
-            <label className="block font-label-md text-label-md text-text-secondary mb-1">
-              Title <span className="text-error">*</span>
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Implement Kafka telemetry health check"
-              className="w-full h-11 px-3.5 rounded-xl border border-border-subtle bg-canvas-main text-text-primary font-body-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              autoFocus
-            />
-          </div>
-
-          {/* Type, Priority, Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Task Type */}
-            <div>
-              <label className="block font-label-md text-label-md text-text-secondary mb-1">
-                Type
-              </label>
-              <select
-                value={taskType}
-                onChange={(e) => setTaskType(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Select type</option>
-                {TASK_TYPE_OPTIONS.map((tp) => (
-                  <option key={tp} value={tp}>
-                    {TASK_TYPE_LABEL[tp]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Priority */}
-            <div>
-              <label className="block font-label-md text-label-md text-text-secondary mb-1">
-                Priority
-              </label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Select priority</option>
-                {TASK_PRIORITY_OPTIONS.map((pr) => (
-                  <option key={pr} value={pr}>
-                    {TASK_PRIORITY_LABEL[pr]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block font-label-md text-label-md text-text-secondary mb-1">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Select status</option>
-                {TASK_STATUS_OPTIONS.map((st) => (
-                  <option key={st} value={st}>
-                    {TASK_STATUS_LABEL[st]}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Story Points & Due Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block font-label-md text-label-md text-text-secondary mb-1">
-                Story Points
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={storyPoints}
-                onChange={(e) => setStoryPoints(e.target.value)}
-                placeholder="0"
-                className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="block font-label-md text-label-md text-text-secondary mb-1">
-                Due Date
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block font-label-md text-label-md text-text-secondary mb-1">
-              Description
-            </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add details, prerequisites, or implementation plan..."
-              className="w-full p-3 rounded-xl border border-border-subtle bg-canvas-main text-text-primary font-body-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-            />
-          </div>
-
-          {/* Form Actions */}
-          <div className="pt-4 border-t border-border-subtle flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-border-subtle text-text-secondary hover:bg-canvas-lavender font-label-md text-label-md transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="material-symbols-outlined text-[16px] animate-spin">refresh</span>
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-[16px]">add</span>
-                  <span>Create Task</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={isSubmitting}
+        className="px-5 py-2.5 rounded-xl bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+      >
+        {isSubmitting ? (
+          <>
+            <span className="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+            <span>Creating...</span>
+          </>
+        ) : (
+          <>
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            <span>Create Task</span>
+          </>
+        )}
+      </button>
     </div>
   );
 
-  return createPortal(modalContent, document.body);
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Task"
+      subtitle="Add an operational or feature work item"
+      size="lg"
+      footer={footer}
+      hasUnsavedChanges={hasUnsavedChanges}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-error-container/40 text-error font-body-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Title */}
+        <div>
+          <label className="block font-label-md text-label-md text-text-secondary mb-1">
+            Title <span className="text-error">*</span>
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Implement Kafka telemetry health check"
+            className="w-full h-11 px-3.5 rounded-xl border border-border-subtle bg-canvas-main text-text-primary font-body-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            autoFocus
+          />
+        </div>
+
+        {/* Type, Priority, Status */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Task Type */}
+          <div>
+            <label className="block font-label-md text-label-md text-text-secondary mb-1">
+              Type
+            </label>
+            <select
+              value={taskType}
+              onChange={(e) => setTaskType(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Select type</option>
+              {TASK_TYPE_OPTIONS.map((tp) => (
+                <option key={tp} value={tp}>
+                  {TASK_TYPE_LABEL[tp]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className="block font-label-md text-label-md text-text-secondary mb-1">
+              Priority
+            </label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Select priority</option>
+              {TASK_PRIORITY_OPTIONS.map((pr) => (
+                <option key={pr} value={pr}>
+                  {TASK_PRIORITY_LABEL[pr]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block font-label-md text-label-md text-text-secondary mb-1">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">Select status</option>
+              {TASK_STATUS_OPTIONS.map((st) => (
+                <option key={st} value={st}>
+                  {TASK_STATUS_LABEL[st]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Story Points & Due Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block font-label-md text-label-md text-text-secondary mb-1">
+              Story Points
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={storyPoints}
+              onChange={(e) => setStoryPoints(e.target.value)}
+              placeholder="0"
+              className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div>
+            <label className="block font-label-md text-label-md text-text-secondary mb-1">
+              Due Date
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block font-label-md text-label-md text-text-secondary mb-1">
+            Description
+          </label>
+          <textarea
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add details, prerequisites, or implementation plan..."
+            className="w-full p-3 rounded-xl border border-border-subtle bg-canvas-main text-text-primary font-body-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          />
+        </div>
+      </form>
+    </Modal>
+  );
 };
 
 export default CreateTaskModal;

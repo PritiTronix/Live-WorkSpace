@@ -4,7 +4,7 @@ import Sidebar from '../components/navigation/Sidebar';
 import GlobalTopBar from '../components/navigation/GlobalTopBar';
 import GlobalPlusMenu from '../components/navigation/GlobalPlusMenu';
 import GlobalSearchOverlay from '../components/navigation/GlobalSearchOverlay';
-import { notificationService, organizationService, dashboardService, connectDashboardWebSocket } from '../services/api';
+import {authService, notificationService, organizationService, dashboardService, connectDashboardWebSocket } from '../services/api';
 import CreateTaskModal from '../modules/tasks/components/CreateTaskModal';
 import { taskService } from '../modules/tasks/services/taskService';
 import CreateTicketModal from '../modules/tickets/components/CreateTicketModal';
@@ -13,6 +13,7 @@ import InviteMemberModal from '../modules/members/components/InviteMemberModal';
 import FileUploadModal from '../modules/files/components/FileUploadModal';
 import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
 import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal';
+import { isSidebarItemActive } from '../utils/navigation';
 
 /**
  * DashboardLayout
@@ -26,6 +27,10 @@ import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal'
 export const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Detect active project context from URL when inside a project workspace
+  const projectPathMatch = location.pathname.match(/\/workspace\/projects\/([^/]+)/);
+  const currentProjectId = projectPathMatch ? projectPathMatch[1] : undefined;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 768 && window.innerWidth < 1180;
@@ -47,7 +52,7 @@ export const DashboardLayout = () => {
   const [slaBreachCount, setSlaBreachCount] = useState(0);
   const [priorityIssuesCount, setPriorityIssuesCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
-  const [workspaceName, setWorkspaceName] = useState('Live Workspace');
+  const [workspaceName, setWorkspaceName] = useState(() => authService.getCurrentUserSync()?.organization?.name || '');
   const [currentProjectName, setCurrentProjectName] = useState(null);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
@@ -111,6 +116,9 @@ export const DashboardLayout = () => {
     organizationService.getCurrent().then((ws) => {
       if (ws?.name) setWorkspaceName(ws.name);
     });
+    authService.getCurrentUser().then((u) => {
+      if (u?.organization?.name) setWorkspaceName(u.organization.name);
+    });
     refreshBadges();
 
     const ws = connectDashboardWebSocket((event) => {
@@ -123,7 +131,13 @@ export const DashboardLayout = () => {
       }
     });
 
+    const handleNotifUpdate = () => {
+      refreshBadges();
+    };
+    window.addEventListener('notifications-updated', handleNotifUpdate);
+
     return () => {
+      window.removeEventListener('notifications-updated', handleNotifUpdate);
       if (ws) ws.close();
     };
   }, [location.pathname]);
@@ -310,9 +324,9 @@ export const DashboardLayout = () => {
           </button>
           <div className="flex items-center gap-2 flex-1">
             <div className="w-7 h-7 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold text-sm">
-              LW
+              {workspaceName ? (workspaceName.trim().split(/\s+/).length >= 2 ? (workspaceName.trim().split(/\s+/)[0][0] + workspaceName.trim().split(/\s+/)[1][0]).toUpperCase() : workspaceName.slice(0, 2).toUpperCase()) : ''}
             </div>
-            <span className="font-headline-sm text-headline-sm text-text-primary">Live Workspace</span>
+            <span className="font-headline-sm text-headline-sm text-text-primary truncate">{workspaceName}</span>
           </div>
           <button
             onClick={() => setIsSearchOpen(true)}
@@ -379,13 +393,17 @@ export const DashboardLayout = () => {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         onCreateTask={async (payload) => {
-          await taskService.create(payload);
+          await taskService.create({
+            ...payload,
+            project_id: payload.project_id || currentProjectId,
+          });
         }}
       />
 
       <CreateTicketModal
         isOpen={isCreateTicketModalOpen}
         onClose={() => setIsCreateTicketModalOpen(false)}
+        defaultProjectId={currentProjectId}
         onTicketCreated={() => {
           setIsCreateTicketModalOpen(false);
           window.dispatchEvent(new CustomEvent('ticket-created'));
@@ -436,7 +454,7 @@ export const DashboardLayout = () => {
 /** Reusable bottom nav tab */
 function MobileNavItem({ to, icon, label, badge }) {
   const location = useLocation();
-  const isActive = location.pathname.startsWith(to);
+  const isActive = isSidebarItemActive(location.pathname, to);
 
   return (
     <Link

@@ -38,26 +38,12 @@ async def _get_or_create_setting(org_id: str, db: AsyncSession) -> WorkspaceSett
             organization_id=org_id,
             working_schedule="24x7 Continuous Tier-1 Operations",
             timezone="UTC",
-            holidays_observed=10,
+            holidays_observed=0,
             pause_on_hold=True,
-            sla_config=json.dumps({
-                "p0_response": "15 minutes",
-                "p0_resolution": "2 hours",
-                "p0_auto_page": True,
-                "p1_response": "30 minutes",
-                "p1_resolution": "4 hours",
-                "p1_auto_escalate": True,
-                "p2_response": "1 hour",
-                "p2_resolution": "8 hours",
-                "p2_round_robin": True,
-            }),
+            sla_config="{}",
             notification_config=json.dumps({
-                "sync_pagerduty": True,
                 "p0_created": {"email": True, "in_app": True, "slack": True},
-                "sla_approaching": {"email": False, "in_app": True, "slack": True},
                 "sla_breached": {"email": True, "in_app": True, "slack": True},
-                "ticket_assigned": {"email": True, "in_app": True, "slack": False},
-                "mention_discussion": {"email": False, "in_app": True, "slack": True},
             }),
             appearance_config=json.dumps({
                 "theme": "dark",
@@ -138,17 +124,26 @@ async def get_sla_configuration(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Retrieve current SLA policy engine and threshold settings."""
-    setting = await _get_or_create_setting(current_user.organization_id, db)
+    """Retrieve current SLA policy engine and threshold settings scoped to user's organization."""
+    res = await db.execute(
+        select(WorkspaceSetting).where(WorkspaceSetting.organization_id == current_user.organization_id)
+    )
+    setting = res.scalars().first()
+    if not setting or not setting.sla_config:
+        return {"configured": False}
+
     try:
-        cfg = json.loads(setting.sla_config or "{}")
+        cfg = json.loads(setting.sla_config)
     except Exception:
         cfg = {}
 
-    cfg["working_schedule"] = setting.working_schedule
-    cfg["timezone"] = setting.timezone
-    cfg["holidays_observed"] = setting.holidays_observed
-    cfg["pause_on_hold"] = setting.pause_on_hold
+    if not cfg or not cfg.get("configured", False):
+        return {"configured": False}
+
+    cfg["working_schedule"] = cfg.get("working_schedule") or setting.working_schedule
+    cfg["timezone"] = cfg.get("timezone") or setting.timezone
+    cfg["holidays_observed"] = cfg.get("holidays_observed") if "holidays_observed" in cfg else setting.holidays_observed
+    cfg["pause_on_hold"] = cfg.get("pause_on_hold") if "pause_on_hold" in cfg else setting.pause_on_hold
     return cfg
 
 
@@ -159,22 +154,30 @@ async def update_sla_configuration(
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """Update SLA policy engine configuration (Requires Admin or Owner role)."""
-    setting = await _get_or_create_setting(current_user.organization_id, db)
+    res = await db.execute(
+        select(WorkspaceSetting).where(WorkspaceSetting.organization_id == current_user.organization_id)
+    )
+    setting = res.scalars().first()
+    if not setting:
+        setting = WorkspaceSetting(organization_id=current_user.organization_id)
+        db.add(setting)
+
     try:
         cfg = json.loads(setting.sla_config or "{}")
     except Exception:
         cfg = {}
 
-    # Extract top-level scheduler fields if present
-    if "working_schedule" in payload:
-        setting.working_schedule = str(payload.pop("working_schedule"))
-    if "timezone" in payload:
-        setting.timezone = str(payload.pop("timezone"))
-    if "holidays_observed" in payload:
+    # Extract and update top-level scheduler fields if present
+    if "working_schedule" in payload and payload["working_schedule"] is not None:
+        setting.working_schedule = str(payload.pop("working_schedule")).strip()
+    if "timezone" in payload and payload["timezone"] is not None:
+        setting.timezone = str(payload.pop("timezone")).strip()
+    if "holidays_observed" in payload and payload["holidays_observed"] is not None:
         setting.holidays_observed = int(payload.pop("holidays_observed"))
-    if "pause_on_hold" in payload:
+    if "pause_on_hold" in payload and payload["pause_on_hold"] is not None:
         setting.pause_on_hold = bool(payload.pop("pause_on_hold"))
 
+    payload["configured"] = True
     cfg.update(payload)
     setting.sla_config = json.dumps(cfg)
     setting.updated_at = datetime.now(timezone.utc)
@@ -185,6 +188,33 @@ async def update_sla_configuration(
     cfg["holidays_observed"] = setting.holidays_observed
     cfg["pause_on_hold"] = setting.pause_on_hold
     return {"status": "success", "config": cfg}
+
+
+@router.post("/sla")
+async def create_sla_configuration(
+    payload: Dict[str, Any],
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """Create or initialize SLA policy (Requires Admin or Owner role)."""
+    return await update_sla_configuration(payload, current_user, db)
+
+
+@router.delete("/sla")
+async def delete_sla_configuration(
+    current_user: User = Depends(require_roles(["owner", "admin"])),
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """Delete/reset SLA policy configuration (Requires Admin or Owner role)."""
+    res = await db.execute(
+        select(WorkspaceSetting).where(WorkspaceSetting.organization_id == current_user.organization_id)
+    )
+    setting = res.scalars().first()
+    if setting:
+        setting.sla_config = "{}"
+        setting.updated_at = datetime.now(timezone.utc)
+        await db.commit()
+    return {"status": "success", "message": "SLA policy deleted."}
 
 
 @router.get("/notifications")

@@ -1,9 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { authService } from '../../services/api';
 
 export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
+
+  const currentUser = authService.getCurrentUserSync();
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const canCreateProject = ['owner', 'admin', 'manager', 'lead'].includes(userRole);
 
   // Focus management & body scroll lock
   useEffect(() => {
@@ -174,38 +179,40 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
                 </div>
               </div>
 
-              {/* Action 3: Create Project */}
-              <div
-                onClick={() => {
-                  onActionSelect?.('CREATE_PROJECT');
-                  onClose();
-                }}
-                className="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all"
-              >
-                <div className="flex items-center gap-space-sm min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-status-open/15 text-status-open flex items-center justify-center group-hover:bg-status-open group-hover:text-on-primary transition-colors flex-shrink-0">
-                    <span className="material-symbols-outlined text-[20px]">folder_open</span>
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">
-                        Create Project
+              {/* Action 3: Create Project (Restricted by Role) */}
+              {canCreateProject && (
+                <div
+                  onClick={() => {
+                    onActionSelect?.('CREATE_PROJECT');
+                    onClose();
+                  }}
+                  className="group flex items-center justify-between p-space-sm rounded-xl hover:bg-canvas-lavender cursor-pointer transition-all"
+                >
+                  <div className="flex items-center gap-space-sm min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-status-open/15 text-status-open flex items-center justify-center group-hover:bg-status-open group-hover:text-on-primary transition-colors flex-shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">folder_open</span>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-label-lg text-label-lg text-text-primary group-hover:text-primary transition-colors">
+                          Create Project
+                        </span>
+                      </div>
+                      <span className="font-body-sm text-body-sm text-text-secondary truncate">
+                        Initiate sprints, milestones & multi-tenant roadmaps
                       </span>
                     </div>
-                    <span className="font-body-sm text-body-sm text-text-secondary truncate">
-                      Initiate sprints, milestones & multi-tenant roadmaps
+                  </div>
+                  <div className="flex items-center gap-space-sm pl-2 flex-shrink-0">
+                    <span className="font-body-sm text-body-sm text-primary-light opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
+                      Opens Modal
                     </span>
+                    <kbd className="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors border border-border-subtle">
+                      C + P
+                    </kbd>
                   </div>
                 </div>
-                <div className="flex items-center gap-space-sm pl-2 flex-shrink-0">
-                  <span className="font-body-sm text-body-sm text-primary-light opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline">
-                    Opens Modal
-                  </span>
-                  <kbd className="px-2 py-1 rounded bg-canvas-main text-text-primary font-mono text-[11px] group-hover:bg-surface-card transition-colors border border-border-subtle">
-                    C + P
-                  </kbd>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

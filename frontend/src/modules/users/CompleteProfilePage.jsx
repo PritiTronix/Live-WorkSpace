@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { apiClient } from '../../services/api';
+import Avatar from '../../components/common/Avatar';
 
 /**
  * CompleteProfilePage — Stitch Screen ID: `b1b381d1d8cb45e79db3dbffe5e7fadf` (Prompt 10)
@@ -149,13 +150,12 @@ export const CompleteProfilePage = () => {
             {/* Avatar Preview */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative group">
-                <img
-                  src={
-                    formData.avatar_url ||
-                    'https://lh3.googleusercontent.com/aida-public/AB6AXuBrAtOdrqsfXwMC1ggrSafmjA3tRiDOW6nsEXFzXsENjtoM3FWwKbLJA1BlzO43CGB9bykeRE8VGswBaHL8HX-wkA95x3YEk8Ido2sEJcvrr_WEWIIuLU9bOpJslSnCE2ZSZRXsXWqYDmuU8pTNCkkoaTZCzOhLNNQ2NT6sZn8vHrb0A-JPplRuViYPfX-t01H6IZLWAE4pWnivGDAtKKzl6WhvmKwlqcCaUb4gPTna'
-                  }
-                  alt="Avatar Preview"
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-[#6040F0]/20 border border-[#E5E5EF] dark:border-[#2e2f41]"
+                <Avatar
+                  src={formData.avatar_url}
+                  name={formData.full_name || 'User'}
+                  size="xl"
+                  ring="ring-4 ring-[#6040F0]/20 border border-[#E5E5EF] dark:border-[#2e2f41]"
+                  className="w-20 h-20 text-2xl"
                 />
                 <label
                   htmlFor="avatar-url-input"

@@ -3,6 +3,7 @@ import { LogOut, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService, DEFAULT_USER } from '../../../services/api';
 import Modal from '../../design-system/components/Modal';
+import Avatar from '../../../components/common/Avatar';
 
 /**
  * Screen 10: Live Workspace - Logout Confirmation Modal (Prompt 80)
@@ -75,10 +76,11 @@ export const LogoutModal = ({
 
         {/* Current User Session Card */}
         <div className="w-full p-3.5 rounded-xl bg-canvas-main border border-border-subtle/80 flex items-center gap-3 text-left mb-4">
-          <img
-            alt={currentUser?.full_name || 'User'}
-            className="w-10 h-10 rounded-full object-cover ring-1 ring-border-subtle flex-shrink-0"
-            src={currentUser?.avatar_url || 'https://api.dicebear.com/7.x/initials/svg?seed=User'}
+          <Avatar
+            src={currentUser?.avatar_url}
+            name={currentUser?.full_name || 'Active User'}
+            size="lg"
+            ring="ring-1 ring-border-subtle flex-shrink-0"
           />
           <div className="min-w-0 flex-1">
             <span className="font-label-md text-label-md text-text-primary truncate block font-semibold">

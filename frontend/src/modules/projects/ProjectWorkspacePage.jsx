@@ -74,13 +74,6 @@ export const ProjectWorkspacePage = () => {
       <ProjectHeaderTabs
         project={project}
         onProjectUpdated={fetchProject}
-        onOpenNewWorkItem={(type) => {
-          if (type === 'task') {
-            navigate(`/workspace/projects/${id}/board`);
-          } else if (type === 'ticket') {
-            navigate(`/workspace/projects/${id}/overview`);
-          }
-        }}
       />
 
       {/* Dynamic Tab View Sub-Routes */}

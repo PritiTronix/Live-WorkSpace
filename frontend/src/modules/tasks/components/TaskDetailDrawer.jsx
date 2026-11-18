@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { lockScroll, unlockScroll } from '../../../utils/scrollLock';
 import TaskStatusBadge from './TaskStatusBadge';
 import TaskPriorityBadge from './TaskPriorityBadge';
 import EditTaskAndStatusPopover from './EditTaskAndStatusPopover';
@@ -36,6 +38,21 @@ export const TaskDetailDrawer = ({
       setIsEditingTitle(false);
     }
   }, [task]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    lockScroll();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !isStatusPopoverOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      unlockScroll();
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose, isStatusPopoverOpen]);
 
   if (!isOpen || !task) return null;
 
@@ -78,7 +95,7 @@ export const TaskDetailDrawer = ({
     onUpdateTask?.(task.id, { due_date: val });
   };
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -133,7 +150,7 @@ export const TaskDetailDrawer = ({
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain" style={{ overscrollBehavior: 'contain' }}>
           {/* Editable Title */}
           <div>
             {isEditingTitle ? (
@@ -277,7 +294,8 @@ export const TaskDetailDrawer = ({
           variant="default"
         />
       )}
-    </>
+    </>,
+    document.body
   );
 };
 

@@ -17,3 +17,4 @@ export { default as ProjectTimelineTab } from './ProjectTimelineTab';
 export { default as ProjectDiscussionTab } from './ProjectDiscussionTab';
 export { default as ProjectFilesTab } from './ProjectFilesTab';
 export { default as ProjectActivityTab } from './ProjectActivityTab';
+export { default as ProjectTicketsTab } from './ProjectTicketsTab';

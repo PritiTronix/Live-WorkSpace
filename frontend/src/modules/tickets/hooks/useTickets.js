@@ -7,18 +7,20 @@
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ticketsService, { createTicketsWebSocket } from '../../../services/ticketsService';
-import { authService } from '../../../services/api';
+import { authService, getApiErrorMessage } from '../../../services/api';
 import { TICKET_STATUSES, TICKET_SEVERITIES } from '../constants/ticketConstants';
 
 export const useTickets = ({
   initialSearch = '',
   initialSeverity = 'all',
   initialStatus = 'all',
+  initialSla = 'all',
   autoConnectWs = true,
 } = {}) => {
   const [search, setSearch] = useState(initialSearch);
   const [severityFilter, setSeverityFilter] = useState(initialSeverity);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [slaFilter, setSlaFilter] = useState(initialSla);
 
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState(null);
@@ -44,6 +46,7 @@ export const useTickets = ({
       if (search.trim()) params.search = search.trim();
       if (severityFilter !== 'all') params.severity = severityFilter.toLowerCase();
       if (statusFilter !== 'all') params.status = statusFilter.toLowerCase();
+      if (slaFilter !== 'all') params.sla = slaFilter.toLowerCase();
 
       const [statsData, ticketsData] = await Promise.all([
         ticketsService.getStats().catch((err) => {
@@ -62,32 +65,23 @@ export const useTickets = ({
         // Fallback computation from tickets if stats endpoint fails
         const total = items.length;
         const open = items.filter((t) => (t.status || '').toLowerCase() === 'open').length;
-        const wip = items.filter((t) => (t.status || '').toLowerCase() === 'wip').length;
+        const wip = items.filter((t) => ['wip', 'in_progress'].includes((t.status || '').toLowerCase())).length;
         const on_hold = items.filter((t) => (t.status || '').toLowerCase() === 'on_hold').length;
         const resolved = items.filter((t) => (t.status || '').toLowerCase() === 'resolved').length;
         const closed = items.filter((t) => (t.status || '').toLowerCase() === 'closed').length;
-        const sla_breached = items.filter(
-          (t) =>
-            (t.severity || '').toLowerCase() === 'blocker' &&
-            !['resolved', 'closed'].includes((t.status || '').toLowerCase())
-        ).length;
+        const sla_breached = items.filter((t) => t.is_breached).length;
 
         setStats({ total, open, wip, on_hold, resolved, closed, sla_breached });
       }
     } catch (err) {
       console.error('Failed to load tickets data:', err);
-      const is503OrNetwork = !err.response || err.response?.status === 503 || err.code === 'ERR_NETWORK';
-      if (is503OrNetwork) {
-        setError('Service temporarily unavailable (503 / Network connection issue). Please retry.');
-      } else {
-        setError(err.response?.data?.detail || err.message || 'Failed to load tickets.');
-      }
+      setError(getApiErrorMessage(err, 'Failed to load tickets.'));
       setTickets([]);
     } finally {
       setLoading(false);
       setIsRetrying(false);
     }
-  }, [search, severityFilter, statusFilter]);
+  }, [search, severityFilter, statusFilter, slaFilter]);
 
   useEffect(() => {
     fetchTicketsData();
@@ -218,6 +212,7 @@ export const useTickets = ({
     setSearch('');
     setSeverityFilter('all');
     setStatusFilter('all');
+    setSlaFilter('all');
   }, []);
 
   return {
@@ -237,6 +232,8 @@ export const useTickets = ({
     setSeverityFilter,
     statusFilter,
     setStatusFilter,
+    slaFilter,
+    setSlaFilter,
     updateTicketStatus,
     fetchTicketsData,
     refetch: fetchTicketsData,

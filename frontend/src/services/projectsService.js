@@ -146,6 +146,31 @@ export const projectsService = {
     return response.data;
   },
 
+  getProjectBurndown: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview/burndown`);
+    return response.data;
+  },
+
+  getProjectMilestones: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview/milestones`);
+    return response.data;
+  },
+
+  getProjectWorkload: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview/workload`);
+    return response.data;
+  },
+
+  getProjectUrgentTickets: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview/urgent-tickets`);
+    return response.data;
+  },
+
+  getProjectActivity: async (projectId) => {
+    const response = await apiClient.get(`/projects/${projectId}/overview/activity`);
+    return response.data;
+  },
+
   /**
    * Screen 41: Get tasks for project Kanban board
    * @param {string} projectId
