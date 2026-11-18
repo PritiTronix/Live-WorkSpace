@@ -16,8 +16,8 @@ export const AuthLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F4FC] p-3 sm:p-6 lg:p-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-[#E5E5EF] p-5 sm:p-8">
+    <div className="min-h-screen lg:min-h-dvh flex items-center justify-center bg-[#F5F4FC] p-3 sm:p-6 lg:p-8">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-[#E5E5EF] p-5 sm:p-8 max-h-[92dvh] overflow-y-auto custom-scrollbar">
         <Outlet />
       </div>
     </div>
