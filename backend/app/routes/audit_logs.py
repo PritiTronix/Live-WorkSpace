@@ -6,13 +6,13 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, desc, func, and_, or_
+from sqlalchemy import select, desc, func, and_, or_, false
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_user_id
-from backend.app.models import TicketActivity, Ticket, Project, User, ProjectActivity
+from backend.app.models import TicketActivity, Ticket, Project, User, ProjectActivity, AuditLog
 from backend.app.schemas import (
     AuditLogsListResponse,
     AuditLogItemRead,
@@ -26,10 +26,49 @@ from backend.app.schemas import (
 router = APIRouter()
 
 
-def _compute_record_fingerprint(activity_id: str, ticket_id: str, actor_id: str, action: str, timestamp: datetime) -> str:
+def _compute_record_fingerprint(activity_id: str, ticket_id: Optional[str], actor_id: Optional[str], action: str, timestamp: Optional[datetime]) -> str:
     """Compute deterministic SHA-256 fingerprint for record identification (not a blockchain or immutable ledger)."""
-    raw = f"{activity_id}:{ticket_id}:{actor_id}:{action}:{timestamp.isoformat()}"
+    ts_str = timestamp.isoformat() if timestamp else ""
+    raw = f"{activity_id}:{ticket_id or 'none'}:{actor_id or 'system'}:{action}:{ts_str}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _map_audit_log_to_item(al: AuditLog) -> AuditLogItemRead:
+    fingerprint = _compute_record_fingerprint(al.id, None, al.actor_id, al.action, al.created_at)
+    log_ref = f"#LOG-{abs(hash(al.id)) % 90000 + 10000}"
+    u = al.actor
+
+    actor_read = None
+    if u:
+        actor_read = UserRead(
+            id=u.id,
+            email=u.email,
+            full_name=u.full_name,
+            role=u.role,
+            title=u.title,
+            avatar_url=u.avatar_url,
+            department=u.department,
+            is_active=u.is_active,
+            created_at=u.created_at
+        )
+
+    return AuditLogItemRead(
+        id=al.id,
+        log_ref=log_ref,
+        created_at=al.created_at,
+        ticket_id=None,
+        ticket_number=None,
+        ticket_title="Organization Event",
+        ticket_severity=None,
+        ticket_status=None,
+        actor=actor_read,
+        event_type=al.action,
+        event_label=_format_event_label(al.action),
+        description=al.details or _format_event_label(al.action),
+        previous_value=None,
+        new_value=None,
+        immutable_hash=fingerprint
+    )
 
 
 def _format_event_label(action: str) -> str:
@@ -48,6 +87,11 @@ def _format_event_label(action: str) -> str:
         "ticket closed": "Ticket Closed",
         "ticket created": "Ticket Ingested",
         "ticket edited": "Ticket Updated",
+        "organization_created": "Organization Created",
+        "join_code_generated": "Join Code Generated",
+        "join_code_revoked": "Join Code Revoked",
+        "join_request_approved": "Join Request Approved",
+        "join_request_rejected": "Join Request Rejected",
     }
     return mapping.get(action_clean, action.replace("_", " ").title())
 
@@ -176,131 +220,154 @@ async def list_audit_logs(
             )
         )
 
+    now = datetime.now(timezone.utc)
+    cutoff = None
+    if time_horizon == "today":
+        cutoff = now - timedelta(days=1)
+    elif time_horizon == "7d":
+        cutoff = now - timedelta(days=7)
+    elif time_horizon == "30d":
+        cutoff = now - timedelta(days=30)
+
+    # Base query for AuditLog (organization lifecycle events)
+    audit_query = (
+        select(AuditLog)
+        .options(selectinload(AuditLog.actor))
+        .where(AuditLog.organization_id == org_id)
+    )
+    if cutoff:
+        audit_query = audit_query.where(AuditLog.created_at >= cutoff)
+    if actor_id and actor_id.lower() != "all":
+        audit_query = audit_query.where(AuditLog.actor_id == actor_id)
+    if severity and severity.lower() != "all":
+        audit_query = audit_query.where(false())
+    if status_filter and status_filter.lower() != "all":
+        audit_query = audit_query.where(false())
+    if event_type and event_type.lower() != "all":
+        et = event_type.lower()
+        if any(k in et for k in ["status", "severity", "escalat", "reassign", "deadline", "reopen", "close", "signoff", "rca"]):
+            audit_query = audit_query.where(false())
+        else:
+            audit_query = audit_query.where(AuditLog.action.ilike(f"%{event_type}%"))
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        audit_query = audit_query.outerjoin(User, AuditLog.actor_id == User.id).where(
+            or_(
+                AuditLog.action.ilike(term),
+                AuditLog.details.ilike(term),
+                User.full_name.ilike(term),
+                User.email.ilike(term)
+            )
+        )
+
     # Fetch organization project IDs
     p_res = await db.execute(select(Project.id).where(Project.organization_id == org_id))
     org_project_ids = [pid for pid in p_res.scalars().all()]
 
-    if not org_project_ids:
-        return AuditLogsListResponse(
-            items=[],
-            total=0,
-            page=1,
-            page_size=page_size,
-            total_pages=1,
-            kpis=AuditLogKPIMetrics(
-                event_volume_24h=0,
-                event_volume_delta_pct=None,
-                escalations_count=0,
-                signoffs_count=0,
-                automated_ingests_count=None,
-                automated_ingests_pct=None,
-                ledger_hash=None
+    base_query = None
+    if org_project_ids:
+        base_query = (
+            select(TicketActivity)
+            .join(Ticket, TicketActivity.ticket_id == Ticket.id)
+            .options(
+                selectinload(TicketActivity.ticket).selectinload(Ticket.project),
+                selectinload(TicketActivity.actor)
             )
+            .where(Ticket.project_id.in_(org_project_ids))
         )
-
-    # Base query for TicketActivity scoped strictly to organization tickets
-    base_query = (
-        select(TicketActivity)
-        .join(Ticket, TicketActivity.ticket_id == Ticket.id)
-        .options(
-            selectinload(TicketActivity.ticket).selectinload(Ticket.project),
-            selectinload(TicketActivity.actor)
-        )
-        .where(Ticket.project_id.in_(org_project_ids))
-    )
-
-    # Time horizon filter
-    now = datetime.now(timezone.utc)
-    if time_horizon == "today":
-        cutoff = now - timedelta(days=1)
-        base_query = base_query.where(TicketActivity.created_at >= cutoff)
-    elif time_horizon == "7d":
-        cutoff = now - timedelta(days=7)
-        base_query = base_query.where(TicketActivity.created_at >= cutoff)
-    elif time_horizon == "30d":
-        cutoff = now - timedelta(days=30)
-        base_query = base_query.where(TicketActivity.created_at >= cutoff)
-
-    # Event Type filter
-    if event_type and event_type.lower() != "all":
-        et = event_type.lower()
-        if "status" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%status%"))
-        elif "severity" in et or "escalat" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%severity%"))
-        elif "reassign" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%reassign%"))
-        elif "deadline" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%deadline%"))
-        elif "reopen" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%reopen%"))
-        elif "close" in et or "signoff" in et or "rca" in et:
-            base_query = base_query.where(TicketActivity.action.ilike("%close%"))
-        else:
-            base_query = base_query.where(TicketActivity.action == event_type)
-
-    # Ticket severity filter
-    if severity and severity.lower() != "all":
-        base_query = base_query.where(Ticket.severity == severity.lower())
-
-    # Ticket status filter
-    if status_filter and status_filter.lower() != "all":
-        base_query = base_query.where(Ticket.status == status_filter.lower())
-
-    # Actor filter
-    if actor_id and actor_id.lower() != "all":
-        base_query = base_query.where(TicketActivity.actor_id == actor_id)
-
-    # Search filter
-    if search and search.strip():
-        term = f"%{search.strip()}%"
-        base_query = base_query.join(User, TicketActivity.actor_id == User.id).where(
-            or_(
-                Ticket.ticket_number.ilike(term),
-                Ticket.title.ilike(term),
-                TicketActivity.action.ilike(term),
-                TicketActivity.old_value.ilike(term),
-                TicketActivity.new_value.ilike(term),
-                User.full_name.ilike(term),
-                User.email.ilike(term),
+        if cutoff:
+            base_query = base_query.where(TicketActivity.created_at >= cutoff)
+        if event_type and event_type.lower() != "all":
+            et = event_type.lower()
+            if "status" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%status%"))
+            elif "severity" in et or "escalat" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%severity%"))
+            elif "reassign" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%reassign%"))
+            elif "deadline" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%deadline%"))
+            elif "reopen" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%reopen%"))
+            elif "close" in et or "signoff" in et or "rca" in et:
+                base_query = base_query.where(TicketActivity.action.ilike("%close%"))
+            else:
+                base_query = base_query.where(TicketActivity.action == event_type)
+        if severity and severity.lower() != "all":
+            base_query = base_query.where(Ticket.severity == severity.lower())
+        if status_filter and status_filter.lower() != "all":
+            base_query = base_query.where(Ticket.status == status_filter.lower())
+        if actor_id and actor_id.lower() != "all":
+            base_query = base_query.where(TicketActivity.actor_id == actor_id)
+        if search and search.strip():
+            term = f"%{search.strip()}%"
+            base_query = base_query.join(User, TicketActivity.actor_id == User.id).where(
+                or_(
+                    Ticket.ticket_number.ilike(term),
+                    Ticket.title.ilike(term),
+                    TicketActivity.action.ilike(term),
+                    TicketActivity.old_value.ilike(term),
+                    TicketActivity.new_value.ilike(term),
+                    User.full_name.ilike(term),
+                    User.email.ilike(term),
+                )
             )
-        )
 
     # Compute Total count
-    count_query = select(func.count()).select_from(base_query.subquery())
-    total_res = await db.execute(count_query)
-    total_count = total_res.scalar() or 0
+    audit_count_res = await db.execute(select(func.count()).select_from(audit_query.subquery()))
+    audit_count = audit_count_res.scalar() or 0
 
-    # Paginate
-    offset = (page - 1) * page_size
-    paged_query = base_query.order_by(desc(TicketActivity.created_at)).offset(offset).limit(page_size)
-    paged_res = await db.execute(paged_query)
-    activities = paged_res.scalars().all()
+    ticket_count = 0
+    if base_query is not None:
+        count_res = await db.execute(select(func.count()).select_from(base_query.subquery()))
+        ticket_count = count_res.scalar() or 0
 
-    # Calculate real KPIs across recent 24h (zero synthetic fallbacks F-04)
+    total_count = audit_count + ticket_count
+
+    # Calculate real KPIs across recent 24h
     cutoff_24h = now - timedelta(days=1)
     cutoff_48h = now - timedelta(days=2)
 
-    kpi_24h_query = (
-        select(TicketActivity)
-        .join(Ticket, TicketActivity.ticket_id == Ticket.id)
-        .where(Ticket.project_id.in_(org_project_ids))
-        .where(TicketActivity.created_at >= cutoff_24h)
-    )
-    kpi_res = await db.execute(kpi_24h_query)
-    recent_24h_activities = kpi_res.scalars().all()
-    v24 = len(recent_24h_activities)
+    recent_24h_activities = []
+    v_prev_24h_ticket = 0
+    if org_project_ids:
+        kpi_24h_query = (
+            select(TicketActivity)
+            .join(Ticket, TicketActivity.ticket_id == Ticket.id)
+            .where(Ticket.project_id.in_(org_project_ids))
+            .where(TicketActivity.created_at >= cutoff_24h)
+        )
+        kpi_res = await db.execute(kpi_24h_query)
+        recent_24h_activities = kpi_res.scalars().all()
 
-    # Calculate comparison for previous 24h
-    kpi_prev_query = (
-        select(func.count(TicketActivity.id))
-        .join(Ticket, TicketActivity.ticket_id == Ticket.id)
-        .where(Ticket.project_id.in_(org_project_ids))
-        .where(TicketActivity.created_at >= cutoff_48h)
-        .where(TicketActivity.created_at < cutoff_24h)
+        kpi_prev_query = (
+            select(func.count(TicketActivity.id))
+            .join(Ticket, TicketActivity.ticket_id == Ticket.id)
+            .where(Ticket.project_id.in_(org_project_ids))
+            .where(TicketActivity.created_at >= cutoff_48h)
+            .where(TicketActivity.created_at < cutoff_24h)
+        )
+        prev_res = await db.execute(kpi_prev_query)
+        v_prev_24h_ticket = prev_res.scalar() or 0
+
+    # 24h audit logs count
+    audit_24h_query = (
+        select(func.count(AuditLog.id))
+        .where(AuditLog.organization_id == org_id)
+        .where(AuditLog.created_at >= cutoff_24h)
     )
-    prev_res = await db.execute(kpi_prev_query)
-    v_prev_24h = prev_res.scalar() or 0
+    v24_audit = (await db.execute(audit_24h_query)).scalar() or 0
+
+    audit_prev_query = (
+        select(func.count(AuditLog.id))
+        .where(AuditLog.organization_id == org_id)
+        .where(AuditLog.created_at >= cutoff_48h)
+        .where(AuditLog.created_at < cutoff_24h)
+    )
+    v_prev_audit = (await db.execute(audit_prev_query)).scalar() or 0
+
+    v24 = len(recent_24h_activities) + v24_audit
+    v_prev_24h = v_prev_24h_ticket + v_prev_audit
 
     if v_prev_24h > 0:
         event_volume_delta_pct = round(((v24 - v_prev_24h) / v_prev_24h * 100), 1)
@@ -310,9 +377,6 @@ async def list_audit_logs(
     escalations = sum(1 for a in recent_24h_activities if "severity" in (a.action or "").lower())
     signoffs = sum(1 for a in recent_24h_activities if "close" in (a.action or "").lower())
 
-    # Automated events: TicketActivity model has no 'source' or 'is_automated' column.
-    # Keyword string matching against action names is unbacked by schema metadata.
-    # Return None to explicitly indicate unavailable telemetry.
     kpis = AuditLogKPIMetrics(
         event_volume_24h=v24,
         event_volume_delta_pct=event_volume_delta_pct,
@@ -320,48 +384,60 @@ async def list_audit_logs(
         signoffs_count=signoffs,
         automated_ingests_count=None,
         automated_ingests_pct=None,
-        ledger_hash=None  # Removed fake Ledger Root Hash (F-10)
+        ledger_hash=None
     )
 
-    items: List[AuditLogItemRead] = []
-    for a in activities:
-        fingerprint = _compute_record_fingerprint(a.id, a.ticket_id, a.actor_id, a.action, a.created_at)
-        log_ref = f"#LOG-{abs(hash(a.id)) % 90000 + 10000}"
-        t = a.ticket
-        u = a.actor
+    offset = (page - 1) * page_size
+    fetch_limit = offset + page_size
+    combined_items: List[AuditLogItemRead] = []
 
-        actor_read = None
-        if u:
-            actor_read = UserRead(
-                id=u.id,
-                email=u.email,
-                full_name=u.full_name,
-                role=u.role,
-                title=u.title,
-                avatar_url=u.avatar_url,
-                department=u.department,
-                is_active=u.is_active,
-                created_at=u.created_at
-            )
+    if audit_count > 0:
+        audit_res = await db.execute(audit_query.order_by(desc(AuditLog.created_at)).limit(fetch_limit))
+        for al in audit_res.scalars().all():
+            combined_items.append(_map_audit_log_to_item(al))
 
-        items.append(AuditLogItemRead(
-            id=a.id,
-            log_ref=log_ref,
-            created_at=a.created_at,
-            ticket_id=t.id if t else None,
-            ticket_number=t.ticket_number if t else "TICK-UNKNOWN",
-            ticket_title=t.title if t else "Untitled Ticket",
-            ticket_severity=t.severity if t else "major",
-            ticket_status=t.status if t else "open",
-            actor=actor_read,
-            event_type=a.action,
-            event_label=_format_event_label(a.action),
-            description=_format_description(a.action, a.old_value, a.new_value, t.ticket_number if t else "ticket"),
-            previous_value=a.old_value,
-            new_value=a.new_value,
-            immutable_hash=fingerprint
-        ))
+    if base_query is not None and ticket_count > 0:
+        paged_res = await db.execute(base_query.order_by(desc(TicketActivity.created_at)).limit(fetch_limit))
+        for a in paged_res.scalars().all():
+            fingerprint = _compute_record_fingerprint(a.id, a.ticket_id, a.actor_id, a.action, a.created_at)
+            log_ref = f"#LOG-{abs(hash(a.id)) % 90000 + 10000}"
+            t = a.ticket
+            u = a.actor
 
+            actor_read = None
+            if u:
+                actor_read = UserRead(
+                    id=u.id,
+                    email=u.email,
+                    full_name=u.full_name,
+                    role=u.role,
+                    title=u.title,
+                    avatar_url=u.avatar_url,
+                    department=u.department,
+                    is_active=u.is_active,
+                    created_at=u.created_at
+                )
+
+            combined_items.append(AuditLogItemRead(
+                id=a.id,
+                log_ref=log_ref,
+                created_at=a.created_at,
+                ticket_id=t.id if t else None,
+                ticket_number=t.ticket_number if t else "TICK-UNKNOWN",
+                ticket_title=t.title if t else "Untitled Ticket",
+                ticket_severity=t.severity if t else "major",
+                ticket_status=t.status if t else "open",
+                actor=actor_read,
+                event_type=a.action,
+                event_label=_format_event_label(a.action),
+                description=_format_description(a.action, a.old_value, a.new_value, t.ticket_number if t else "ticket"),
+                previous_value=a.old_value,
+                new_value=a.new_value,
+                immutable_hash=fingerprint
+            ))
+
+    combined_items.sort(key=lambda x: x.created_at, reverse=True)
+    items = combined_items[offset : offset + page_size]
     total_pages = max(1, (total_count + page_size - 1) // page_size)
 
     return AuditLogsListResponse(
@@ -407,9 +483,58 @@ async def get_audit_log_detail(
     a = res.scalar_one_or_none()
 
     if not a:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Audit log entry {log_id} not found."
+        audit_query = (
+            select(AuditLog)
+            .options(selectinload(AuditLog.actor))
+            .where(AuditLog.id == log_id)
+            .where(AuditLog.organization_id == org_id)
+        )
+        audit_res = await db.execute(audit_query)
+        al = audit_res.scalar_one_or_none()
+        if not al:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Audit log entry {log_id} not found."
+            )
+
+        u = al.actor
+        fingerprint = _compute_record_fingerprint(al.id, None, al.actor_id, al.action, al.created_at)
+        log_ref = f"#LOG-{abs(hash(al.id)) % 90000 + 10000}"
+
+        actor_read = None
+        if u:
+            actor_read = UserRead(
+                id=u.id,
+                email=u.email,
+                full_name=u.full_name,
+                role=u.role,
+                title=u.title,
+                avatar_url=u.avatar_url,
+                department=u.department,
+                is_active=u.is_active,
+                created_at=u.created_at
+            )
+
+        return AuditLogDetailRead(
+            id=al.id,
+            log_ref=log_ref,
+            created_at=al.created_at,
+            ticket_id=None,
+            ticket_number=None,
+            ticket_title="Organization Event",
+            ticket_severity=None,
+            ticket_status=None,
+            actor=actor_read,
+            event_type=al.action,
+            event_label=_format_event_label(al.action),
+            description=al.details or _format_event_label(al.action),
+            previous_value=None,
+            new_value=None,
+            immutable_hash=fingerprint,
+            originating_interface="Not recorded",
+            auth_host="Not recorded",
+            context_justification=None,
+            target_entity_details={"organization_id": al.organization_id, "action": al.action, "details": al.details}
         )
 
     t = a.ticket
@@ -546,11 +671,51 @@ async def export_audit_logs(
         res = await db.execute(base_query.order_by(desc(TicketActivity.created_at)).limit(500))
         activities = res.scalars().all()
 
+    # Query organization AuditLog entries for export
     now = datetime.now(timezone.utc)
+    audit_export_query = (
+        select(AuditLog)
+        .options(selectinload(AuditLog.actor))
+        .where(AuditLog.organization_id == org_id)
+    )
+    if req.time_horizon == "today":
+        audit_export_query = audit_export_query.where(AuditLog.created_at >= (now - timedelta(days=1)))
+    elif req.time_horizon == "7d":
+        audit_export_query = audit_export_query.where(AuditLog.created_at >= (now - timedelta(days=7)))
+    elif req.time_horizon == "30d":
+        audit_export_query = audit_export_query.where(AuditLog.created_at >= (now - timedelta(days=30)))
+
+    include_org_events = True
+    if req.severity and req.severity.lower() != "all":
+        include_org_events = False
+    if req.event_domains:
+        include_org_events = any(d.lower() in ["lifecycle", "organization", "auth", "admin", "all"] for d in req.event_domains)
+
+    audit_records = []
+    if include_org_events:
+        a_res = await db.execute(audit_export_query.order_by(desc(AuditLog.created_at)).limit(500))
+        audit_records = a_res.scalars().all()
+
     timestamp_str = now.strftime('%Y%m%d-%H%M%S')
 
     if req.format.lower() == "json":
         data = []
+        for al in audit_records:
+            u = al.actor
+            fingerprint = _compute_record_fingerprint(al.id, None, al.actor_id, al.action, al.created_at)
+            data.append({
+                "log_id": al.id,
+                "log_ref": f"#LOG-{abs(hash(al.id)) % 90000 + 10000}",
+                "timestamp": al.created_at.isoformat() if al.created_at else None,
+                "ticket_number": None,
+                "ticket_title": "Organization Event",
+                "actor": u.full_name if u else "System",
+                "actor_email": u.email if u else None,
+                "event_type": al.action,
+                "previous_value": None,
+                "new_value": al.details,
+                "sha256_fingerprint": fingerprint
+            })
         for a in activities:
             t = a.ticket
             u = a.actor
@@ -595,6 +760,23 @@ async def export_audit_logs(
         "New Value",
         "SHA-256 Fingerprint"
     ])
+
+    for al in audit_records:
+        u = al.actor
+        fingerprint = _compute_record_fingerprint(al.id, None, al.actor_id, al.action, al.created_at)
+        log_ref = f"#LOG-{abs(hash(al.id)) % 90000 + 10000}"
+        writer.writerow([
+            log_ref,
+            al.created_at.isoformat() if al.created_at else "",
+            "N/A",
+            "Organization Event",
+            u.full_name if u else "System",
+            u.email if u else "",
+            al.action,
+            "",
+            al.details or "",
+            fingerprint
+        ])
 
     for a in activities:
         t = a.ticket

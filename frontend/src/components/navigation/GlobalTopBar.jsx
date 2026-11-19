@@ -10,7 +10,7 @@ export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
-  activeBreadcrumbs = [authService.getCurrentUserSync()?.organization?.name || ''],
+  activeBreadcrumbs = [authService.getCurrentUserSync()?.memberships?.[0]?.organization_name || authService.getCurrentUserSync()?.organization_summary?.name || authService.getCurrentUserSync()?.organization?.name || ''],
   unreadNotifications = 0,
   slaBreachCount = 0,
   isCollapsed = false,

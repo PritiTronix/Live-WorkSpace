@@ -52,7 +52,10 @@ export const DashboardLayout = () => {
   const [slaBreachCount, setSlaBreachCount] = useState(0);
   const [priorityIssuesCount, setPriorityIssuesCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
-  const [workspaceName, setWorkspaceName] = useState(() => authService.getCurrentUserSync()?.organization?.name || '');
+  const [workspaceName, setWorkspaceName] = useState(() => {
+    const syncUser = authService.getCurrentUserSync();
+    return syncUser?.memberships?.[0]?.organization_name || syncUser?.organization_summary?.name || syncUser?.organization?.name || '';
+  });
   const [currentProjectName, setCurrentProjectName] = useState(null);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
@@ -113,11 +116,9 @@ export const DashboardLayout = () => {
   };
 
   useEffect(() => {
-    organizationService.getCurrent().then((ws) => {
-      if (ws?.name) setWorkspaceName(ws.name);
-    });
     authService.getCurrentUser().then((u) => {
-      if (u?.organization?.name) setWorkspaceName(u.organization.name);
+      const orgName = u?.memberships?.[0]?.organization_name || u?.organization_summary?.name || u?.organization?.name;
+      if (orgName) setWorkspaceName(orgName);
     });
     refreshBadges();
 

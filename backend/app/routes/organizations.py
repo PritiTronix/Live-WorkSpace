@@ -32,6 +32,7 @@ from backend.app.schemas import (
     JoinRequestDecision, JoinRequestPaginatedResponse,
     JoinCodeCreate, JoinCodeRead
 )
+from backend.app.core.config import settings
 from backend.app.core.websockets import ws_manager
 
 router = APIRouter()
@@ -74,12 +75,16 @@ def _get_client_ip(request: Request) -> str:
     return "unknown"
 
 
-def _check_join_rate_limit(user_id: str, client_ip: str) -> None:
-    """Enforces rate limiting on /organizations/join per user and per IP."""
+def _check_join_rate_limit(client_ip: str, user_id: Optional[str] = None) -> None:
+    """Enforces rate limiting on /organizations/join and /organizations/join/lookup per user and per IP."""
     now = time.time()
     cutoff = now - _RATE_LIMIT_WINDOW_SECONDS
 
-    for key in (f"user:{user_id}", f"ip:{client_ip}"):
+    keys = [f"ip:{client_ip}"]
+    if user_id:
+        keys.append(f"user:{user_id}")
+
+    for key in keys:
         timestamps = [t for t in _join_rate_limit_history[key] if t > cutoff]
         _join_rate_limit_history[key] = timestamps
         if len(timestamps) >= _RATE_LIMIT_MAX_ATTEMPTS:
@@ -133,7 +138,7 @@ async def create_organization(
     Creates the organization plus owner membership in one transaction.
     """
     # 1. Require email verification
-    if not current_user.email_verified:
+    if settings.REQUIRE_EMAIL_VERIFICATION and not current_user.email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -233,12 +238,17 @@ async def create_organization(
 @router.post("/join/lookup", response_model=JoinCodeLookupResponse)
 async def lookup_join_code(
     payload: JoinCodeLookupRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
     Looks up public organization details by join code.
     Invalid, expired, and revoked codes return the exact same 404 response.
+    Rate limited per IP using the sliding-window limiter.
     """
+    client_ip = _get_client_ip(request)
+    _check_join_rate_limit(client_ip=client_ip)
+
     clean_code = payload.code.strip()
     code_hash = _hash_join_code(clean_code)
     now = _utc_now()
@@ -304,7 +314,7 @@ async def join_organization(
     Notifies owner and admins in-app and via WebSocket.
     """
     client_ip = _get_client_ip(request)
-    _check_join_rate_limit(current_user.id, client_ip)
+    _check_join_rate_limit(client_ip=client_ip, user_id=current_user.id)
 
     clean_code = payload.code.strip()
     code_hash = _hash_join_code(clean_code)

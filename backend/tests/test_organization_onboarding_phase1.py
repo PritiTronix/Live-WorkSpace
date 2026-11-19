@@ -23,6 +23,7 @@ from backend.app.models import (
     User, Organization, Membership, OrganizationJoinCode,
     JoinRequest, Notification, AuditLog
 )
+from backend.app.core.config import settings
 from backend.app.core.security import create_access_token, get_password_hash
 from backend.app.routes.organizations import _join_rate_limit_history
 
@@ -196,6 +197,7 @@ async def run_test_suite():
             print("Scenario 3 PASSED.")
 
             print("--- Scenario 4: Join requests (duplicate, already member, pending limit) ---")
+            _join_rate_limit_history.clear()
             resp_join_self = await client.post(
                 "/api/v1/organizations/join",
                 json={"code": active_code, "message": "Trying to rejoin"},
@@ -360,6 +362,79 @@ async def run_test_suite():
 
             assert rl_triggered, "Expected rate limit 429 to trigger within 10 requests"
             print("Scenario 7 PASSED.")
+
+            print("--- Scenario 8: Rate limiting on /organizations/join/lookup returns 429 with Retry-After ---")
+            _join_rate_limit_history.clear()
+            lookup_rl_triggered = False
+            for _ in range(10):
+                r_lookup = await client.post("/api/v1/organizations/join/lookup", json={"code": "ANYCODE123"})
+                if r_lookup.status_code == 429:
+                    lookup_rl_triggered = True
+                    assert "Retry-After" in r_lookup.headers, "429 lookup must include Retry-After header"
+                    assert r_lookup.json().get("error", {}).get("code") == "rate_limited" or "rate_limited" in r_lookup.text
+                    break
+            assert lookup_rl_triggered, "Expected lookup rate limit 429 to trigger within 10 requests"
+            _join_rate_limit_history.clear()
+            print("Scenario 8 PASSED.")
+
+            print("--- Scenario 9: REQUIRE_EMAIL_VERIFICATION setting enforcement ---")
+            unverified_uid, unverified_token = await create_user("unverified@example.com", email_verified=False)
+            auth_unverified = {"Authorization": f"Bearer {unverified_token}"}
+
+            # With REQUIRE_EMAIL_VERIFICATION = True (default)
+            settings.REQUIRE_EMAIL_VERIFICATION = True
+            r_unverified_blocked = await client.post(
+                "/api/v1/organizations",
+                json={"name": "Unverified Org Blocked"},
+                headers=auth_unverified
+            )
+            assert r_unverified_blocked.status_code == 403, f"Expected 403, got {r_unverified_blocked.status_code}"
+            assert r_unverified_blocked.json().get("error", {}).get("code") == "email_verification_required" or "verification required" in r_unverified_blocked.text
+
+            # Toggle REQUIRE_EMAIL_VERIFICATION = False
+            settings.REQUIRE_EMAIL_VERIFICATION = False
+            r_unverified_allowed = await client.post(
+                "/api/v1/organizations",
+                json={"name": "Unverified Org Allowed"},
+                headers=auth_unverified
+            )
+            assert r_unverified_allowed.status_code == 201, f"Expected 201 when setting is False, got {r_unverified_allowed.status_code}: {r_unverified_allowed.text}"
+            settings.REQUIRE_EMAIL_VERIFICATION = True  # Restore default
+            print("Scenario 9 PASSED.")
+
+            print("--- Scenario 10: Audit entries appear in Activity Logs (/api/v1/audit-logs/) ---")
+            # Query audit logs for Apex Innovations (owned by auth_header)
+            r_audit_list = await client.get("/api/v1/audit-logs/", headers=auth_header)
+            assert r_audit_list.status_code == 200, f"Audit logs failed: {r_audit_list.text}"
+            audit_data = r_audit_list.json()
+            audit_items = audit_data.get("items", [])
+            assert len(audit_items) > 0, "Organization audit logs should contain events"
+
+            event_types = [item["event_type"] for item in audit_items]
+            assert "organization_created" in event_types, f"organization_created missing from {event_types}"
+            assert "join_code_generated" in event_types, f"join_code_generated missing from {event_types}"
+            assert "join_code_revoked" in event_types, f"join_code_revoked missing from {event_types}"
+            assert "join_request_approved" in event_types, f"join_request_approved missing from {event_types}"
+            assert "join_request_rejected" in event_types, f"join_request_rejected missing from {event_types}"
+
+            # Verify audit log detail endpoint for an org event
+            org_created_log = next(i for i in audit_items if i["event_type"] == "organization_created")
+            r_log_detail = await client.get(f"/api/v1/audit-logs/{org_created_log['id']}", headers=auth_header)
+            assert r_log_detail.status_code == 200
+            detail_data = r_log_detail.json()
+            assert detail_data["event_type"] == "organization_created"
+            assert detail_data["target_entity_details"]["organization_id"] == org_id
+
+            # Verify export endpoint includes organization audit events
+            r_export_json = await client.post("/api/v1/audit-logs/export", json={"format": "json"}, headers=auth_header)
+            assert r_export_json.status_code == 200
+            export_events = [e["event_type"] for e in r_export_json.json()]
+            assert "organization_created" in export_events
+
+            r_export_csv = await client.post("/api/v1/audit-logs/export", json={"format": "csv"}, headers=auth_header)
+            assert r_export_csv.status_code == 200
+            assert "Organization Created" in r_export_csv.text or "organization_created" in r_export_csv.text
+            print("Scenario 10 PASSED.")
 
     finally:
         app.dependency_overrides.clear()

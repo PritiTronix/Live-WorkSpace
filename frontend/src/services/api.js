@@ -375,14 +375,6 @@ export const searchService = {
 
 // Organization Services
 export const organizationService = {
-  list: async () => {
-    try {
-      const response = await apiClient.get('/organizations');
-      return response.data || [];
-    } catch {
-      return [];
-    }
-  },
   getCurrent: async () => {
     try {
       const response = await apiClient.get('/settings/workspace');
