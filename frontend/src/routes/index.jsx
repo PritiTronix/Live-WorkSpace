@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -39,13 +39,56 @@ import {
   VerifyEmailPage,
   JoinOrgPage,
 } from '../modules/auth';
+import { LogoutModal } from '../modules/auth/components/LogoutModal';
 import { RcaManagementPage } from '../modules/rca';
 import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
 import CompleteProfilePage from '../modules/users/CompleteProfilePage';
 import ProtectedRoute from './ProtectedRoute';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import NotFoundPage from '../components/common/NotFoundPage';
-import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
+import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2, LogOut } from 'lucide-react';
+
+/**
+ * OnboardingLayout
+ * Minimal layout for organization onboarding screens.
+ * Contains brand logo and Logout button connected to LogoutModal; no workspace sidebar.
+ */
+const OnboardingLayout = ({ currentUser }) => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-[#0F172A] flex flex-col text-slate-100">
+      <header className="h-16 px-6 bg-slate-950/80 backdrop-blur border-b border-slate-800 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <span className="font-headline font-bold text-lg text-white tracking-tight">
+            Live Workspace
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowLogoutModal(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-medium transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Sign Out</span>
+        </button>
+      </header>
+      <main className="flex-1 flex flex-col justify-center items-center p-6">
+        <Outlet context={{ currentUser }} />
+      </main>
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        currentUser={currentUser}
+      />
+    </div>
+  );
+};
 
 /**
  * AppRoutes
@@ -72,17 +115,53 @@ export const AppRoutes = () => {
         <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
 
-      {/* Onboarding Shell (Screens 10, 29, 31) */}
+      {/* Onboarding Shell */}
       <Route
-        path="/onboarding/profile"
+        path="/onboarding"
         element={
           <ProtectedRoute>
-            <CompleteProfilePage />
+            <OnboardingLayout />
           </ProtectedRoute>
         }
-      />
-      <Route path="/onboarding/create-org" element={<RegisterPage />} />
-      <Route path="/onboarding/join-org" element={<JoinOrgPage />} />
+      >
+        <Route
+          index
+          element={
+            <ModuleComingSoonPage
+              title="Organization Onboarding"
+              description="Get started by creating a new organization or joining your team's existing workspace."
+            />
+          }
+        />
+        <Route
+          path="create-org"
+          element={
+            <ModuleComingSoonPage
+              title="Create Organization"
+              description="Set up an organization workspace for your team and manage enterprise incident operations."
+            />
+          }
+        />
+        <Route
+          path="join-org"
+          element={
+            <ModuleComingSoonPage
+              title="Join Organization"
+              description="Enter your team's organization join code to request membership and start collaborating."
+            />
+          }
+        />
+        <Route
+          path="waiting"
+          element={
+            <ModuleComingSoonPage
+              title="Join Request Pending"
+              description="Your join request is awaiting administrator approval. You will receive access once approved."
+            />
+          }
+        />
+        <Route path="profile" element={<CompleteProfilePage />} />
+      </Route>
 
       {/* Design System Catalogs (Available only in DEV mode) */}
       {isDev && (

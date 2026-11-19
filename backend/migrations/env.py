@@ -23,6 +23,13 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+def include_object(object, name, type_, reflected, compare_to):
+    if type_ == "table" and reflected and name not in target_metadata.tables:
+        return False
+    if type_ == "index" and reflected and compare_to is None:
+        return False
+    return True
+
 # Set database URL dynamically from environment / app config
 db_url = settings.DATABASE_URL
 if db_url.startswith("postgresql://"):
@@ -42,6 +49,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         render_as_batch=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -49,10 +57,18 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    x_args = context.get_x_argument(as_dictionary=True)
+    schema = x_args.get("schema") or os.environ.get("ALEMBIC_TEST_SCHEMA")
+    if schema:
+        from sqlalchemy import text
+        connection.execute(text(f'SET search_path TO "{schema}"'))
+
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
         render_as_batch=True,
+        include_object=include_object,
+        version_table_schema=schema if schema else None,
     )
 
     with context.begin_transaction():
@@ -84,6 +100,7 @@ async def run_async_migrations() -> None:
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
+        await connection.commit()
 
     await connectable.dispose()
 

@@ -137,7 +137,7 @@ class TaskRead(BaseSchema):
     assignee_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
     reporter_id: Optional[str] = None
-    organization_id: Optional[str] = "org_01"
+    organization_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     comment_count: int = 0

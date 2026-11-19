@@ -10,8 +10,12 @@ from jose import jwt, JWTError
 from backend.app.core.config import settings
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
-from backend.app.models import User, Organization
-from backend.app.schemas import UserCreate, UserRead, Token, TokenRefreshRequest, OnboardingCompleteResponse
+from backend.app.models import User, Organization, Membership
+from backend.app.schemas import (
+    UserCreate, UserRead, Token, TokenRefreshRequest,
+    OnboardingCompleteResponse, UserMembershipRead, OrganizationSummary
+)
+from sqlalchemy.orm import selectinload
 from backend.app.core.security import (
     get_password_hash,
     verify_password,
@@ -39,9 +43,65 @@ class LoginResponse(BaseModel):
     user: UserRead
 
 
+async def build_user_auth_response(user: User, db: AsyncSession) -> UserRead:
+    """Build standardized user auth response including organization_required and active memberships."""
+    m_res = await db.execute(
+        select(Membership)
+        .options(selectinload(Membership.organization))
+        .where(Membership.user_id == user.id, Membership.status == "active")
+    )
+    memberships = m_res.scalars().all()
+    user_memberships = [
+        UserMembershipRead(
+            id=m.organization_id,
+            name=m.organization.name if m.organization else "",
+            role=m.role,
+            plan=m.organization.plan if m.organization else None,
+        )
+        for m in memberships
+    ]
+
+    org_required = len(user_memberships) == 0
+
+    org_summary = None
+    if user.organization_id:
+        org_res = await db.execute(select(Organization).where(Organization.id == user.organization_id))
+        org = org_res.scalars().first()
+        if org:
+            org_summary = OrganizationSummary(
+                id=org.id,
+                name=org.name,
+                plan=org.plan,
+            )
+
+    return UserRead(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        display_name=user.display_name,
+        role=user.role,
+        title=user.title,
+        avatar_url=user.avatar_url,
+        department=user.department,
+        phone=user.phone,
+        slack_handle=user.slack_handle,
+        is_active=user.is_active,
+        email_verified=user.email_verified,
+        onboarding_completed=user.onboarding_completed,
+        timezone=user.timezone,
+        last_active_at=user.last_active_at,
+        on_call_role=user.on_call_role,
+        organization_id=user.organization_id,
+        organization_required=org_required,
+        memberships=user_memberships,
+        created_at=user.created_at,
+        organization_summary=org_summary,
+    )
+
+
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    """Register a new user account with hashed password and default organization link."""
+    """Register a new user account with hashed password. User has organization_required until onboarding."""
     existing_user_res = await db.execute(select(User).where(User.email == user_in.email.lower().strip()))
     if existing_user_res.scalars().first():
         raise HTTPException(
@@ -49,56 +109,26 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
             detail="A user with this email address already exists.",
         )
 
-    # Link to specified organization, default organization, or create a new organization
-    org = None
-    role = "member"
-    if user_in.organization_name:
-        slug = user_in.organization_name.lower().strip().replace(" ", "-")
-        org_slug_res = await db.execute(select(Organization).where(Organization.slug == slug))
-        org = org_slug_res.scalars().first()
-        if not org:
-            org = Organization(
-                id=f"org_{uuid.uuid4().hex[:8]}",
-                name=user_in.organization_name.strip(),
-                slug=slug,
-                created_at=datetime.now(timezone.utc),
-            )
-            db.add(org)
-            await db.flush()
-        role = "owner"
-    else:
-        org_res = await db.execute(select(Organization))
-        org = org_res.scalars().first()
-        if not org:
-            org = Organization(
-                id=f"org_{uuid.uuid4().hex[:8]}",
-                name="Acme Tech",
-                slug="acme-tech",
-                created_at=datetime.now(timezone.utc),
-            )
-            db.add(org)
-            await db.flush()
-
     now = datetime.now(timezone.utc)
     new_user = User(
         id=f"usr_{uuid.uuid4().hex[:8]}",
         email=user_in.email.lower().strip(),
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name.strip(),
-        role=role,
+        role="member",
         title=user_in.title or "Software Engineer",
         department=user_in.department or "Engineering",
         avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
         is_active=True,
         email_verified=False,
         onboarding_completed=False,
-        organization_id=org.id,
+        organization_id=None,
         created_at=now,
     )
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
-    return new_user
+    return await build_user_auth_response(new_user, db)
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -132,7 +162,7 @@ async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
         access_token=access_token,
         token_type="bearer",
         refresh_token=refresh_token,
-        user=UserRead.model_validate(user),
+        user=await build_user_auth_response(user, db),
     )
 
 
@@ -180,14 +210,17 @@ async def refresh_access_token(payload: TokenRefreshRequest, db: AsyncSession = 
         access_token=new_access_token,
         token_type="bearer",
         refresh_token=new_refresh_token,
-        user=UserRead.model_validate(user),
+        user=await build_user_auth_response(user, db),
     )
 
 
 @router.get("/me", response_model=UserRead)
-async def get_current_authenticated_user(current_user: User = Depends(get_current_active_user)):
+async def get_current_authenticated_user(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Retrieve verified profile of currently authenticated user session including onboarding status."""
-    return current_user
+    return await build_user_auth_response(current_user, db)
 
 
 @router.post("/onboarding/complete", response_model=OnboardingCompleteResponse)
@@ -203,7 +236,7 @@ async def complete_onboarding(
         success=True,
         message="Onboarding marked as completed",
         onboarding_completed=True,
-        user=UserRead.model_validate(current_user),
+        user=await build_user_auth_response(current_user, db),
     )
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr

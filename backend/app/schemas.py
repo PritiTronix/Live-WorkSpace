@@ -90,12 +90,21 @@ class ActiveOperationalQueue(BaseSchema):
 class OrganizationSummary(BaseSchema):
     id: str
     name: str
-    plan: Optional[str] = "Standard"
+    plan: Optional[str] = None
+
+
+class UserMembershipRead(BaseSchema):
+    id: str
+    name: str
+    role: str
+    plan: Optional[str] = None
 
 
 class UserRead(UserBase):
     id: str
     organization_id: Optional[str] = None
+    organization_required: bool = False
+    memberships: List[UserMembershipRead] = []
     created_at: datetime
     operational_velocity: Optional[OperationalVelocity] = None
     active_queue: Optional[ActiveOperationalQueue] = None
@@ -187,14 +196,86 @@ class OnboardingCompleteResponse(BaseSchema):
 # --- Organization Schemas ---
 class OrganizationBase(BaseSchema):
     name: str
-    slug: str
+    slug: Optional[str] = None
+    plan: Optional[str] = None
+    industry: Optional[str] = None
+    size_range: Optional[str] = None
+    logo_path: Optional[str] = None
+
+
+class OrganizationCreateRequest(BaseSchema):
+    name: str = Field(..., min_length=2, max_length=100)
+    industry: Optional[str] = Field(None, max_length=100)
+    size_range: Optional[str] = Field(None, max_length=50)
+    logo_path: Optional[str] = Field(None, max_length=500)
     plan: Optional[str] = None
 
 
 class OrganizationRead(OrganizationBase):
     id: str
+    slug: str
+    created_by: Optional[str] = None
     created_at: datetime
-    plan: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
+class JoinCodeLookupRequest(BaseSchema):
+    code: str = Field(..., min_length=1, max_length=100)
+
+
+class JoinCodeLookupResponse(BaseSchema):
+    name: str
+    logo_path: Optional[str] = None
+
+
+class JoinRequestCreate(BaseSchema):
+    code: str = Field(..., min_length=1, max_length=100)
+    message: Optional[str] = Field(None, max_length=500)
+
+
+class JoinRequestUser(BaseSchema):
+    id: str
+    full_name: str
+    email: EmailStr
+    avatar_url: Optional[str] = None
+
+
+class JoinRequestRead(BaseSchema):
+    id: str
+    user_id: str
+    organization_id: str
+    status: str
+    message: Optional[str] = None
+    created_at: datetime
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    decision_reason: Optional[str] = None
+    organization_name: Optional[str] = None
+    organization_logo: Optional[str] = None
+    user: Optional[JoinRequestUser] = None
+
+
+class JoinRequestDecision(BaseSchema):
+    decision_reason: Optional[str] = Field(None, max_length=500)
+
+
+class JoinCodeCreate(BaseSchema):
+    expires_in_days: Optional[int] = Field(None, ge=1, le=365)
+    max_uses: Optional[int] = Field(None, ge=1, le=10000)
+
+
+class JoinCodeRead(BaseSchema):
+    code: str
+    expires_at: Optional[datetime] = None
+    max_uses: Optional[int] = None
+    created_at: datetime
+
+
+class JoinRequestPaginatedResponse(BaseSchema):
+    items: List[JoinRequestRead]
+    total: int
+    page: int
+    page_size: int
 
 
 # --- Project Member & Invitation Schemas ---

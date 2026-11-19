@@ -1,7 +1,9 @@
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +55,40 @@ def create_application() -> FastAPI:
 
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    @application.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        if isinstance(exc.detail, dict):
+            code = exc.detail.get("code", "error")
+            message = exc.detail.get("message", str(exc.detail))
+        else:
+            code = "organization_required" if exc.status_code == 403 and "organization" in str(exc.detail).lower() else "error"
+            message = str(exc.detail)
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": code,
+                    "message": message,
+                },
+                "detail": exc.detail,
+            },
+            headers=exc.headers,
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "validation_error",
+                    "message": "Request validation failed",
+                },
+                "detail": exc.errors(),
+            },
+        )
 
     # Secure ticket storage directory
     uploads_dir = os.path.abspath(settings.UPLOAD_DIR)

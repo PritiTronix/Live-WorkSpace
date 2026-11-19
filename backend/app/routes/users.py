@@ -21,11 +21,11 @@ from backend.app.dependencies import get_current_active_user, get_current_user_i
 from backend.app.core.security import verify_password, get_password_hash
 from backend.app.models import (
     User, Ticket, Task, ProjectMember, Project, UserInvitation,
-    ProjectActivity, Organization, RCARecord
+    ProjectActivity, Organization, RCARecord, Membership
 )
 from backend.app.schemas import (
     UserRead, UserUpdateProfile, UserChangePassword, UserInviteRequest, UserUpdateRole,
-    OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary
+    OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary, UserMembershipRead
 )
 
 logger = logging.getLogger("tronix.users")
@@ -118,8 +118,26 @@ async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:
             org_summary = OrganizationSummary(
                 id=org.id,
                 name=org.name,
-                plan=getattr(org, "plan", None) or "Standard"
+                plan=getattr(org, "plan", None)
             )
+
+    # 1b. Active Memberships
+    m_res = await db.execute(
+        select(Membership)
+        .options(selectinload(Membership.organization))
+        .where(Membership.user_id == user.id, Membership.status == "active")
+    )
+    memberships = m_res.scalars().all()
+    user_memberships = [
+        UserMembershipRead(
+            id=m.organization_id,
+            name=m.organization.name if m.organization else "",
+            role=m.role,
+            plan=m.organization.plan if m.organization else None,
+        )
+        for m in memberships
+    ]
+    org_required = len(user_memberships) == 0
 
     # 2. Operational Velocity (assigned or resolved by user in current quarter)
     tk_res = await db.execute(
@@ -281,6 +299,8 @@ async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:
         last_active_at=user.last_active_at,
         on_call_role=user.on_call_role,
         organization_id=user.organization_id,
+        organization_required=org_required,
+        memberships=user_memberships,
         created_at=user.created_at,
         operational_velocity=op_velocity,
         active_queue=active_queue,
