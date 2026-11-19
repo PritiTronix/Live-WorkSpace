@@ -50,7 +50,11 @@ export const GlobalTopBar = ({
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target) &&
+        !event.target.closest?.('[role="dialog"]')
+      ) {
         setIsNotifOpen(false);
       }
     };

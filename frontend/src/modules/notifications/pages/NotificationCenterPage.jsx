@@ -5,10 +5,12 @@
  * - When at /workspace/inbox: strictly scopes to actionable updates (mentions, assignments, comments).
  * - When at /workspace/notifications: comprehensive activity stream including system and SLA alerts.
  * - Filter tabs, mark all read, chronological grouping (Today / Earlier).
+ * - NotificationDetailModal when clicking any notification.
  */
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import NotificationItem from '../components/NotificationItem';
+import NotificationDetailModal from '../components/NotificationDetailModal';
 import useNotifications from '../hooks/useNotifications';
 
 const NOTIF_FILTERS = [
@@ -32,6 +34,7 @@ export const NotificationCenterPage = () => {
   const filters = isInbox ? INBOX_FILTERS : NOTIF_FILTERS;
 
   const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedNotification, setSelectedNotification] = useState(null);
   const { notifications, unreadCount, loading, markRead, markAllRead } = useNotifications({
     inboxOnly: isInbox,
   });
@@ -41,6 +44,13 @@ export const NotificationCenterPage = () => {
     if (activeFilter === 'unread') return !n.is_read;
     return n.type === activeFilter;
   });
+
+  const handleSelectNotification = (notif) => {
+    if (!notif.is_read) {
+      markRead(notif.id);
+    }
+    setSelectedNotification(notif);
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -148,6 +158,7 @@ export const NotificationCenterPage = () => {
                       key={notif.id}
                       notification={notif}
                       onMarkRead={markRead}
+                      onSelect={handleSelectNotification}
                     />
                   ))}
               </>
@@ -166,6 +177,7 @@ export const NotificationCenterPage = () => {
                       key={notif.id}
                       notification={notif}
                       onMarkRead={markRead}
+                      onSelect={handleSelectNotification}
                     />
                   ))}
               </>
@@ -173,6 +185,16 @@ export const NotificationCenterPage = () => {
           </div>
         )}
       </div>
+
+      {/* Notification Details Modal */}
+      {selectedNotification && (
+        <NotificationDetailModal
+          isOpen={Boolean(selectedNotification)}
+          onClose={() => setSelectedNotification(null)}
+          notification={selectedNotification}
+          onMarkRead={markRead}
+        />
+      )}
     </div>
   );
 };

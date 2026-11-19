@@ -713,7 +713,7 @@ async def approve_join_request(
         actor_id=current_user.id,
         target_id=join_req.id,
         target_type="join_request",
-        target_route="/dashboard",
+        target_route="/workspace/dashboard",
         created_at=now,
     )
     db.add(notif)
@@ -816,6 +816,7 @@ async def reject_join_request(
         actor_id=current_user.id,
         target_id=join_req.id,
         target_type="join_request",
+        target_route="/workspace/dashboard",
         created_at=now,
     )
     db.add(notif)
