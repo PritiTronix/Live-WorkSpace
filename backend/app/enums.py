@@ -1,8 +1,34 @@
 """
-Task-related enumerations — single source of truth for the backend.
-All values are lowercase strings to match the frontend constants.
+Task and Organization enumerations — single source of truth for the backend.
+All values are lowercase strings.
 """
 from enum import Enum
+
+
+class OrganizationPlan(str, Enum):
+    free = "free"
+    starter = "starter"
+    pro = "pro"
+    enterprise = "enterprise"
+
+
+class MembershipRole(str, Enum):
+    owner = "owner"
+    admin = "admin"
+    member = "member"
+
+
+class MembershipStatus(str, Enum):
+    active = "active"
+    suspended = "suspended"
+
+
+class JoinRequestStatus(str, Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    cancelled = "cancelled"
+    expired = "expired"
 
 
 class TaskStatus(str, Enum):

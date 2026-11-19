@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import AuthLayout from '../layouts/AuthLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -37,15 +37,63 @@ import {
   ForgotPasswordPage,
   ResetPasswordPage,
   VerifyEmailPage,
-  JoinOrgPage,
 } from '../modules/auth';
+import {
+  OnboardingChoicePage,
+  CreateOrgPage,
+  JoinOrgPage,
+  WaitingApprovalPage,
+} from '../modules/onboarding';
+import { LogoutModal } from '../modules/auth/components/LogoutModal';
 import { RcaManagementPage } from '../modules/rca';
 import { ModalCatalogPage, StatesCatalogPage } from '../modules/design-system';
 import CompleteProfilePage from '../modules/users/CompleteProfilePage';
 import ProtectedRoute from './ProtectedRoute';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import NotFoundPage from '../components/common/NotFoundPage';
-import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2 } from 'lucide-react';
+import { Activity, ShieldCheck, BarChart3, Settings, MessageSquare, FolderGit2, LogOut } from 'lucide-react';
+
+/**
+ * OnboardingLayout
+ * Minimal layout for organization onboarding screens.
+ * Contains brand logo and Logout button connected to LogoutModal; no workspace sidebar.
+ */
+const OnboardingLayout = ({ currentUser }) => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-canvas-main flex flex-col text-text-primary font-body">
+      <header className="h-16 px-6 bg-surface-card border-b border-border-subtle flex items-center justify-between shrink-0 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-btn-primary flex items-center justify-center text-white font-bold shadow-sm">
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <span className="font-headline font-bold text-lg text-text-primary tracking-tight">
+            Live Workspace
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowLogoutModal(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-border-subtle bg-surface-card hover:bg-canvas-lavender text-text-secondary hover:text-text-primary text-sm font-medium transition-colors shadow-xs"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Sign Out</span>
+        </button>
+      </header>
+      <main className="flex-1 flex flex-col justify-center items-center p-6">
+        <Outlet context={{ currentUser }} />
+      </main>
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        currentUser={currentUser}
+      />
+    </div>
+  );
+};
 
 /**
  * AppRoutes
@@ -72,17 +120,21 @@ export const AppRoutes = () => {
         <Route path="mfa-challenge" element={<LoginPage />} />
       </Route>
 
-      {/* Onboarding Shell (Screens 10, 29, 31) */}
+      {/* Onboarding Shell */}
       <Route
-        path="/onboarding/profile"
+        path="/onboarding"
         element={
           <ProtectedRoute>
-            <CompleteProfilePage />
+            <OnboardingLayout />
           </ProtectedRoute>
         }
-      />
-      <Route path="/onboarding/create-org" element={<RegisterPage />} />
-      <Route path="/onboarding/join-org" element={<JoinOrgPage />} />
+      >
+        <Route index element={<OnboardingChoicePage />} />
+        <Route path="create-org" element={<CreateOrgPage />} />
+        <Route path="join-org" element={<JoinOrgPage />} />
+        <Route path="waiting" element={<WaitingApprovalPage />} />
+        <Route path="profile" element={<CompleteProfilePage />} />
+      </Route>
 
       {/* Design System Catalogs (Available only in DEV mode) */}
       {isDev && (

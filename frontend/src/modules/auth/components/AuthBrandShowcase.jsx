@@ -54,14 +54,17 @@ export const AuthBrandShowcase = () => {
       `}</style>
 
       {/* ── Top Block: Brand Logo & Hero Copy ── */}
-      <div className="flex-shrink-0 space-y-3 sm:space-y-4" data-purpose="hero-top">
-        <header className="flex items-center flex-shrink-0" data-purpose="brand-header">
+      <div className="flex-shrink-0" data-purpose="hero-top">
+        <header className="flex items-center flex-shrink-0 mb-5 sm:mb-6" data-purpose="brand-header">
           <AppLogo size="md" />
         </header>
 
         {/* ── Headline & Subtext (12-16px between headline and subtext) ── */}
         <div className="space-y-3 sm:space-y-3.5" data-purpose="hero-copy">
-          <h1 className="font-headline text-2xl sm:text-3xl lg:text-[2.25rem] xl:text-[2.65rem] font-extrabold tracking-tight leading-[1.14]">
+          <h1
+            className="font-headline text-2xl sm:text-3xl lg:text-[2.25rem] xl:text-[2.65rem] font-extrabold tracking-tight leading-[1.14] sm:leading-[1.14] lg:leading-[1.14] xl:leading-[1.14]"
+            style={{ lineHeight: 1.14 }}
+          >
             <span className="text-text-primary block">{AUTH_TEXT.headlineMain}</span>
             <span className="text-btn-primary block">{AUTH_TEXT.headlineAccent}</span>
           </h1>

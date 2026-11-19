@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt
@@ -21,11 +21,11 @@ from backend.app.dependencies import get_current_active_user, get_current_user_i
 from backend.app.core.security import verify_password, get_password_hash
 from backend.app.models import (
     User, Ticket, Task, ProjectMember, Project, UserInvitation,
-    ProjectActivity, Organization, RCARecord
+    ProjectActivity, Organization, RCARecord, Membership
 )
 from backend.app.schemas import (
     UserRead, UserUpdateProfile, UserChangePassword, UserInviteRequest, UserUpdateRole,
-    OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary
+    OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary, UserMembershipRead
 )
 
 logger = logging.getLogger("tronix.users")
@@ -118,8 +118,26 @@ async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:
             org_summary = OrganizationSummary(
                 id=org.id,
                 name=org.name,
-                plan=getattr(org, "plan", None) or "Standard"
+                plan=getattr(org, "plan", None)
             )
+
+    # 1b. Active Memberships
+    m_res = await db.execute(
+        select(Membership)
+        .options(selectinload(Membership.organization))
+        .where(Membership.user_id == user.id, Membership.status == "active")
+    )
+    memberships = m_res.scalars().all()
+    user_memberships = [
+        UserMembershipRead(
+            id=m.organization_id,
+            name=m.organization.name if m.organization else "",
+            role=m.role,
+            plan=m.organization.plan if m.organization else None,
+        )
+        for m in memberships
+    ]
+    org_required = len(user_memberships) == 0
 
     # 2. Operational Velocity (assigned or resolved by user in current quarter)
     tk_res = await db.execute(
@@ -281,6 +299,8 @@ async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:
         last_active_at=user.last_active_at,
         on_call_role=user.on_call_role,
         organization_id=user.organization_id,
+        organization_required=org_required,
+        memberships=user_memberships,
         created_at=user.created_at,
         operational_velocity=op_velocity,
         active_queue=active_queue,
@@ -669,6 +689,62 @@ async def invite_member(
     }
 
 
+async def get_organization_team_members(
+    db: AsyncSession,
+    organization_id: str,
+    department: Optional[str] = None
+) -> List[User]:
+    """
+    Returns deduplicated users for an organization:
+    1. Reads users with an active membership in the organization.
+    2. Reads users that exist only in users.organization_id (not yet in memberships).
+    3. Merges and deduplicates safely by User.id, assigning membership role where available.
+    4. Applies optional department/team filtering.
+    """
+    # 1. Fetch active memberships with associated User objects
+    mem_stmt = (
+        select(User, Membership.role.label("membership_role"))
+        .join(Membership, Membership.user_id == User.id)
+        .where(
+            Membership.organization_id == organization_id,
+            Membership.status == "active"
+        )
+    )
+    mem_res = await db.execute(mem_stmt)
+    users_by_id: Dict[str, User] = {}
+    membership_roles: Dict[str, str] = {}
+    for u, m_role in mem_res.all():
+        users_by_id[u.id] = u
+        if m_role:
+            membership_roles[u.id] = m_role
+
+    # 2. Fetch users with users.organization_id == organization_id (not yet in memberships)
+    legacy_stmt = select(User).where(User.organization_id == organization_id)
+    legacy_res = await db.execute(legacy_stmt)
+    for u in legacy_res.scalars().all():
+        if u.id not in users_by_id:
+            users_by_id[u.id] = u
+
+    # 3. Create user list reflecting active membership role
+    result_users = []
+    for uid, u in users_by_id.items():
+        if uid in membership_roles:
+            u.role = membership_roles[uid]
+        result_users.append(u)
+
+    # 4. Department filter
+    if department and department.lower().strip() != "all":
+        search_term = department.strip().lower()
+        result_users = [
+            u for u in result_users
+            if u.department and search_term in u.department.lower()
+        ]
+
+    # 5. Sort by full_name
+    result_users.sort(key=lambda u: (u.full_name or "").lower())
+    return result_users
+
+
 @router.get("", response_model=List[UserRead])
 @router.get("/", response_model=List[UserRead], include_in_schema=False)
 async def list_team_members(
@@ -681,14 +757,8 @@ async def list_team_members(
     if not current_user.organization_id:
         return [current_user]
 
-    query = select(User).where(User.organization_id == current_user.organization_id)
     eff_dept = department or team
-    if eff_dept and eff_dept.lower().strip() != "all":
-        query = query.where(User.department.ilike(f"%{eff_dept.strip()}%"))
-    query = query.order_by(User.full_name)
-
-    res = await db.execute(query)
-    return res.scalars().all()
+    return await get_organization_team_members(db, current_user.organization_id, department=eff_dept)
 
 
 class TeamSummaryResponse(BaseModel):
@@ -729,11 +799,8 @@ async def get_team_members_summary(
             workload_status=None,
         )
 
-    # All users in org
-    res = await db.execute(
-        select(User).where(User.organization_id == current_user.organization_id)
-    )
-    users = res.scalars().all()
+    # All users in org (memberships + users.organization_id deduplicated)
+    users = await get_organization_team_members(db, current_user.organization_id)
 
     total = len(users)
     active = sum(1 for u in users if u.is_active)
@@ -897,13 +964,8 @@ async def get_user_member_detail(
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """Retrieve full user profile with live workload and aggregations, strictly scoped to caller's organization."""
-    u_res = await db.execute(
-        select(User).where(
-            User.id == user_id,
-            User.organization_id == current_user.organization_id
-        )
-    )
-    user = u_res.scalars().first()
+    org_users = await get_organization_team_members(db, current_user.organization_id)
+    user = next((u for u in org_users if u.id == user_id), None)
     if not user:
         raise HTTPException(status_code=404, detail="User not found in this organization")
 
@@ -1063,11 +1125,19 @@ async def update_member_role(
             detail=f"Invalid role '{payload.role}'. Must be one of: {', '.join(sorted(valid_roles))}"
         )
 
-    # Fetch target user in same organization
+    # Fetch target user in same organization (via active membership or users.organization_id)
     u_res = await db.execute(
         select(User).where(
             User.id == user_id,
-            User.organization_id == current_user.organization_id
+            or_(
+                User.organization_id == current_user.organization_id,
+                User.id.in_(
+                    select(Membership.user_id).where(
+                        Membership.organization_id == current_user.organization_id,
+                        Membership.status == "active"
+                    )
+                )
+            )
         )
     )
     target_user = u_res.scalars().first()
@@ -1084,22 +1154,42 @@ async def update_member_role(
     if current_user.id == target_user.id and caller_role != "owner":
         raise HTTPException(status_code=403, detail="Self-escalation of roles is forbidden")
 
-    old_role = (target_user.role or "").lower()
+    # Check effective old role in organization
+    m_check = await db.execute(
+        select(Membership).where(
+            Membership.user_id == target_user.id,
+            Membership.organization_id == current_user.organization_id,
+            Membership.status == "active"
+        )
+    )
+    target_membership = m_check.scalars().first()
+    old_role = (target_membership.role if target_membership else target_user.role or "").lower()
 
     # Prevent demoting the last owner
     if old_role == "owner" and new_role != "owner":
         owner_count_res = await db.execute(
-            select(func.count(User.id)).where(
-                User.organization_id == current_user.organization_id,
-                User.role == "owner",
-                User.is_active.is_(True)
+            select(func.count(Membership.id)).where(
+                Membership.organization_id == current_user.organization_id,
+                Membership.role == "owner",
+                Membership.status == "active"
             )
         )
         owner_count = owner_count_res.scalar() or 0
         if owner_count <= 1:
-            raise HTTPException(status_code=400, detail="Cannot demote the last organization owner")
+            u_owner_res = await db.execute(
+                select(func.count(User.id)).where(
+                    User.organization_id == current_user.organization_id,
+                    User.role == "owner",
+                    User.is_active.is_(True)
+                )
+            )
+            u_count = u_owner_res.scalar() or 0
+            if max(owner_count, u_count) <= 1:
+                raise HTTPException(status_code=400, detail="Cannot demote the last organization owner")
 
     target_user.role = new_role
+    if target_membership:
+        target_membership.role = new_role
 
     # Audit logging
     logger.info(

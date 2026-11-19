@@ -15,6 +15,13 @@ export const projectsService = {
   },
 
   /**
+   * Alias for getProjects
+   */
+  listProjects: async (params = {}) => {
+    return projectsService.getProjects(params);
+  },
+
+  /**
    * Get single project details by ID
    * @param {string} id - Project ID
    */

@@ -1,7 +1,9 @@
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,36 +18,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks: automatically create database tables and seed if empty
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            try:
-                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50)"))
-            except Exception:
-                try:
-                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50)"))
-                except Exception:
-                    pass
-            for col_name, col_type in [
-                ("display_name", "VARCHAR(255)"),
-                ("phone", "VARCHAR(50)"),
-                ("slack_handle", "VARCHAR(100)"),
-            ]:
-                try:
-                    await conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
-                except Exception:
-                    try:
-                        await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                    except Exception:
-                        pass
-        async with AsyncSessionLocal() as session:
-            await seed_initial_data_if_empty(session)
-            await session.commit()
-        logger.info("Database initialized and verified on Neon PostgreSQL.")
-    except Exception as e:
-        logger.error(f"Database initialization error: {e}")
-        raise e
+    logger.info("Application startup completed.")
     yield
     # Shutdown tasks: dispose engine pool
     await engine.dispose()
@@ -82,6 +55,40 @@ def create_application() -> FastAPI:
 
     # Register API V1 Routers
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    @application.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        if isinstance(exc.detail, dict):
+            code = exc.detail.get("code", "error")
+            message = exc.detail.get("message", str(exc.detail))
+        else:
+            code = "organization_required" if exc.status_code == 403 and "organization" in str(exc.detail).lower() else "error"
+            message = str(exc.detail)
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": {
+                    "code": code,
+                    "message": message,
+                },
+                "detail": exc.detail,
+            },
+            headers=exc.headers,
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "validation_error",
+                    "message": "Request validation failed",
+                },
+                "detail": exc.errors(),
+            },
+        )
 
     # Secure ticket storage directory
     uploads_dir = os.path.abspath(settings.UPLOAD_DIR)

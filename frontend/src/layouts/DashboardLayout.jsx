@@ -13,6 +13,7 @@ import InviteMemberModal from '../modules/members/components/InviteMemberModal';
 import FileUploadModal from '../modules/files/components/FileUploadModal';
 import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
 import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import { isSidebarItemActive } from '../utils/navigation';
 
 /**
@@ -52,7 +53,10 @@ export const DashboardLayout = () => {
   const [slaBreachCount, setSlaBreachCount] = useState(0);
   const [priorityIssuesCount, setPriorityIssuesCount] = useState(0);
   const [openTicketsCount, setOpenTicketsCount] = useState(0);
-  const [workspaceName, setWorkspaceName] = useState(() => authService.getCurrentUserSync()?.organization?.name || '');
+  const [workspaceName, setWorkspaceName] = useState(() => {
+    const syncUser = authService.getCurrentUserSync();
+    return syncUser?.memberships?.[0]?.organization_name || syncUser?.organization_summary?.name || syncUser?.organization?.name || '';
+  });
   const [currentProjectName, setCurrentProjectName] = useState(null);
 
   // Responsive Breakpoint Handler: automatically adapt sidebar on tablet vs desktop
@@ -113,11 +117,9 @@ export const DashboardLayout = () => {
   };
 
   useEffect(() => {
-    organizationService.getCurrent().then((ws) => {
-      if (ws?.name) setWorkspaceName(ws.name);
-    });
     authService.getCurrentUser().then((u) => {
-      if (u?.organization?.name) setWorkspaceName(u.organization.name);
+      const orgName = u?.memberships?.[0]?.organization_name || u?.organization_summary?.name || u?.organization?.name;
+      if (orgName) setWorkspaceName(orgName);
     });
     refreshBadges();
 
@@ -145,17 +147,26 @@ export const DashboardLayout = () => {
   // Dynamic breadcrumbs based on active route and verified tenant data
   const getBreadcrumbs = () => {
     const path = location.pathname;
-    if (path === '/workspace/dashboard' || path === '/workspace') {
+    if (path === '/workspace/dashboard' || path === '/workspace' || path === '/workspace/') {
       return [workspaceName, 'Dashboard'];
     }
+    if (path.startsWith('/workspace/inbox')) {
+      return [workspaceName, 'Inbox'];
+    }
+    if (path.startsWith('/workspace/notifications')) {
+      return [workspaceName, 'Notifications'];
+    }
     if (path.startsWith('/workspace/projects/')) {
-      return currentProjectName ? [workspaceName, 'Projects', currentProjectName] : [workspaceName, 'Projects'];
+      return currentProjectName ? [workspaceName, 'Projects', currentProjectName] : [workspaceName, 'Projects', 'Project Detail'];
     }
     if (path === '/workspace/projects') {
       return [workspaceName, 'Projects'];
     }
-    if (path === '/workspace/tasks/my-tasks') {
+    if (path === '/workspace/tasks/my-tasks' || path === '/workspace/tasks/my') {
       return [workspaceName, 'Tasks', 'My Tasks'];
+    }
+    if (path === '/workspace/tasks/all') {
+      return [workspaceName, 'Tasks', 'All Tasks'];
     }
     if (path.startsWith('/workspace/tasks')) {
       return [workspaceName, 'Tasks'];
@@ -178,6 +189,9 @@ export const DashboardLayout = () => {
     if (path.startsWith('/workspace/members')) {
       return [workspaceName, 'Team Members'];
     }
+    if (path.startsWith('/workspace/discussions/')) {
+      return [workspaceName, 'Discussions', 'Discussion Thread'];
+    }
     if (path.startsWith('/workspace/discussions')) {
       return [workspaceName, 'Discussions'];
     }
@@ -193,11 +207,30 @@ export const DashboardLayout = () => {
     if (path.startsWith('/workspace/analytics')) {
       return [workspaceName, 'Reports'];
     }
+    if (path === '/workspace/settings/sla') {
+      return [workspaceName, 'Settings', 'SLA Config'];
+    }
+    if (path === '/workspace/settings/notifications') {
+      return [workspaceName, 'Settings', 'Notifications'];
+    }
+    if (path === '/workspace/settings/appearance') {
+      return [workspaceName, 'Settings', 'Appearance'];
+    }
     if (path.startsWith('/workspace/settings')) {
       return [workspaceName, 'Settings'];
     }
     return [workspaceName];
   };
+
+  // Synchronize browser tab document.title with verified page context
+  useEffect(() => {
+    const crumbs = getBreadcrumbs();
+    if (crumbs && crumbs.length > 1) {
+      document.title = `${crumbs.slice(1).join(' / ')} — ${workspaceName || 'Live Workspace'}`;
+    } else if (workspaceName) {
+      document.title = `${workspaceName} — Live Workspace`;
+    }
+  }, [location.pathname, workspaceName, currentProjectName]);
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K for Search, ? for Shortcuts)
   useEffect(() => {
@@ -363,7 +396,9 @@ export const DashboardLayout = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 pt-16 md:pt-20 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 min-h-screen overflow-y-auto pb-24 md:pb-8 w-full max-w-full">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
 
         {/* ── Mobile Bottom Navigation Bar ── */}

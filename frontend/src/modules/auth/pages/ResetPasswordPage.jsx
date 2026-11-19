@@ -66,10 +66,13 @@ export const ResetPasswordPage = () => {
     <div className="w-full">
       {/* Brand Header */}
       <div className="text-center mb-6">
-        <div className="w-12 h-12 rounded-xl bg-canvas-lavender text-btn-primary mx-auto mb-3 flex items-center justify-center shadow-sm">
+        <div className="w-12 h-12 rounded-xl bg-canvas-lavender text-btn-primary mx-auto mb-4 flex items-center justify-center shadow-sm">
           <Lock className="w-6 h-6" />
         </div>
-        <h1 className="font-headline text-headline-lg text-text-primary tracking-tight">
+        <h1
+          className="font-headline text-headline-lg text-text-primary tracking-tight leading-[1.15]"
+          style={{ lineHeight: 1.15 }}
+        >
           Create new password
         </h1>
         <p className="font-body text-body-md text-text-secondary mt-1">

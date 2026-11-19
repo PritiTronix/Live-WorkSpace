@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient, organizationService } from './api';
 
 export const membersService = {
   listMembers: async () => {
@@ -49,6 +49,27 @@ export const membersService = {
       role: role,
     });
     return response.data;
+  },
+
+  // Organization Join Requests & Join Codes (Owner/Admin)
+  listJoinRequests: async (organizationId, status, page = 1, pageSize = 20) => {
+    return organizationService.listJoinRequests(organizationId, status, page, pageSize);
+  },
+
+  approveJoinRequest: async (organizationId, requestId) => {
+    return organizationService.approveJoinRequest(organizationId, requestId);
+  },
+
+  rejectJoinRequest: async (organizationId, requestId, reason) => {
+    return organizationService.rejectJoinRequest(organizationId, requestId, reason);
+  },
+
+  generateJoinCode: async (organizationId, options = {}) => {
+    return organizationService.generateJoinCode(organizationId, options);
+  },
+
+  revokeJoinCode: async (organizationId) => {
+    return organizationService.revokeJoinCode(organizationId);
   },
 };
 

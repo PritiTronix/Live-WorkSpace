@@ -6,7 +6,7 @@ frontend/src/modules/tasks/constants/taskEnums.js.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, ConfigDict, model_validator
 
 
@@ -150,7 +150,7 @@ class TaskRead(BaseSchema):
     assigned_to_id: Optional[str] = None
     reporter_id: Optional[str] = None
     assigner_id: Optional[str] = None
-    organization_id: Optional[str] = "org_01"
+    organization_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     comment_count: int = 0
@@ -183,3 +183,7 @@ class TaskListResponse(BaseSchema):
     total: int
     page: int
     page_size: int
+    stats: Optional[Dict[str, int]] = None
+    todo_count: Optional[int] = None
+    in_progress_count: Optional[int] = None
+    done_count: Optional[int] = None

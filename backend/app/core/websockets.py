@@ -12,23 +12,42 @@ logger = logging.getLogger(__name__)
 
 
 class WorkspaceWebSocketManager:
-    """Manages real-time WebSocket connections partitioned by workspace/organization."""
+    """Manages real-time WebSocket connections partitioned by workspace/organization and user."""
 
     def __init__(self):
         self._active_connections: Dict[str, Set[WebSocket]] = {}
+        self._user_connections: Dict[str, Set[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, workspace_id: str):
+    async def connect(self, websocket: WebSocket, workspace_id: str, user_id: Optional[str] = None):
         await websocket.accept()
         if workspace_id not in self._active_connections:
             self._active_connections[workspace_id] = set()
         self._active_connections[workspace_id].add(websocket)
-        logger.info(f"WebSocket client connected to workspace {workspace_id}")
 
-    def disconnect(self, websocket: WebSocket, workspace_id: str):
+        if user_id:
+            if user_id not in self._user_connections:
+                self._user_connections[user_id] = set()
+            self._user_connections[user_id].add(websocket)
+
+        logger.info(f"WebSocket client connected to workspace {workspace_id} (user: {user_id or 'anonymous'})")
+
+    def disconnect(self, websocket: WebSocket, workspace_id: str, user_id: Optional[str] = None):
         if workspace_id in self._active_connections:
             self._active_connections[workspace_id].discard(websocket)
             if not self._active_connections[workspace_id]:
                 del self._active_connections[workspace_id]
+
+        if user_id and user_id in self._user_connections:
+            self._user_connections[user_id].discard(websocket)
+            if not self._user_connections[user_id]:
+                del self._user_connections[user_id]
+        else:
+            # Check all user sets to safely remove dead connection if user_id wasn't passed
+            for uid, conns in list(self._user_connections.items()):
+                conns.discard(websocket)
+                if not conns:
+                    del self._user_connections[uid]
+
         logger.info(f"WebSocket client disconnected from workspace {workspace_id}")
 
     async def broadcast(self, workspace_id: str, event_type: str, data: dict):
@@ -52,8 +71,12 @@ class WorkspaceWebSocketManager:
         for dead in dead_connections:
             self.disconnect(dead, workspace_id)
 
-    async def broadcast_to_workspace(self, workspace_id: str, payload: dict):
-        """Helper to broadcast dict payload to workspace clients."""
+    async def broadcast_to_workspace(self, workspace_id: str, payload: dict, target_user_id: Optional[str] = None):
+        """Helper to broadcast dict payload to workspace clients, optionally restricted to a target user."""
+        if target_user_id:
+            await self.broadcast_to_user(target_user_id, payload)
+            return
+
         if workspace_id not in self._active_connections:
             return
         message = json.dumps(payload, default=str)
@@ -66,6 +89,27 @@ class WorkspaceWebSocketManager:
                 dead_connections.add(connection)
         for dead in dead_connections:
             self.disconnect(dead, workspace_id)
+
+    async def broadcast_to_user(self, user_id: str, payload: dict):
+        """Helper to broadcast dict payload exclusively to the specified recipient user's active connections."""
+        if user_id not in self._user_connections:
+            return
+        message = json.dumps(payload, default=str)
+        dead_connections = set()
+        for connection in list(self._user_connections[user_id]):
+            try:
+                await connection.send_text(message)
+            except Exception as e:
+                logger.warning(f"Failed to send user-scoped WebSocket to {user_id}: {e}")
+                dead_connections.add(connection)
+        for dead in dead_connections:
+            # find workspace to properly clean up
+            for ws_id, ws_set in list(self._active_connections.items()):
+                if dead in ws_set:
+                    self.disconnect(dead, ws_id, user_id=user_id)
+                    break
+            else:
+                self.disconnect(dead, "", user_id=user_id)
 
 
 ws_manager = WorkspaceWebSocketManager()

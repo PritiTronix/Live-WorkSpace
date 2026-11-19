@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator, model_validator
 from backend.app.core.security import validate_password_strength
 
 
@@ -90,16 +90,47 @@ class ActiveOperationalQueue(BaseSchema):
 class OrganizationSummary(BaseSchema):
     id: str
     name: str
-    plan: Optional[str] = "Standard"
+    plan: Optional[str] = None
+
+
+class UserMembershipRead(BaseSchema):
+    id: str
+    name: str
+    role: str
+    plan: Optional[str] = None
 
 
 class UserRead(UserBase):
     id: str
     organization_id: Optional[str] = None
+    organization_required: bool = False
+    memberships: List[UserMembershipRead] = []
     created_at: datetime
     operational_velocity: Optional[OperationalVelocity] = None
     active_queue: Optional[ActiveOperationalQueue] = None
     organization_summary: Optional[OrganizationSummary] = Field(default=None, serialization_alias="organization")
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_orm_user(cls, data: Any) -> Any:
+        if hasattr(data, "__table__") and getattr(data, "__tablename__", None) == "users":
+            raw_dict = {}
+            for col in data.__table__.columns.keys():
+                raw_dict[col] = getattr(data, col, None)
+            raw_dict["organization_required"] = getattr(data, "organization_required", False)
+            raw_dict["operational_velocity"] = getattr(data, "operational_velocity", None)
+            raw_dict["active_queue"] = getattr(data, "active_queue", None)
+            raw_dict["organization_summary"] = getattr(data, "organization_summary", None)
+            mems = getattr(data, "__dict__", {}).get("memberships")
+            if isinstance(mems, list):
+                raw_dict["memberships"] = mems
+            else:
+                raw_dict["memberships"] = []
+            return raw_dict
+        elif isinstance(data, dict):
+            if "memberships" not in data or data["memberships"] is None:
+                data["memberships"] = []
+        return data
 
 
 class UserUpdateProfile(BaseSchema):
@@ -187,14 +218,88 @@ class OnboardingCompleteResponse(BaseSchema):
 # --- Organization Schemas ---
 class OrganizationBase(BaseSchema):
     name: str
-    slug: str
+    slug: Optional[str] = None
+    plan: Optional[str] = None
+    industry: Optional[str] = None
+    size_range: Optional[str] = None
+    logo_path: Optional[str] = None
+
+
+class OrganizationCreateRequest(BaseSchema):
+    name: str = Field(..., min_length=2, max_length=100)
+    industry: Optional[str] = Field(None, max_length=100)
+    size_range: Optional[str] = Field(None, max_length=50)
+    logo_path: Optional[str] = Field(None, max_length=500)
     plan: Optional[str] = None
 
 
 class OrganizationRead(OrganizationBase):
     id: str
+    slug: str
+    created_by: Optional[str] = None
     created_at: datetime
-    plan: Optional[str] = None
+    updated_at: Optional[datetime] = None
+
+
+class JoinCodeLookupRequest(BaseSchema):
+    code: str = Field(..., min_length=1, max_length=100)
+
+
+class JoinCodeLookupResponse(BaseSchema):
+    name: str
+    logo_path: Optional[str] = None
+
+
+class JoinRequestCreate(BaseSchema):
+    code: str = Field(..., min_length=1, max_length=100)
+    message: Optional[str] = Field(None, max_length=500)
+
+
+class JoinRequestUser(BaseSchema):
+    id: str
+    full_name: str
+    email: EmailStr
+    avatar_url: Optional[str] = None
+
+
+class JoinRequestRead(BaseSchema):
+    id: str
+    user_id: str
+    organization_id: str
+    status: str
+    message: Optional[str] = None
+    created_at: datetime
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    decision_reason: Optional[str] = None
+    organization_name: Optional[str] = None
+    organization_logo: Optional[str] = None
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
+    user: Optional[JoinRequestUser] = None
+
+
+class JoinRequestDecision(BaseSchema):
+    decision_reason: Optional[str] = Field(None, max_length=500)
+
+
+class JoinCodeCreate(BaseSchema):
+    expires_in_days: Optional[int] = Field(None, ge=1, le=365)
+    max_uses: Optional[int] = Field(None, ge=1, le=10000)
+
+
+class JoinCodeRead(BaseSchema):
+    code: str
+    expires_at: Optional[datetime] = None
+    max_uses: Optional[int] = None
+    created_at: datetime
+
+
+class JoinRequestPaginatedResponse(BaseSchema):
+    items: List[JoinRequestRead]
+    total: int
+    page: int
+    page_size: int
 
 
 # --- Project Member & Invitation Schemas ---

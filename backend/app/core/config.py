@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Organization Onboarding
+    REQUIRE_EMAIL_VERIFICATION: bool = True
+
     # Database (Neon PostgreSQL / Hosted PostgreSQL)
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/live_workspace"
     DATABASE_URL_POOLED: Optional[str] = None

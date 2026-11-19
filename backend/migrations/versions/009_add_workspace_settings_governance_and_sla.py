@@ -4,7 +4,7 @@ Revision ID: 009_add_workspace_settings_governance_and_sla
 Revises: 008_add_support_requests
 Create Date: 2026-11-17
 """
-from alembic import op
+from alembic import op, context
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
@@ -15,7 +15,14 @@ depends_on = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind) if not context.is_offline_mode() else None
+
     # 1. Add governance columns to workspace_settings if not already present
+    existing_ws_cols = set()
+    if inspector and inspector.has_table("workspace_settings"):
+        existing_ws_cols = {c["name"] for c in inspector.get_columns("workspace_settings")}
+
     columns_to_add = [
         ("working_schedule", sa.Column("working_schedule", sa.String(255), nullable=True)),
         ("timezone", sa.Column("timezone", sa.String(100), nullable=True)),
@@ -28,13 +35,12 @@ def upgrade() -> None:
     ]
 
     for col_name, col_obj in columns_to_add:
-        try:
+        if col_name not in existing_ws_cols:
             op.add_column("workspace_settings", col_obj)
-        except Exception:
-            pass
 
     # 2. Add additive sla_policies table for dedicated relational SLA policy records
-    try:
+    has_sla_table = inspector.has_table("sla_policies") if inspector else False
+    if not has_sla_table:
         op.create_table(
             "sla_policies",
             sa.Column("id", sa.String(36), primary_key=True),
@@ -50,17 +56,31 @@ def upgrade() -> None:
         )
         op.create_index("ix_sla_policies_org_id", "sla_policies", ["organization_id"])
         op.create_index("ix_sla_policies_severity", "sla_policies", ["severity"])
-    except Exception:
-        pass
+    else:
+        existing_indexes = {idx["name"] for idx in inspector.get_indexes("sla_policies")}
+        existing_cols = {c["name"] for c in inspector.get_columns("sla_policies")}
+        if "ix_sla_policies_org_id" not in existing_indexes and "organization_id" in existing_cols:
+            op.create_index("ix_sla_policies_org_id", "sla_policies", ["organization_id"])
+        if "ix_sla_policies_severity" not in existing_indexes and "severity" in existing_cols:
+            op.create_index("ix_sla_policies_severity", "sla_policies", ["severity"])
 
 
 def downgrade() -> None:
-    try:
-        op.drop_index("ix_sla_policies_severity", table_name="sla_policies")
-        op.drop_index("ix_sla_policies_org_id", table_name="sla_policies")
+    bind = op.get_bind()
+    inspector = sa.inspect(bind) if not context.is_offline_mode() else None
+
+    has_sla_table = inspector.has_table("sla_policies") if inspector else False
+    if has_sla_table:
+        existing_indexes = {idx["name"] for idx in inspector.get_indexes("sla_policies")}
+        if "ix_sla_policies_severity" in existing_indexes:
+            op.drop_index("ix_sla_policies_severity", table_name="sla_policies")
+        if "ix_sla_policies_org_id" in existing_indexes:
+            op.drop_index("ix_sla_policies_org_id", table_name="sla_policies")
         op.drop_table("sla_policies")
-    except Exception:
-        pass
+
+    existing_ws_cols = set()
+    if inspector and inspector.has_table("workspace_settings"):
+        existing_ws_cols = {c["name"] for c in inspector.get_columns("workspace_settings")}
 
     columns_to_drop = [
         "created_at",
@@ -73,7 +93,5 @@ def downgrade() -> None:
         "working_schedule",
     ]
     for col_name in columns_to_drop:
-        try:
+        if col_name in existing_ws_cols:
             op.drop_column("workspace_settings", col_name)
-        except Exception:
-            pass
