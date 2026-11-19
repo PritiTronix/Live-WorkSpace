@@ -110,7 +110,7 @@ export const ProtectedRoute = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [location.pathname]);
 
   // 1. Loading state with no flash of the dashboard or of onboarding
   if (authState.isLoading) {

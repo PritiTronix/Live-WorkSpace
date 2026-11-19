@@ -679,11 +679,19 @@ export const notificationService = {
   },
 };
 
-export const connectNotificationsWebSocket = (onMessage, onError) => {
-  const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-  const wsUrl = `${base}/api/v1/notifications/ws`;
+export const connectNotificationsWebSocket = (onMessage, onError, onStatusChange) => {
+  const token = localStorage.getItem('access_token');
+  const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
+  const urlObj = new URL('/api/v1/notifications/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
+  const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
+  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+
   try {
-    const ws = new WebSocket(wsUrl);
+    const ws = new WebSocket(fullWsUrl);
+    if (onStatusChange) {
+      ws.onopen = () => onStatusChange('open');
+      ws.onclose = () => onStatusChange('closed');
+    }
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -692,7 +700,9 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
         console.error('Notifications WS parse error:', err);
       }
     };
-    ws.onerror = (err) => { if (onError) onError(err); };
+    ws.onerror = (err) => {
+      if (onError) onError(err);
+    };
     return ws;
   } catch (err) {
     console.warn('Notifications WebSocket unavailable:', err);
