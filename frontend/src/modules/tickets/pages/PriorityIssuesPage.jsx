@@ -86,22 +86,34 @@ export const PriorityIssuesPage = () => {
       .catch((e) => console.error('Failed to load projects:', e));
 
     // Connect WebSocket dynamically scoped to authenticated workspace
+    let isMounted = true;
     let cleanupWs = null;
-    authService.getCurrentUser()
+
+    authService
+      .getCurrentUser()
       .then((user) => {
-        const workspaceId = user?.organization_id || localStorage.getItem('organization_id') || 'org_01';
+        if (!isMounted) return;
+        const workspaceId =
+          user?.organization_id ||
+          localStorage.getItem('organization_id') ||
+          localStorage.getItem('active_workspace_id');
+        if (!workspaceId) return;
+
         cleanupWs = createTicketsWebSocket(workspaceId, () => {
-          fetchIssues();
+          if (isMounted) fetchIssues();
         });
       })
-      .catch(() => {
-        cleanupWs = createTicketsWebSocket('org_01', () => {
-          fetchIssues();
-        });
+      .catch((err) => {
+        console.warn('Failed to resolve workspace for priority issues WebSocket:', err);
       });
 
     return () => {
-      if (cleanupWs) cleanupWs();
+      isMounted = false;
+      if (cleanupWs) {
+        if (typeof cleanupWs === 'function') cleanupWs();
+        else if (typeof cleanupWs.close === 'function') cleanupWs.close();
+        cleanupWs = null;
+      }
     };
   }, []);
 

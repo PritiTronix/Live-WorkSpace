@@ -1,5 +1,6 @@
 import os
 import uuid
+import logging
 from pathlib import Path
 from typing import List, Optional, Dict
 from datetime import datetime, timezone
@@ -54,6 +55,7 @@ from backend.app.schemas import (
 from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 ALLOWED_ATTACHMENT_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp",
@@ -560,12 +562,17 @@ async def create_ticket(
     out_obj = res.scalars().first()
 
     # Broadcast real-time event to workspace
-    workspace_id = project.organization_id if project.organization_id else "org_01"
-    await ws_manager.broadcast(
-        workspace_id=workspace_id,
-        event_type="ticket_created",
-        data={"ticket": TicketRead.model_validate(out_obj).model_dump(mode="json")},
-    )
+    workspace_id = project.organization_id if project and project.organization_id else None
+    if workspace_id:
+        await ws_manager.broadcast(
+            workspace_id=workspace_id,
+            event_type="ticket_created",
+            data={"ticket": TicketRead.model_validate(out_obj).model_dump(mode="json")},
+        )
+    else:
+        logger.warning(
+            f"Skipping ticket_created broadcast for ticket {new_ticket.id}: missing project.organization_id"
+        )
 
     return out_obj
 

@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { apiClient, authService, buildWebSocketUrl, safeCloseWebSocket } from './api';
 
 /**
  * Tickets API Service
@@ -110,46 +110,115 @@ export const ticketsService = {
 };
 
 /**
- * Real-time WebSocket hook for ticket events in workspace
+ * Helper to resolve active workspace ID strictly from authenticated context.
+ * Returns null if no verified organization or workspace ID is present.
  */
-export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => {
-  const token = localStorage.getItem('access_token') || '';
+export const getAuthenticatedWorkspaceId = (explicitWorkspaceId) => {
+  // Authoritative tenant identity from authenticated session
+  const user = authService.getCurrentUserSync();
+  const authenticatedOrgId =
+    user?.organization_id ||
+    user?.organization?.id ||
+    user?.workspace_id ||
+    null;
 
-  // Dynamically resolve organization / workspace without hardcoding
-  let userOrgId = null;
+  let storedUserOrgId = null;
   try {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const parsed = JSON.parse(userStr);
-      userOrgId = parsed?.organization_id || parsed?.workspace_id;
+      storedUserOrgId = parsed?.organization_id || parsed?.organization?.id || parsed?.workspace_id || null;
     }
   } catch {}
 
-  const resolvedWorkspaceId =
-    (workspaceId && workspaceId !== 'org_01' ? workspaceId : null) ||
-    userOrgId ||
-    localStorage.getItem('organization_id') ||
-    localStorage.getItem('active_workspace_id') ||
-    workspaceId ||
-    'org_01';
+  const authoritativeOrgId = authenticatedOrgId || storedUserOrgId;
 
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const query = token ? `?token=${encodeURIComponent(token)}` : '';
-  // Point to backend websocket URL (default port 8000 in local dev)
-  const wsUrl = `${protocol}//${window.location.hostname}:8000/api/v1/tickets/ws/${resolvedWorkspaceId}${query}`;
+  // Validate explicit workspace ID against authenticated tenant identity
+  if (
+    explicitWorkspaceId &&
+    typeof explicitWorkspaceId === 'string' &&
+    explicitWorkspaceId.trim() &&
+    explicitWorkspaceId !== 'null' &&
+    explicitWorkspaceId !== 'undefined'
+  ) {
+    const trimmed = explicitWorkspaceId.trim();
+    if (authoritativeOrgId) {
+      if (trimmed === authoritativeOrgId || (user?.organization?.slug && trimmed === user.organization.slug)) {
+        return trimmed;
+      }
+      // Explicit ID does not match authenticated tenant; enforce verified tenant identity
+      return authoritativeOrgId;
+    }
+    // If no authenticated tenant identity exists, disallow unverified explicit workspace IDs
+    return null;
+  }
+
+  return authoritativeOrgId;
+};
+
+/**
+ * Real-time WebSocket connection for ticket events scoped strictly to authenticated workspace.
+ */
+export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => {
+  const token = localStorage.getItem('access_token');
+  const resolvedWorkspaceId = getAuthenticatedWorkspaceId(workspaceId);
+
+  // If token or workspace ID is missing, safely transition to disconnected state without connecting
+  if (!token || !resolvedWorkspaceId) {
+    if (typeof onStatusChange === 'function') onStatusChange(false);
+    const noopCleanup = () => {};
+    noopCleanup.close = noopCleanup;
+    return noopCleanup;
+  }
+
+  const wsUrl = buildWebSocketUrl(`/api/v1/tickets/ws/${encodeURIComponent(resolvedWorkspaceId)}`, token);
 
   let ws = null;
   let retryTimer = null;
+  let isDisposed = false;
+
+  const clearExistingTimer = () => {
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+  };
+
+  const scheduleReconnect = () => {
+    if (isDisposed) return;
+    clearExistingTimer();
+    retryTimer = setTimeout(() => {
+      if (!isDisposed) {
+        connect();
+      }
+    }, 3000);
+  };
 
   const connect = () => {
+    if (isDisposed) return;
+    clearExistingTimer();
+
+    // Close any prior socket instance cleanly before creating a new one
+    if (ws) {
+      const prevWs = ws;
+      ws = null;
+      safeCloseWebSocket(prevWs);
+    }
+
     try {
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
+        if (isDisposed) {
+          safeCloseWebSocket(ws);
+          ws = null;
+          return;
+        }
         if (typeof onStatusChange === 'function') onStatusChange(true);
       };
 
       ws.onmessage = (event) => {
+        if (isDisposed) return;
         try {
           const payload = JSON.parse(event.data);
           if (onEvent) onEvent(payload);
@@ -158,29 +227,37 @@ export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => 
         }
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        if (isDisposed) return;
         if (typeof onStatusChange === 'function') onStatusChange(false);
-        retryTimer = setTimeout(connect, 3000);
+        // Do not reconnect on normal closure (1000) or authentication / policy violation (1008)
+        if (event && (event.code === 1000 || event.code === 1008 || event.code === 1003)) {
+          return;
+        }
+        scheduleReconnect();
       };
 
-      ws.onerror = () => {
+      ws.onerror = (err) => {
+        if (isDisposed) return;
         if (typeof onStatusChange === 'function') onStatusChange(false);
-        if (ws) ws.close();
+        // Note: onclose will fire following onerror to handle single reconnect
       };
     } catch (err) {
+      if (isDisposed) return;
       if (typeof onStatusChange === 'function') onStatusChange(false);
-      retryTimer = setTimeout(connect, 3000);
+      scheduleReconnect();
     }
   };
 
   connect();
 
   const cleanup = () => {
+    isDisposed = true;
+    clearExistingTimer();
     if (typeof onStatusChange === 'function') onStatusChange(false);
-    if (retryTimer) clearTimeout(retryTimer);
     if (ws) {
-      ws.onclose = null;
-      ws.close();
+      safeCloseWebSocket(ws);
+      ws = null;
     }
   };
 
@@ -189,7 +266,9 @@ export const createTicketsWebSocket = (workspaceId, onEvent, onStatusChange) => 
   return cleanup;
 };
 
+export const connectTicketsWebSocket = createTicketsWebSocket;
 ticketsService.createTicketsWebSocket = createTicketsWebSocket;
+ticketsService.connectTicketsWebSocket = createTicketsWebSocket;
 
 export default ticketsService;
 

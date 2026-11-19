@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { dashboardService, connectDashboardWebSocket, authService } from '../../../services/api';
+import { dashboardService, connectDashboardWebSocket, safeCloseWebSocket, authService } from '../../../services/api';
 import { useClock } from '../../../utils/greeting';
 import { pluralize } from '../../../utils/pluralize';
 import WelcomeModal from '../components/WelcomeModal';
@@ -246,7 +246,7 @@ export const DashboardOverviewPage = () => {
     );
 
     return () => {
-      if (ws) ws.close();
+      if (ws) safeCloseWebSocket(ws);
     };
   }, []);
 

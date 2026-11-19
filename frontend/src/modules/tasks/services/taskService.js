@@ -2,7 +2,7 @@
  * taskService — API calls for the tasks module.
  * All methods return raw API data or null/[] on error.
  */
-import { apiClient } from '../../../services/api';
+import { apiClient, buildWebSocketUrl, safeCloseWebSocket } from '../../../services/api';
 
 const BASE = '/tasks';
 
@@ -91,16 +91,44 @@ export const taskService = {
   },
 };
 
-export const connectTasksWebSocket = (onMessage) => {
-  const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-  const wsUrl = `${base}/api/v1/tasks/ws`;
+export const connectTasksWebSocket = (onMessage, workspaceId) => {
+  const token = localStorage.getItem('access_token');
+  if (!token) return null;
+
+  const endpoint = workspaceId ? `/api/v1/tasks/ws/${encodeURIComponent(workspaceId)}` : '/api/v1/tasks/ws';
+  const wsUrl = buildWebSocketUrl(endpoint, token);
+
+  let isDisposed = false;
+  let ws = null;
+
   try {
-    const ws = new WebSocket(wsUrl);
-    ws.onmessage = (event) => {
-      try { onMessage?.(JSON.parse(event.data)); } catch {}
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      if (isDisposed) {
+        safeCloseWebSocket(ws);
+      }
     };
+
+    ws.onmessage = (event) => {
+      if (isDisposed) return;
+      try {
+        onMessage?.(JSON.parse(event.data));
+      } catch {}
+    };
+
+    ws.onerror = (err) => {
+      if (isDisposed || ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) return;
+      console.warn('Tasks WebSocket error:', err);
+    };
+
+    ws._dispose = () => {
+      isDisposed = true;
+    };
+
     return ws;
-  } catch {
+  } catch (err) {
+    console.warn('Tasks WebSocket initialization failed:', err);
     return null;
   }
 };

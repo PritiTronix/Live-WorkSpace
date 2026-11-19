@@ -99,10 +99,14 @@ export const useTickets = ({
         const orgId =
           user?.organization_id ||
           localStorage.getItem('organization_id') ||
-          localStorage.getItem('active_workspace_id') ||
-          'org_01';
+          localStorage.getItem('active_workspace_id');
 
         if (!isMounted) return;
+
+        if (!orgId) {
+          setIsWsConnected(false);
+          return;
+        }
 
         wsCleanupRef.current = createTicketsWebSocket(
           orgId,
@@ -137,7 +141,11 @@ export const useTickets = ({
     return () => {
       isMounted = false;
       if (wsCleanupRef.current) {
-        wsCleanupRef.current();
+        if (typeof wsCleanupRef.current === 'function') {
+          wsCleanupRef.current();
+        } else if (typeof wsCleanupRef.current.close === 'function') {
+          wsCleanupRef.current.close();
+        }
         wsCleanupRef.current = null;
       }
     };

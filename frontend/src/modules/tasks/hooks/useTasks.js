@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { taskService, connectTasksWebSocket } from '../services/taskService';
+import { safeCloseWebSocket } from '../../../services/api';
 
 export const useTasks = ({ isMyTasks = false, initialFilters = {}, autoConnect = true } = {}) => {
   const [tasks, setTasks] = useState([]);
@@ -115,7 +116,7 @@ export const useTasks = ({ isMyTasks = false, initialFilters = {}, autoConnect =
     wsRef.current = connectTasksWebSocket(handleWsMessage);
     return () => {
       if (wsRef.current) {
-        wsRef.current.close();
+        safeCloseWebSocket(wsRef.current);
         wsRef.current = null;
       }
     };

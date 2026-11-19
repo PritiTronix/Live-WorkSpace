@@ -3,7 +3,7 @@
  * Used by NotificationDropdown (top bar) and NotificationCenterPage (full page).
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { notificationService, connectNotificationsWebSocket } from '../../../services/api';
+import { notificationService, connectNotificationsWebSocket, safeCloseWebSocket } from '../../../services/api';
 
 export const useNotifications = ({ autoConnect = true } = {}) => {
   const [notifications, setNotifications] = useState([]);
@@ -84,7 +84,7 @@ export const useNotifications = ({ autoConnect = true } = {}) => {
     wsRef.current = connectNotificationsWebSocket(handleWsMessage);
     return () => {
       if (wsRef.current) {
-        wsRef.current.close();
+        safeCloseWebSocket(wsRef.current);
         wsRef.current = null;
       }
     };
