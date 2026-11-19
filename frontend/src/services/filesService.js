@@ -29,5 +29,21 @@ export const filesService = {
     const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
     return `${base}/files/${fileId}/download`;
   },
+
+  downloadFile: async (fileId, fileName = 'download') => {
+    const response = await apiClient.get(`/files/${fileId}/download`, {
+      responseType: 'blob',
+    });
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    return true;
+  },
 };
 

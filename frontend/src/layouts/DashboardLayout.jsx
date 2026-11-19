@@ -13,6 +13,7 @@ import InviteMemberModal from '../modules/members/components/InviteMemberModal';
 import FileUploadModal from '../modules/files/components/FileUploadModal';
 import CreateDiscussionModal from '../modules/discussions/components/CreateDiscussionModal';
 import KeyboardShortcutsModal from '../components/modals/KeyboardShortcutsModal';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import { isSidebarItemActive } from '../utils/navigation';
 
 /**
@@ -395,7 +396,9 @@ export const DashboardLayout = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 pt-16 md:pt-20 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 min-h-screen overflow-y-auto pb-24 md:pb-8 w-full max-w-full">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
 
         {/* ── Mobile Bottom Navigation Bar ── */}

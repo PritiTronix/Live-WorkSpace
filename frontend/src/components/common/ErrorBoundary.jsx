@@ -41,7 +41,7 @@ export class ErrorBoundary extends React.Component {
               Something went wrong
             </h2>
             <p className="font-body-md text-body-md text-text-secondary mb-6 leading-relaxed">
-              {this.state.error?.message || 'An unexpected error occurred while rendering this ticket view.'}
+              {this.state.error?.message || 'An unexpected error occurred while rendering this view.'}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button

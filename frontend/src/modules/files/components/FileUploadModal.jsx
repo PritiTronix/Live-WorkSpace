@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { filesService } from '../../../services/filesService';
+import { projectsService } from '../../../services/projectsService';
 import { lockScroll, unlockScroll } from '../../../utils/scrollLock';
 
 export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = [] }) => {
@@ -11,6 +12,24 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
   const [relatedTicket, setRelatedTicket] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [loadedProjects, setLoadedProjects] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (projects && projects.length > 0) {
+        setLoadedProjects(projects);
+      } else {
+        projectsService.getProjects().then((data) => {
+          const list = Array.isArray(data) ? data : (data?.items || []);
+          setLoadedProjects(list);
+        }).catch(() => {
+          setLoadedProjects([]);
+        });
+      }
+    }
+  }, [isOpen, projects]);
+
+  const effectiveProjects = projects && projects.length > 0 ? projects : loadedProjects;
 
   // Focus management & body scroll lock
   useEffect(() => {
@@ -120,9 +139,9 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-xs"
     >
-      <div className="relative bg-surface-card w-full max-w-[520px] rounded-2xl shadow-2xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[92vh]">
+      <div className="relative bg-surface-card w-full max-w-[520px] rounded-2xl shadow-2xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[90vh] max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border-subtle bg-canvas-lavender/40">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border-subtle bg-canvas-lavender/40 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-xl">cloud_upload</span>
@@ -142,7 +161,7 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
         </div>
 
         {/* Modal Content Body */}
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+        <div className="p-6 space-y-5 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {error && (
             <div className="p-3 bg-red-50 border border-error/30 rounded-lg flex items-start gap-2.5 text-xs text-error">
               <span className="material-symbols-outlined text-error text-base shrink-0 mt-0.5">error</span>
@@ -214,46 +233,46 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
             <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider block">
               Metadata Association
             </label>
-            <div>
-              <label className="block text-xs font-medium text-text-primary mb-1">Project Association</label>
-              <div className="relative">
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full bg-canvas-lavender border border-border-subtle text-xs rounded-lg py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary focus:outline-none appearance-none"
-                >
-                  <option value="">Auto-associate to primary project</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-2.5 text-text-secondary text-sm">
-                  expand_more
-                </span>
+
+            {effectiveProjects.length === 0 ? (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs text-amber-800">
+                <span className="material-symbols-outlined text-base shrink-0 mt-0.5">info</span>
+                <span>No project available in your organization yet. Files must be associated with a project. Please create a project before uploading.</span>
               </div>
-            </div>
+            ) : (
+              <div>
+                <label className="block text-xs font-medium text-text-primary mb-1">Project Association</label>
+                <div className="relative">
+                  <select
+                    value={selectedProject}
+                    onChange={(e) => setSelectedProject(e.target.value)}
+                    className="w-full bg-canvas-lavender border border-border-subtle text-xs rounded-lg py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary focus:outline-none appearance-none"
+                  >
+                    <option value="">Auto-associate to primary project</option>
+                    {effectiveProjects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-2.5 text-text-secondary text-sm">
+                    expand_more
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-medium text-text-primary mb-1">
-                Related Ticket / Task (Optional)
+                Related Ticket / Task Key (Optional)
               </label>
-              <div className="relative">
-                <select
-                  value={relatedTicket}
-                  onChange={(e) => setRelatedTicket(e.target.value)}
-                  className="w-full bg-canvas-lavender border border-border-subtle text-xs rounded-lg py-2 pl-3 pr-8 focus:ring-1 focus:ring-primary focus:outline-none appearance-none"
-                >
-                  <option value="">None / Standalone Workspace File</option>
-                  <option value="TKT-1025">#TKT-1025 Auth proxy latency spike</option>
-                  <option value="TKT-1019">#TKT-1019 Postgres Replication Sync</option>
-                  <option value="TKT-994">#TKT-994 Redis cache failover testing</option>
-                </select>
-                <span className="material-symbols-outlined pointer-events-none absolute right-2.5 top-2.5 text-text-secondary text-sm">
-                  expand_more
-                </span>
-              </div>
+              <input
+                type="text"
+                value={relatedTicket}
+                onChange={(e) => setRelatedTicket(e.target.value)}
+                placeholder="e.g. TKT-101 (optional)"
+                className="w-full bg-canvas-lavender border border-border-subtle text-xs rounded-lg py-2 px-3 text-text-primary placeholder:text-text-muted focus:ring-1 focus:ring-primary focus:outline-none"
+              />
             </div>
           </div>
 
@@ -270,22 +289,28 @@ export const FileUploadModal = ({ isOpen, onClose, onFileUploaded, projects = []
         </div>
 
         {/* Modal Actions Footer */}
-        <div className="px-6 py-4 border-t border-border-subtle bg-canvas-lavender/40 flex items-center justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border-subtle bg-canvas-lavender/60 flex items-center justify-end gap-3 flex-shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-text-secondary hover:text-text-primary rounded-lg transition hover:bg-surface-container"
+            className="px-4 py-2 text-xs font-semibold text-text-secondary hover:text-text-primary rounded-lg transition hover:bg-surface-container cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleUploadAll}
-            disabled={isUploading || queue.length === 0}
-            className="px-4 py-2 text-xs font-semibold bg-btn-primary hover:bg-primary-hover text-on-primary rounded-lg transition shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+            disabled={isUploading || queue.length === 0 || effectiveProjects.length === 0}
+            className="px-5 py-2.5 text-xs font-bold bg-btn-primary hover:bg-primary-hover text-on-primary rounded-lg transition shadow-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <span className="material-symbols-outlined text-sm">file_upload</span>
-            <span>{isUploading ? 'Uploading...' : `Upload ${queue.length} Files`}</span>
+            <span>
+              {isUploading
+                ? 'Uploading...'
+                : queue.length <= 1
+                ? 'Upload File'
+                : `Upload ${queue.length} Files`}
+            </span>
           </button>
         </div>
       </div>
