@@ -21,6 +21,7 @@ if "postgresql" in (db_url or ""):
         "max_overflow": 20,
         "pool_recycle": 300,
         "pool_timeout": 30,
+        "connect_args": {"server_settings": {"search_path": "public"}},
     })
 
 engine = create_async_engine(

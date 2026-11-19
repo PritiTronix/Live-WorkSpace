@@ -446,6 +446,8 @@ async def run_test_suite():
         async with teardown_engine.begin() as conn:
             assert schema_name.startswith("test_") and len(schema_name) > 5, "Safety check before drop"
             await conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema_name}" CASCADE'))
+            await conn.execute(text("SET search_path TO public"))
+            await conn.execute(text('ALTER ROLE neondb_owner SET search_path TO public, "$user"'))
         await teardown_engine.dispose()
         print("Isolated test schema dropped cleanly.")
 

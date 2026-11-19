@@ -110,22 +110,57 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         )
 
     now = datetime.now(timezone.utc)
+    org_id = None
+    role = "member"
+    onboarding_completed = False
+
+    if user_in.organization_name and user_in.organization_name.strip():
+        org_name = user_in.organization_name.strip()
+        slug = org_name.lower().replace(" ", "-")
+        org_slug_res = await db.execute(select(Organization).where(Organization.slug == slug))
+        org = org_slug_res.scalars().first()
+        if not org:
+            org = Organization(
+                id=f"org_{uuid.uuid4().hex[:8]}",
+                name=org_name,
+                slug=slug,
+                created_at=now,
+            )
+            db.add(org)
+            await db.flush()
+        org_id = org.id
+        role = "owner"
+        onboarding_completed = True
+
     new_user = User(
         id=f"usr_{uuid.uuid4().hex[:8]}",
         email=user_in.email.lower().strip(),
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name.strip(),
-        role="member",
+        role=role,
         title=user_in.title or "Software Engineer",
         department=user_in.department or "Engineering",
         avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
         is_active=True,
         email_verified=False,
-        onboarding_completed=False,
-        organization_id=None,
+        onboarding_completed=onboarding_completed,
+        organization_id=org_id,
         created_at=now,
     )
     db.add(new_user)
+    await db.flush()
+
+    if org_id:
+        membership = Membership(
+            id=f"mem_{uuid.uuid4().hex[:8]}",
+            user_id=new_user.id,
+            organization_id=org_id,
+            role=role,
+            status="active",
+            joined_at=now,
+        )
+        db.add(membership)
+
     await db.commit()
     await db.refresh(new_user)
     return await build_user_auth_response(new_user, db)
