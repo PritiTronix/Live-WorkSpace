@@ -229,7 +229,6 @@ export const Sidebar = ({
             </div>
           </div>
         )}
-        )}
 
         {/* Quick Create Button */}
         <div className="mt-space-sm mb-space-md">

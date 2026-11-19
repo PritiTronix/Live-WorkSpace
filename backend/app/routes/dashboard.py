@@ -35,8 +35,16 @@ from reportlab.pdfgen import canvas
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
-from backend.app.models import Project, Task, Ticket, ProjectActivity, User, Organization
+from backend.app.models import Project, Task, Ticket, ProjectActivity, User, Organization, Membership
 from backend.app.services.sla import is_active_sla_breach
+from backend.app.services.metrics import (
+    get_my_tasks_count,
+    get_my_tasks_stats,
+    get_total_tasks_count,
+    get_tasks_completion_percentage,
+    get_open_tickets_count,
+    get_work_in_progress_count,
+)
 from backend.app.core.websockets import ws_manager, authenticate_ws
 
 router = APIRouter()
@@ -227,7 +235,14 @@ async def get_dashboard_filters(
     # 1. Real departments in organization - deduplicated and normalized (trimmed, case-insensitive)
     dept_res = await db.execute(
         select(User.department)
-        .where(User.organization_id == org_id, User.department.isnot(None))
+        .outerjoin(Membership, Membership.user_id == User.id)
+        .where(
+            or_(
+                User.organization_id == org_id,
+                and_(Membership.organization_id == org_id, Membership.status == "active")
+            ),
+            User.department.isnot(None)
+        )
     )
     raw_depts = [d.strip() for d in dept_res.scalars().all() if d and d.strip()]
     seen_depts = set()
@@ -322,7 +337,16 @@ async def get_dashboard_metrics(
     p_month_res = await db.execute(proj_month_q)
     projects_this_month = p_month_res.scalar() or 0
 
-    # Tasks count
+    # Core operational metrics calculated via shared service functions
+    total_tasks = await get_total_tasks_count(db, org_id, eff_project_id, period_start, eff_department)
+    tasks_completion_rate = await get_tasks_completion_percentage(db, org_id, eff_project_id, period_start, eff_department)
+    my_tasks_stats = await get_my_tasks_stats(db, current_user.id, org_id, eff_project_id, period_start, eff_department)
+    my_tasks = my_tasks_stats["total"]
+    my_tasks_due_today = my_tasks_stats["due_today"]
+    open_tickets = await get_open_tickets_count(db, org_id, eff_project_id, period_start, eff_department)
+    work_in_progress = await get_work_in_progress_count(db, org_id, eff_project_id, period_start, eff_department)
+
+    # Load tasks and tickets collections for secondary calculations (active teams, SLA breaches)
     tasks_q = select(Task).where(Task.organization_id == org_id)
     if eff_project_id:
         tasks_q = tasks_q.where(Task.project_id == eff_project_id)
@@ -333,24 +357,8 @@ async def get_dashboard_metrics(
             User.organization_id == org_id,
             User.department.ilike(eff_department.strip())
         )
-
     task_res = await db.execute(tasks_q)
     tasks = task_res.scalars().all()
-    total_tasks = len(tasks)
-
-    done_tasks = sum(1 for t in tasks if (t.status or "").lower() == "done")
-    tasks_completion_rate = round(done_tasks / total_tasks * 100.0, 1) if total_tasks > 0 else None
-
-    # My tasks
-    my_tasks_list = [t for t in tasks if t.assignee_id == current_user.id]
-    my_tasks = len(my_tasks_list)
-
-    my_tasks_due_today = 0
-    for t in my_tasks_list:
-        if t.due_date:
-            due_dt = t.due_date if t.due_date.tzinfo else t.due_date.replace(tzinfo=timezone.utc)
-            if today_start <= due_dt <= today_end:
-                my_tasks_due_today += 1
 
     # Tickets scoped to organization
     tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == org_id)
@@ -366,10 +374,6 @@ async def get_dashboard_metrics(
 
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
-
-    open_tickets = sum(1 for t in tickets if (t.status or "").lower() == "open")
-    wip_tickets = sum(1 for t in tickets if (t.status or "").lower() == "wip")
-    work_in_progress = wip_tickets
 
     on_hold_count = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
 
@@ -746,12 +750,26 @@ async def get_team_workload(
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
 
-    # Fetch users in organization
-    user_q = select(User).where(User.organization_id == org_id)
+    # Fetch users in organization (both active memberships and legacy users.organization_id)
+    mem_q = (
+        select(User)
+        .join(Membership, Membership.user_id == User.id)
+        .where(Membership.organization_id == org_id, Membership.status == "active")
+    )
     if eff_department:
-        user_q = user_q.where(User.department.ilike(eff_department.strip()))
-    u_res = await db.execute(user_q)
-    users = u_res.scalars().all()
+        mem_q = mem_q.where(User.department.ilike(eff_department.strip()))
+    mem_users = (await db.execute(mem_q)).scalars().all()
+
+    leg_q = select(User).where(User.organization_id == org_id)
+    if eff_department:
+        leg_q = leg_q.where(User.department.ilike(eff_department.strip()))
+    leg_users = (await db.execute(leg_q)).scalars().all()
+
+    users_map = {u.id: u for u in mem_users}
+    for u in leg_users:
+        if u.id not in users_map:
+            users_map[u.id] = u
+    users = list(users_map.values())
     if not users:
         return []
 
@@ -1114,17 +1132,18 @@ async def export_workspace_summary(
         )
     task_res = await db.execute(tasks_q)
     tasks = task_res.scalars().all()
-    total_tasks = len(tasks)
+    total_tasks = await get_total_tasks_count(db, org_id, eff_project_id, period_start, eff_department)
+    tasks_completion_rate = await get_tasks_completion_percentage(db, org_id, eff_project_id, period_start, eff_department)
+    completion_rate_str = f"{tasks_completion_rate}%" if tasks_completion_rate is not None else "—"
 
     # Tasks by status
     done_tasks = sum(1 for t in tasks if (t.status or "").lower() == "done")
     in_progress_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_progress")
     in_review_tasks = sum(1 for t in tasks if (t.status or "").lower() == "in_review")
     todo_tasks = sum(1 for t in tasks if (t.status or "").lower() in ("todo", "to_do"))
-    completion_rate_str = f"{round(done_tasks / total_tasks * 100.0, 1)}%" if total_tasks > 0 else "—"
 
     # My tasks
-    my_tasks = sum(1 for t in tasks if t.assignee_id == current_user.id)
+    my_tasks = await get_my_tasks_count(db, current_user.id, org_id, eff_project_id, period_start, eff_department)
 
     # Tickets scoped to org
     tickets_q = select(Ticket).join(Ticket.project).where(Project.organization_id == org_id)
@@ -1140,9 +1159,9 @@ async def export_workspace_summary(
     t_res = await db.execute(tickets_q)
     tickets = t_res.scalars().all()
 
-    open_tickets = sum(1 for t in tickets if (t.status or "").lower() in ("open", "wip"))
-    wip_tickets = sum(1 for t in tickets if (t.status or "").lower() == "wip")
-    work_in_progress = wip_tickets + in_progress_tasks
+    open_tickets = await get_open_tickets_count(db, org_id, eff_project_id, period_start, eff_department)
+    wip_tickets = await get_work_in_progress_count(db, org_id, eff_project_id, period_start, eff_department)
+    work_in_progress = wip_tickets
     on_hold = sum(1 for t in tickets if (t.status or "").lower() == "on_hold")
 
     # Tickets by severity (active)
@@ -1186,9 +1205,19 @@ async def export_workspace_summary(
         })
 
     # Per-assignee breakdown
-    user_q = select(User).where(User.organization_id == org_id).order_by(User.full_name.asc())
-    u_res = await db.execute(user_q)
-    org_users = u_res.scalars().all()
+    mem_u = (
+        await db.execute(
+            select(User)
+            .join(Membership, Membership.user_id == User.id)
+            .where(Membership.organization_id == org_id, Membership.status == "active")
+        )
+    ).scalars().all()
+    leg_u = (await db.execute(select(User).where(User.organization_id == org_id))).scalars().all()
+    assignee_map = {u.id: u for u in mem_u}
+    for u in leg_u:
+        if u.id not in assignee_map:
+            assignee_map[u.id] = u
+    org_users = sorted(assignee_map.values(), key=lambda u: (u.full_name or "").lower())
 
     assignee_breakdown = []
     for u in org_users:

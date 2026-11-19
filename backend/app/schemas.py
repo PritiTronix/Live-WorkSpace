@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator, model_validator
 from backend.app.core.security import validate_password_strength
 
 
@@ -109,6 +109,28 @@ class UserRead(UserBase):
     operational_velocity: Optional[OperationalVelocity] = None
     active_queue: Optional[ActiveOperationalQueue] = None
     organization_summary: Optional[OrganizationSummary] = Field(default=None, serialization_alias="organization")
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_orm_user(cls, data: Any) -> Any:
+        if hasattr(data, "__table__") and getattr(data, "__tablename__", None) == "users":
+            raw_dict = {}
+            for col in data.__table__.columns.keys():
+                raw_dict[col] = getattr(data, col, None)
+            raw_dict["organization_required"] = getattr(data, "organization_required", False)
+            raw_dict["operational_velocity"] = getattr(data, "operational_velocity", None)
+            raw_dict["active_queue"] = getattr(data, "active_queue", None)
+            raw_dict["organization_summary"] = getattr(data, "organization_summary", None)
+            mems = getattr(data, "__dict__", {}).get("memberships")
+            if isinstance(mems, list):
+                raw_dict["memberships"] = mems
+            else:
+                raw_dict["memberships"] = []
+            return raw_dict
+        elif isinstance(data, dict):
+            if "memberships" not in data or data["memberships"] is None:
+                data["memberships"] = []
+        return data
 
 
 class UserUpdateProfile(BaseSchema):

@@ -99,20 +99,18 @@ async def get_current_active_user(
 
     # Server-side authorization: users without active organization can only call onboarding, profile, and auth
     if request is not None and not is_onboarding_or_profile_path(request.url.path, request.method):
-        if not user.organization_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={"code": "organization_required", "message": "User has no active organization membership. Please complete organization onboarding."},
-            )
         # Verify active membership in memberships table
-        m_res = await db.execute(
-            select(Membership).where(
-                Membership.user_id == user.id,
-                Membership.organization_id == user.organization_id,
-                Membership.status == "active"
+        membership = None
+        if user.organization_id:
+            m_res = await db.execute(
+                select(Membership).where(
+                    Membership.user_id == user.id,
+                    Membership.organization_id == user.organization_id,
+                    Membership.status == "active"
+                )
             )
-        )
-        membership = m_res.scalars().first()
+            membership = m_res.scalars().first()
+
         if not membership:
             # Fallback: check if user has any active membership
             any_m = await db.execute(
@@ -122,14 +120,18 @@ async def get_current_active_user(
                 )
             )
             membership = any_m.scalars().first()
-            if membership:
-                user.organization_id = membership.organization_id
-                user.role = membership.role
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail={"code": "organization_required", "message": "User has no active organization membership. Please complete organization onboarding."},
-                )
+
+        if membership:
+            user.organization_id = membership.organization_id
+            user.role = membership.role
+        elif user.organization_id:
+            # User has legacy organization_id not yet migrated into memberships table
+            pass
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "organization_required", "message": "User has no active organization membership. Please complete organization onboarding."},
+            )
 
     return user
 

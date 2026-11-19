@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_user_id
-from backend.app.models import TicketActivity, Ticket, Project, User, ProjectActivity, AuditLog
+from backend.app.models import TicketActivity, Ticket, Project, User, ProjectActivity, AuditLog, Membership
 from backend.app.schemas import (
     AuditLogsListResponse,
     AuditLogItemRead,
@@ -171,16 +171,30 @@ async def list_audit_actors(
     if not org_id:
         return []
 
-    res = await db.execute(
+    mem_stmt = (
+        select(User.id, User.full_name, User.email, Membership.role)
+        .join(Membership, Membership.user_id == User.id)
+        .where(
+            Membership.organization_id == org_id,
+            Membership.status == "active"
+        )
+    )
+    mem_res = await db.execute(mem_stmt)
+    actors_by_id = {}
+    for r in mem_res.all():
+        actors_by_id[r[0]] = {"id": r[0], "full_name": r[1], "email": r[2], "role": r[3]}
+
+    legacy_res = await db.execute(
         select(User.id, User.full_name, User.email, User.role)
         .where(User.organization_id == org_id)
-        .order_by(User.full_name.asc())
     )
-    rows = res.all()
-    return [
-        {"id": r[0], "full_name": r[1], "email": r[2], "role": r[3]}
-        for r in rows
-    ]
+    for r in legacy_res.all():
+        if r[0] not in actors_by_id:
+            actors_by_id[r[0]] = {"id": r[0], "full_name": r[1], "email": r[2], "role": r[3]}
+
+    actors = list(actors_by_id.values())
+    actors.sort(key=lambda a: (a["full_name"] or "").lower())
+    return actors
 
 
 @router.get("/", response_model=AuditLogsListResponse)

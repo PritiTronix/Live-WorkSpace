@@ -104,28 +104,40 @@ async def list_notifications(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     unread_only: bool = Query(False),
+    inbox_only: bool = Query(False),
+    type: Optional[str] = Query(None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Return paginated notifications for the authenticated user within their organization."""
+    """Return paginated notifications strictly scoped to the authenticated user within their organization."""
     base_filter = [
         Notification.user_id == current_user.id,
         Notification.organization_id == current_user.organization_id,
     ]
     if unread_only:
         base_filter.append(Notification.is_read.is_(False))
+    if inbox_only:
+        base_filter.append(Notification.type.in_(["ticket_assigned", "mention", "comment"]))
+    if type and type.lower() != "all":
+        base_filter.append(Notification.type == type.lower())
 
     # Total count matching filters
     count_q = select(func.count(Notification.id)).where(*base_filter)
     count_res = await db.execute(count_q)
     total = count_res.scalar() or 0
 
-    # Total unread count for badge
-    unread_q = select(func.count(Notification.id)).where(
+    # Total unread count for badge matching current stream scope
+    unread_filter = [
         Notification.user_id == current_user.id,
         Notification.organization_id == current_user.organization_id,
         Notification.is_read.is_(False),
-    )
+    ]
+    if inbox_only:
+        unread_filter.append(Notification.type.in_(["ticket_assigned", "mention", "comment"]))
+    if type and type.lower() != "all":
+        unread_filter.append(Notification.type == type.lower())
+
+    unread_q = select(func.count(Notification.id)).where(*unread_filter)
     unread_res = await db.execute(unread_q)
     unread_count = unread_res.scalar() or 0
 
@@ -216,9 +228,9 @@ async def mark_notification_read(
     notif.is_read = True
     await db.commit()
 
-    await ws_manager.broadcast_to_workspace(
-        current_user.organization_id,
-        {"event": "notification_read", "notification_id": notification_id}
+    await ws_manager.broadcast_to_user(
+        current_user.id,
+        {"event": "notification_read", "notification_id": notification_id, "user_id": current_user.id}
     )
     return {"success": True, "notification_id": notification_id}
 
@@ -243,9 +255,9 @@ async def mark_all_notifications_read(
     count = res.rowcount if hasattr(res, "rowcount") else 0
 
     if count:
-        await ws_manager.broadcast_to_workspace(
-            current_user.organization_id,
-            {"event": "all_notifications_read", "marked_count": count}
+        await ws_manager.broadcast_to_user(
+            current_user.id,
+            {"event": "all_notifications_read", "marked_count": count, "user_id": current_user.id}
         )
     return BulkMarkReadResponse(marked_count=count)
 
@@ -264,13 +276,14 @@ async def notifications_ws(
 ):
     """
     Authenticated WebSocket endpoint for real-time notification events.
+    Strictly isolated per-user connection.
     """
     user = await authenticate_ws(websocket, token, db, required_workspace_id=workspace_id)
     if not user:
         return
 
     target_ws = workspace_id or user.organization_id
-    await ws_manager.connect(websocket, target_ws)
+    await ws_manager.connect(websocket, target_ws, user_id=user.id)
 
     # Send current unread count on connect
     unread_q = select(func.count(Notification.id)).where(
@@ -286,6 +299,6 @@ async def notifications_ws(
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket, target_ws)
+        ws_manager.disconnect(websocket, target_ws, user_id=user.id)
     except Exception:
-        ws_manager.disconnect(websocket, target_ws)
+        ws_manager.disconnect(websocket, target_ws, user_id=user.id)

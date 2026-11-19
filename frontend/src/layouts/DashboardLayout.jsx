@@ -146,17 +146,26 @@ export const DashboardLayout = () => {
   // Dynamic breadcrumbs based on active route and verified tenant data
   const getBreadcrumbs = () => {
     const path = location.pathname;
-    if (path === '/workspace/dashboard' || path === '/workspace') {
+    if (path === '/workspace/dashboard' || path === '/workspace' || path === '/workspace/') {
       return [workspaceName, 'Dashboard'];
     }
+    if (path.startsWith('/workspace/inbox')) {
+      return [workspaceName, 'Inbox'];
+    }
+    if (path.startsWith('/workspace/notifications')) {
+      return [workspaceName, 'Notifications'];
+    }
     if (path.startsWith('/workspace/projects/')) {
-      return currentProjectName ? [workspaceName, 'Projects', currentProjectName] : [workspaceName, 'Projects'];
+      return currentProjectName ? [workspaceName, 'Projects', currentProjectName] : [workspaceName, 'Projects', 'Project Detail'];
     }
     if (path === '/workspace/projects') {
       return [workspaceName, 'Projects'];
     }
-    if (path === '/workspace/tasks/my-tasks') {
+    if (path === '/workspace/tasks/my-tasks' || path === '/workspace/tasks/my') {
       return [workspaceName, 'Tasks', 'My Tasks'];
+    }
+    if (path === '/workspace/tasks/all') {
+      return [workspaceName, 'Tasks', 'All Tasks'];
     }
     if (path.startsWith('/workspace/tasks')) {
       return [workspaceName, 'Tasks'];
@@ -179,6 +188,9 @@ export const DashboardLayout = () => {
     if (path.startsWith('/workspace/members')) {
       return [workspaceName, 'Team Members'];
     }
+    if (path.startsWith('/workspace/discussions/')) {
+      return [workspaceName, 'Discussions', 'Discussion Thread'];
+    }
     if (path.startsWith('/workspace/discussions')) {
       return [workspaceName, 'Discussions'];
     }
@@ -194,11 +206,30 @@ export const DashboardLayout = () => {
     if (path.startsWith('/workspace/analytics')) {
       return [workspaceName, 'Reports'];
     }
+    if (path === '/workspace/settings/sla') {
+      return [workspaceName, 'Settings', 'SLA Config'];
+    }
+    if (path === '/workspace/settings/notifications') {
+      return [workspaceName, 'Settings', 'Notifications'];
+    }
+    if (path === '/workspace/settings/appearance') {
+      return [workspaceName, 'Settings', 'Appearance'];
+    }
     if (path.startsWith('/workspace/settings')) {
       return [workspaceName, 'Settings'];
     }
     return [workspaceName];
   };
+
+  // Synchronize browser tab document.title with verified page context
+  useEffect(() => {
+    const crumbs = getBreadcrumbs();
+    if (crumbs && crumbs.length > 1) {
+      document.title = `${crumbs.slice(1).join(' / ')} — ${workspaceName || 'Live Workspace'}`;
+    } else if (workspaceName) {
+      document.title = `${workspaceName} — Live Workspace`;
+    }
+  }, [location.pathname, workspaceName, currentProjectName]);
 
   // Global keyboard shortcuts (Ctrl+K or Cmd+K for Search, ? for Shortcuts)
   useEffect(() => {
