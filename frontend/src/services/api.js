@@ -164,7 +164,33 @@ export const authService = {
   getCurrentUserSync: () => {
     try {
       const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : DEFAULT_USER;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          return parsed;
+        }
+      }
+      // JWT token fallback if user object is not yet saved to localStorage
+      const token = localStorage.getItem('access_token');
+      if (token && token.includes('.')) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const payload = JSON.parse(decodeURIComponent(escape(atob(base64))));
+          if (payload) {
+            return {
+              ...DEFAULT_USER,
+              id: payload.sub || '',
+              role: payload.role || 'member',
+              organization_id: payload.org_id || null,
+              email: payload.email || '',
+            };
+          }
+        } catch {
+          // ignore JWT decode failure
+        }
+      }
+      return DEFAULT_USER;
     } catch {
       return DEFAULT_USER;
     }
@@ -175,10 +201,17 @@ export const authService = {
       try {
         response = await apiClient.get('/auth/me');
       } catch {
-        response = await apiClient.get('/users/me');
+        try {
+          response = await apiClient.get('/members/me');
+        } catch {
+          response = await apiClient.get('/users/me');
+        }
       }
       if (response?.data) {
         localStorage.setItem('user', JSON.stringify(response.data));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth-user-updated', { detail: response.data }));
+        }
         return response.data;
       }
       return authService.getCurrentUserSync();

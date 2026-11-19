@@ -5,6 +5,7 @@ import TaskStatusBadge from './TaskStatusBadge';
 import TaskPriorityBadge from './TaskPriorityBadge';
 import EditTaskAndStatusPopover from './EditTaskAndStatusPopover';
 import CommentComposerAndAttachmentPicker from './CommentComposerAndAttachmentPicker';
+import Avatar from '../../../components/common/Avatar';
 import {
   TASK_STATUS_OPTIONS,
   TASK_STATUS_LABEL,
@@ -247,6 +248,54 @@ export const TaskDetailDrawer = ({
                 onChange={handleDueDateChange}
                 className="w-full h-9 px-2.5 rounded-lg border border-border-subtle bg-surface-card text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
+            </div>
+
+            {/* Assignee */}
+            <div>
+              <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Assignee
+              </label>
+              <div className="h-9 px-2.5 rounded-lg border border-border-subtle bg-surface-card flex items-center gap-2 min-w-0">
+                {task.assignee ? (
+                  <>
+                    <Avatar
+                      src={task.assignee.avatar_url}
+                      name={task.assignee.full_name}
+                      size="xs"
+                      shape="rounded-full"
+                    />
+                    <span className="font-label-md text-label-md text-text-primary truncate">
+                      {task.assignee.full_name}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-body-sm text-body-sm text-text-muted">Unassigned</span>
+                )}
+              </div>
+            </div>
+
+            {/* Assigner */}
+            <div>
+              <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                Assigner
+              </label>
+              <div className="h-9 px-2.5 rounded-lg border border-border-subtle bg-surface-card flex items-center gap-2 min-w-0">
+                {task.assigner || task.reporter ? (
+                  <>
+                    <Avatar
+                      src={(task.assigner || task.reporter).avatar_url}
+                      name={(task.assigner || task.reporter).full_name}
+                      size="xs"
+                      shape="rounded-full"
+                    />
+                    <span className="font-label-md text-label-md text-text-primary truncate">
+                      {(task.assigner || task.reporter).full_name}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-body-sm text-body-sm text-text-muted">—</span>
+                )}
+              </div>
             </div>
           </div>
 

@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Modal from '../../design-system/components/Modal';
+import Avatar from '../../../components/common/Avatar';
+import { projectsService } from '../../../services/projectsService';
+import { authService } from '../../../services/api';
 import {
   TASK_STATUS_OPTIONS,
   TASK_STATUS_LABEL,
@@ -13,9 +16,9 @@ import {
 } from '../constants/taskEnums';
 
 /**
- * CreateTaskModal (Prompt 32)
+ * CreateTaskModal
  * Clean, production modal for creating tasks using shared Modal component.
- * STRICT RULE: All form fields start EMPTY. Selects start on placeholder options.
+ * Includes interactive Assigner and Assignee dropdowns with real workspace users.
  */
 export const CreateTaskModal = ({
   isOpen,
@@ -33,7 +36,23 @@ export const CreateTaskModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Reset form to empty on open/close
+  // Workspace members & authenticated user state
+  const [users, setUsers] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
+  const [assignerId, setAssignerId] = useState('');
+  const [assigneeId, setAssigneeId] = useState('');
+
+  // Dropdown open states & search query states
+  const [isAssignerOpen, setIsAssignerOpen] = useState(false);
+  const [isAssigneeOpen, setIsAssigneeOpen] = useState(false);
+  const [assignerSearch, setAssignerSearch] = useState('');
+  const [assigneeSearch, setAssigneeSearch] = useState('');
+
+  const assignerRef = useRef(null);
+  const assigneeRef = useRef(null);
+
+  // Reset form and initialize users on open
   useEffect(() => {
     if (isOpen) {
       setTitle('');
@@ -45,11 +64,101 @@ export const CreateTaskModal = ({
       setDueDate('');
       setErrorMessage('');
       setIsSubmitting(false);
+
+      // Authenticated user initialization
+      const user = authService.getCurrentUserSync();
+      if (user) {
+        setCurrentUser(user);
+        setAssignerId(user.id);
+      } else {
+        authService.getCurrentUser().then((u) => {
+          if (u) {
+            setCurrentUser(u);
+            setAssignerId(u.id);
+          }
+        });
+      }
+
+      setAssigneeId('');
+      setIsAssignerOpen(false);
+      setIsAssigneeOpen(false);
+      setAssignerSearch('');
+      setAssigneeSearch('');
+
+      // Fetch dynamic workspace members
+      setIsLoadingUsers(true);
+      projectsService
+        .getUsers()
+        .then((data) => {
+          setUsers(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error('Failed to load workspace members:', err);
+        })
+        .finally(() => {
+          setIsLoadingUsers(false);
+        });
     }
   }, [isOpen]);
 
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (assignerRef.current && !assignerRef.current.contains(e.target)) {
+        setIsAssignerOpen(false);
+      }
+      if (assigneeRef.current && !assigneeRef.current.contains(e.target)) {
+        setIsAssigneeOpen(false);
+      }
+    };
+    if (isAssignerOpen || isAssigneeOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isAssignerOpen, isAssigneeOpen]);
+
+  // Check RBAC permission for changing assigner (owner, admin, manager, lead)
+  const userRole = (currentUser?.role || '').toLowerCase();
+  const canChangeAssigner = ['owner', 'admin', 'manager', 'lead'].includes(userRole);
+
+  // Filtered users for searching
+  const filteredAssigners = useMemo(() => {
+    if (!assignerSearch.trim()) return users;
+    const q = assignerSearch.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        u.full_name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q)
+    );
+  }, [users, assignerSearch]);
+
+  const filteredAssignees = useMemo(() => {
+    if (!assigneeSearch.trim()) return users;
+    const q = assigneeSearch.toLowerCase().trim();
+    return users.filter(
+      (u) =>
+        u.full_name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.toLowerCase().includes(q)
+    );
+  }, [users, assigneeSearch]);
+
+  const selectedAssigner = users.find((u) => u.id === assignerId) || currentUser;
+  const selectedAssignee = users.find((u) => u.id === assigneeId) || null;
+
   const hasUnsavedChanges = Boolean(
-    title.trim() || description.trim() || status || priority || taskType || storyPoints || dueDate
+    title.trim() ||
+    description.trim() ||
+    status ||
+    priority ||
+    taskType ||
+    storyPoints ||
+    dueDate ||
+    assigneeId ||
+    (currentUser && assignerId !== currentUser.id)
   );
 
   const handleSubmit = async (e) => {
@@ -71,6 +180,10 @@ export const CreateTaskModal = ({
         task_type: taskType || TASK_TYPE.FEATURE,
         story_points: storyPoints !== '' ? Number(storyPoints) : null,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        assignee_id: assigneeId || null,
+        assigned_to_id: assigneeId || null,
+        assigner_id: assignerId || currentUser?.id,
+        reporter_id: assignerId || currentUser?.id,
       };
 
       await onCreateTask(payload);
@@ -233,6 +346,290 @@ export const CreateTaskModal = ({
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full h-10 px-3 rounded-lg border border-border-subtle bg-canvas-main text-text-primary font-body-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
+          </div>
+        </div>
+
+        {/* Assigner & Assignee Fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Assigner */}
+          <div className="relative" ref={assignerRef}>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-label-md text-label-md text-text-secondary">
+                Assigner
+              </label>
+              {!canChangeAssigner && (
+                <span className="text-[11px] text-text-muted flex items-center gap-0.5" title="Only administrators, managers, and leads can change assigner">
+                  <span className="material-symbols-outlined text-[13px]">lock</span>
+                  Locked
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              disabled={!canChangeAssigner || isLoadingUsers}
+              onClick={() => {
+                setIsAssignerOpen((prev) => !prev);
+                setIsAssigneeOpen(false);
+              }}
+              className={`w-full h-11 px-3 rounded-lg border border-border-subtle bg-canvas-main flex items-center justify-between transition-colors text-left ${
+                canChangeAssigner ? 'hover:bg-canvas-lavender/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20' : 'cursor-default opacity-85'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0 pr-2">
+                <Avatar
+                  src={selectedAssigner?.avatar_url}
+                  name={selectedAssigner?.full_name}
+                  size="sm"
+                  shape="rounded-full"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="font-label-md text-label-md text-text-primary truncate">
+                    {selectedAssigner?.full_name || 'Select Assigner'}
+                  </span>
+                  {selectedAssigner?.role && (
+                    <span className="text-[10px] text-text-muted capitalize leading-none">
+                      {selectedAssigner.role}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {canChangeAssigner ? (
+                <span className="material-symbols-outlined text-text-muted text-[18px]">
+                  {isAssignerOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              ) : (
+                <span className="material-symbols-outlined text-text-muted text-[16px]">lock</span>
+              )}
+            </button>
+
+            {/* Assigner Dropdown Popover */}
+            {isAssignerOpen && canChangeAssigner && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-surface-card rounded-xl shadow-xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="p-2 border-b border-border-subtle bg-canvas-main">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-card rounded-lg border border-border-subtle">
+                    <span className="material-symbols-outlined text-text-muted text-[16px]">search</span>
+                    <input
+                      type="text"
+                      value={assignerSearch}
+                      onChange={(e) => setAssignerSearch(e.target.value)}
+                      placeholder="Search assigner..."
+                      autoFocus
+                      className="w-full bg-transparent border-0 outline-none font-body-sm text-body-sm text-text-primary placeholder:text-text-muted"
+                    />
+                    {assignerSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setAssignerSearch('')}
+                        className="text-text-muted hover:text-text-primary"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="max-h-48 overflow-y-auto p-1 divide-y divide-border-subtle/30">
+                  {filteredAssigners.length === 0 ? (
+                    <div className="p-3 text-center text-text-muted font-body-sm text-body-sm">
+                      No members found
+                    </div>
+                  ) : (
+                    filteredAssigners.map((u) => {
+                      const isSelected = u.id === assignerId;
+                      return (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            setAssignerId(u.id);
+                            setIsAssignerOpen(false);
+                            setAssignerSearch('');
+                          }}
+                          className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-canvas-lavender text-primary font-semibold'
+                              : 'hover:bg-canvas-lavender/50 text-text-primary'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <Avatar
+                              src={u.avatar_url}
+                              name={u.full_name}
+                              size="sm"
+                              shape="rounded-full"
+                            />
+                            <div className="flex flex-col text-left min-w-0">
+                              <span className="font-label-md text-label-md truncate">
+                                {u.full_name}
+                              </span>
+                              <span className="text-[11px] text-text-muted truncate">
+                                {u.email || u.role}
+                              </span>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <span className="material-symbols-outlined text-primary text-[18px]">check</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Assignee */}
+          <div className="relative" ref={assigneeRef}>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-label-md text-label-md text-text-secondary">
+                Assignee
+              </label>
+            </div>
+
+            <button
+              type="button"
+              disabled={isLoadingUsers}
+              onClick={() => {
+                setIsAssigneeOpen((prev) => !prev);
+                setIsAssignerOpen(false);
+              }}
+              className="w-full h-11 px-3 rounded-lg border border-border-subtle bg-canvas-main hover:bg-canvas-lavender/30 flex items-center justify-between transition-colors text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <div className="flex items-center gap-2 min-w-0 pr-2">
+                {selectedAssignee ? (
+                  <>
+                    <Avatar
+                      src={selectedAssignee.avatar_url}
+                      name={selectedAssignee.full_name}
+                      size="sm"
+                      shape="rounded-full"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-label-md text-label-md text-text-primary truncate">
+                        {selectedAssignee.full_name}
+                      </span>
+                      {selectedAssignee.role && (
+                        <span className="text-[10px] text-text-muted capitalize leading-none">
+                          {selectedAssignee.role}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-text-muted">
+                    <span className="w-7 h-7 rounded-full bg-border-subtle/50 flex items-center justify-center text-text-muted">
+                      <span className="material-symbols-outlined text-[16px]">person</span>
+                    </span>
+                    <span className="font-body-sm text-body-sm text-text-muted">
+                      Unassigned
+                    </span>
+                  </div>
+                )}
+              </div>
+              <span className="material-symbols-outlined text-text-muted text-[18px]">
+                {isAssigneeOpen ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+
+            {/* Assignee Dropdown Popover */}
+            {isAssigneeOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-surface-card rounded-xl shadow-xl border border-border-subtle overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                <div className="p-2 border-b border-border-subtle bg-canvas-main">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-card rounded-lg border border-border-subtle">
+                    <span className="material-symbols-outlined text-text-muted text-[16px]">search</span>
+                    <input
+                      type="text"
+                      value={assigneeSearch}
+                      onChange={(e) => setAssigneeSearch(e.target.value)}
+                      placeholder="Search assignee..."
+                      autoFocus
+                      className="w-full bg-transparent border-0 outline-none font-body-sm text-body-sm text-text-primary placeholder:text-text-muted"
+                    />
+                    {assigneeSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setAssigneeSearch('')}
+                        className="text-text-muted hover:text-text-primary"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">close</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="max-h-48 overflow-y-auto p-1 divide-y divide-border-subtle/30">
+                  {/* Unassigned Option */}
+                  <div
+                    onClick={() => {
+                      setAssigneeId('');
+                      setIsAssigneeOpen(false);
+                      setAssigneeSearch('');
+                    }}
+                    className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                      !assigneeId
+                        ? 'bg-canvas-lavender text-primary font-semibold'
+                        : 'hover:bg-canvas-lavender/50 text-text-primary'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-full bg-border-subtle/40 flex items-center justify-center text-text-muted">
+                        <span className="material-symbols-outlined text-[16px]">person_off</span>
+                      </span>
+                      <span className="font-label-md text-label-md">Unassigned</span>
+                    </div>
+                    {!assigneeId && (
+                      <span className="material-symbols-outlined text-primary text-[18px]">check</span>
+                    )}
+                  </div>
+
+                  {filteredAssignees.length === 0 ? (
+                    <div className="p-3 text-center text-text-muted font-body-sm text-body-sm">
+                      No members found
+                    </div>
+                  ) : (
+                    filteredAssignees.map((u) => {
+                      const isSelected = u.id === assigneeId;
+                      return (
+                        <div
+                          key={u.id}
+                          onClick={() => {
+                            setAssigneeId(u.id);
+                            setIsAssigneeOpen(false);
+                            setAssigneeSearch('');
+                          }}
+                          className={`w-full px-2.5 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-canvas-lavender text-primary font-semibold'
+                              : 'hover:bg-canvas-lavender/50 text-text-primary'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <Avatar
+                              src={u.avatar_url}
+                              name={u.full_name}
+                              size="sm"
+                              shape="rounded-full"
+                            />
+                            <div className="flex flex-col text-left min-w-0">
+                              <span className="font-label-md text-label-md truncate">
+                                {u.full_name}
+                              </span>
+                              <span className="text-[11px] text-text-muted truncate">
+                                {u.email || u.role}
+                              </span>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <span className="material-symbols-outlined text-primary text-[18px]">check</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

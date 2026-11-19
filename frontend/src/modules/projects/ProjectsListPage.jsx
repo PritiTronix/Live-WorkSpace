@@ -56,8 +56,21 @@ export const ProjectsListPage = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Current authenticated user role & permission check
-  const currentUser = authService.getCurrentUserSync();
-  const userRole = (currentUser?.role || '').toLowerCase();
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
+
+  useEffect(() => {
+    authService.getCurrentUser().then((u) => {
+      if (u) setCurrentUser(u);
+    }).catch(() => {});
+
+    const handleUserUpdate = (e) => {
+      if (e.detail) setCurrentUser(e.detail);
+    };
+    window.addEventListener('auth-user-updated', handleUserUpdate);
+    return () => window.removeEventListener('auth-user-updated', handleUserUpdate);
+  }, []);
+
+  const userRole = (currentUser?.role || '').toLowerCase().trim();
   const canCreateProject = ['owner', 'admin', 'manager', 'lead'].includes(userRole);
 
   // Keyboard shortcut '/' to focus project search filter (Ctrl+K is reserved for global search)
@@ -104,6 +117,12 @@ export const ProjectsListPage = () => {
 
   useEffect(() => {
     fetchProjects();
+
+    const handleProjectCreatedEvent = () => {
+      fetchProjects();
+    };
+    window.addEventListener('project-created', handleProjectCreatedEvent);
+    return () => window.removeEventListener('project-created', handleProjectCreatedEvent);
   }, []);
 
   // Real status options extracted dynamically from projects

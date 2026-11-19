@@ -207,13 +207,18 @@ export const Sidebar = ({
         <div className="flex items-center justify-between pb-space-sm">
           <div className="flex items-center gap-space-sm">
             <div className="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm font-bold shadow-sm flex-shrink-0">
-              {getInitials(organizationName)}
+              LW
             </div>
             {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none truncate max-w-[170px]">
-                  {organizationName}
+              <div className="flex flex-col min-w-0">
+                <span className="font-headline-sm text-headline-sm text-text-primary tracking-tight leading-none">
+                  Live Workspace
                 </span>
+                {organizationName && (
+                  <span className="font-label-sm text-label-sm text-text-muted truncate max-w-[170px] mt-0.5">
+                    {organizationName}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -238,12 +243,12 @@ export const Sidebar = ({
                 organizations.length > 1 ? 'cursor-pointer hover:bg-canvas-lavender' : ''
               }`}
             >
-              <div className="flex items-center gap-space-sm min-w-0">
+              <div className="flex items-center gap-space-sm min-w-0 flex-1">
                 <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
-                  {getInitials(organizationName)}
+                  {getInitials(organizationName) || 'AT'}
                 </span>
-                <div className="flex flex-col text-left min-w-0">
-                  <span className="font-label-md text-label-md text-text-primary truncate max-w-[130px]">
+                <div className="flex flex-col text-left min-w-0 flex-1">
+                  <span className="font-label-md text-label-md text-text-primary truncate" title={organizationName}>
                     {organizationName}
                   </span>
                   {currentOrg?.plan ? (
@@ -254,7 +259,7 @@ export const Sidebar = ({
                 </div>
               </div>
               {organizations.length > 1 && (
-                <span className="material-symbols-outlined text-text-muted text-[16px]">unfold_more</span>
+                <span className="material-symbols-outlined text-text-muted text-[16px] flex-shrink-0">unfold_more</span>
               )}
             </div>
 

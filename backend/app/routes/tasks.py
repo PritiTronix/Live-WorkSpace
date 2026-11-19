@@ -36,6 +36,16 @@ router = APIRouter()
 
 
 def _format_task_read(t: Task) -> TaskRead:
+    assignee_actor = (
+        ActorSchema(id=t.assignee.id, full_name=t.assignee.full_name, avatar_url=t.assignee.avatar_url)
+        if getattr(t, "assignee", None)
+        else None
+    )
+    reporter_actor = (
+        ActorSchema(id=t.reporter.id, full_name=t.reporter.full_name, avatar_url=t.reporter.avatar_url)
+        if getattr(t, "reporter", None)
+        else None
+    )
     return TaskRead(
         id=t.id,
         task_number=t.task_number,
@@ -50,16 +60,15 @@ def _format_task_read(t: Task) -> TaskRead:
         assignee_id=t.assignee_id,
         assigned_to_id=t.assignee_id,
         reporter_id=t.reporter_id,
+        assigner_id=t.reporter_id,
         organization_id=t.organization_id,
         created_at=t.created_at,
         updated_at=t.updated_at,
         comment_count=len(t.comments) if t.comments else 0,
         attachment_count=len(t.attachments) if t.attachments else 0,
-        assignee=(
-            ActorSchema(id=t.assignee.id, full_name=t.assignee.full_name, avatar_url=t.assignee.avatar_url)
-            if t.assignee
-            else None
-        ),
+        assignee=assignee_actor,
+        reporter=reporter_actor,
+        assigner=reporter_actor,
     )
 
 
@@ -135,6 +144,7 @@ async def list_tasks(
         select(Task)
         .options(
             selectinload(Task.assignee),
+            selectinload(Task.reporter),
             selectinload(Task.comments),
             selectinload(Task.attachments),
         )
@@ -190,6 +200,7 @@ async def get_task(
         select(Task)
         .options(
             selectinload(Task.assignee),
+            selectinload(Task.reporter),
             selectinload(Task.comments),
             selectinload(Task.attachments),
         )
@@ -209,8 +220,32 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new task scoped to current tenant and broadcast to real-time subscribers."""
-    assignee_id = payload.assignee_id or payload.assigned_to_id or current_user.id
+    assignee_id = payload.assignee_id or payload.assigned_to_id
+    assigner_id = payload.assigner_id or payload.reporter_id or current_user.id
     task_id = str(uuid4())
+
+    # RBAC: Changing assigner from self requires elevated privilege (owner, admin, manager, lead)
+    user_role = (current_user.role or "").lower()
+    can_change_assigner = user_role in ("owner", "admin", "manager", "lead")
+    if assigner_id != current_user.id and not can_change_assigner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Only workspace leads, managers, or administrators can assign tasks on behalf of another user."
+        )
+
+    # Validate assigner belongs to organization
+    if assigner_id != current_user.id:
+        assigner_res = await db.execute(
+            select(User).where(
+                User.id == assigner_id,
+                User.organization_id == current_user.organization_id
+            )
+        )
+        if not assigner_res.scalars().first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigner does not belong to your organization"
+            )
 
     # Validate project belongs to user's organization
     project = None
@@ -272,7 +307,7 @@ async def create_task(
         due_date=payload.due_date,
         project_id=payload.project_id,
         assignee_id=assignee_id,
-        reporter_id=current_user.id,
+        reporter_id=assigner_id,
         organization_id=current_user.organization_id,
         created_at=now,
         updated_at=now,
@@ -301,6 +336,7 @@ async def create_task(
         select(Task)
         .options(
             selectinload(Task.assignee),
+            selectinload(Task.reporter),
             selectinload(Task.comments),
             selectinload(Task.attachments),
         )
@@ -333,6 +369,7 @@ async def update_task(
         select(Task)
         .options(
             selectinload(Task.assignee),
+            selectinload(Task.reporter),
             selectinload(Task.comments),
             selectinload(Task.attachments),
         )
@@ -370,6 +407,29 @@ async def update_task(
         t.story_points = payload.story_points
     if payload.due_date is not None:
         t.due_date = payload.due_date
+    target_assigner = payload.assigner_id or payload.reporter_id
+    if target_assigner is not None:
+        user_role = (current_user.role or "").lower()
+        can_change_assigner = user_role in ("owner", "admin", "manager", "lead")
+        if target_assigner != current_user.id and not can_change_assigner:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden: Only workspace leads, managers, or administrators can assign tasks on behalf of another user."
+            )
+        if target_assigner != current_user.id:
+            assigner_res = await db.execute(
+                select(User).where(
+                    User.id == target_assigner,
+                    User.organization_id == current_user.organization_id
+                )
+            )
+            if not assigner_res.scalars().first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Assigner does not belong to your organization"
+                )
+        t.reporter_id = target_assigner
+
     if target_assignee is not None:
         # Validate assignee belongs to organization
         if target_assignee != current_user.id:
@@ -394,6 +454,7 @@ async def update_task(
         select(Task)
         .options(
             selectinload(Task.assignee),
+            selectinload(Task.reporter),
             selectinload(Task.comments),
             selectinload(Task.attachments),
         )

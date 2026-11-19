@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { projectsService } from '../../services/projectsService';
 import Avatar from '../../components/common/Avatar';
@@ -49,7 +49,21 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
   const [slaTier, setSlaTier] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [calendarDay, setCalendarDay] = useState(15);
+
+  // Date range calculation and validation
+  const isInvalidDate = useMemo(() => {
+    if (!startDate || !targetDate) return false;
+    return new Date(targetDate) < new Date(startDate);
+  }, [startDate, targetDate]);
+
+  const durationLabel = useMemo(() => {
+    if (!startDate || !targetDate || isInvalidDate) return '';
+    const start = new Date(startDate);
+    const end = new Date(targetDate);
+    const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const sprints = Math.max(1, Math.ceil(diffDays / 14));
+    return `~${diffDays} Days (${sprints} Sprint${sprints === 1 ? '' : 's'})`;
+  }, [startDate, targetDate, isInvalidDate]);
 
   // Focus management & body scroll lock
   useEffect(() => {
@@ -83,6 +97,29 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Reset form fields on open to ensure clean state with no demo values
+  useEffect(() => {
+    if (isOpen) {
+      setName('');
+      setKey('');
+      setDescription('');
+      setSelectedIcon('rocket_launch');
+      setSelectedColor('bg-btn-primary');
+      setSelectedMembers([]);
+      setMemberSearchQuery('');
+      setShowMemberDropdown(false);
+      setSlaTier('');
+      setErrorMsg('');
+      setTimelinePreset('1 Quarter');
+      setStartDate(new Date().toISOString().slice(0, 10));
+      const d = new Date();
+      d.setMonth(d.getMonth() + 3);
+      setTargetDate(d.toISOString().slice(0, 10));
+      setVisibility('org');
+      setStatus('active');
+    }
+  }, [isOpen]);
 
   // Fetch users on open
   useEffect(() => {
@@ -152,33 +189,45 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
       setErrorMsg('Project name is required.');
       return;
     }
+    if (startDate && targetDate && new Date(targetDate) < new Date(startDate)) {
+      setErrorMsg('Target Completion Date cannot be earlier than Start Date.');
+      return;
+    }
     try {
       setIsSubmitting(true);
       setErrorMsg('');
 
       const projectData = {
         name: name.trim(),
-        key: key.trim().toUpperCase() || 'PRJ',
-        description: description.trim(),
-        icon: selectedIcon,
-        color: selectedColor,
-        visibility: visibility === 'org' ? 'public' : 'private',
-        status: draft ? 'Planning' : status,
-        sla_tier: slaTier,
-        lead_id: leadId,
-        start_date: startDate || null,
-        target_date: targetDate || null,
-        initial_member_ids: selectedMembers.map((m) => m.id),
+        key: key.trim().toUpperCase() || undefined,
+        description: description.trim() || null,
+        icon: selectedIcon || 'rocket_launch',
+        color: selectedColor || 'bg-btn-primary',
+        visibility: visibility === 'org' ? 'organization' : 'restricted',
+        status: draft ? 'planning' : (status || 'active').toLowerCase(),
+        sla_tier: slaTier || 'Standard SaaS Tier 1',
+        lead_id: leadId || null,
+        start_date: startDate ? new Date(startDate).toISOString() : null,
+        target_date: targetDate ? new Date(targetDate).toISOString() : null,
+        contributor_ids: selectedMembers.map((m) => m.id),
       };
 
       const created = await projectsService.createProject(projectData);
+      window.dispatchEvent(new CustomEvent('project-created', { detail: created }));
       if (onProjectCreated) {
         onProjectCreated(created);
       }
       onClose();
     } catch (err) {
       console.error('Create project error:', err);
-      setErrorMsg(err.response?.data?.detail || 'Failed to create project. Please verify inputs.');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setErrorMsg(detail);
+      } else if (Array.isArray(detail)) {
+        setErrorMsg(detail.map((d) => d.msg || d.detail).join(', '));
+      } else {
+        setErrorMsg(err.message || 'Failed to create project. Please verify inputs.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -536,147 +585,54 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
 
             <div className="grid grid-cols-12 gap-space-md">
               {/* Start Date */}
-              <div className="col-span-12 sm:col-span-5 space-y-1.5">
+              <div className="col-span-12 sm:col-span-6 space-y-1.5">
                 <label className="font-label-md text-label-md text-text-primary font-medium">Start Date</label>
                 <div className="h-10 px-3 bg-canvas-main rounded-lg flex items-center justify-between shadow-sm border border-border-subtle">
-                  <div className="flex items-center gap-2 text-text-primary">
+                  <div className="flex items-center gap-2 text-text-primary w-full">
                     <span className="material-symbols-outlined text-[18px] text-text-secondary">calendar_today</span>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="bg-transparent font-label-md text-label-md font-medium text-text-primary outline-none"
+                      className="bg-transparent font-label-md text-label-md font-medium text-text-primary outline-none w-full"
                     />
                   </div>
-                  <span className="font-label-sm text-label-sm text-text-muted">Sprint 1</span>
+                  <span className="font-label-sm text-label-sm text-text-muted flex-shrink-0">Sprint 1</span>
                 </div>
               </div>
 
-              {/* Target Completion Date (Active State with Calendar View) */}
-              <div className="col-span-12 sm:col-span-7 space-y-1.5">
-                <label className="font-label-md text-label-md text-text-primary font-medium flex justify-between">
+              {/* Target Completion Date */}
+              <div className="col-span-12 sm:col-span-6 space-y-1.5">
+                <label className="font-label-md text-label-md text-text-primary font-medium flex items-center justify-between">
                   <span>
                     Target Completion Date <span className="text-error">*</span>
                   </span>
-                  <span className="text-btn-primary font-bold font-label-sm text-label-sm">
-                    ~105 Days (15 Sprints)
-                  </span>
+                  {durationLabel && (
+                    <span className="text-btn-primary font-bold font-label-sm text-label-sm">
+                      {durationLabel}
+                    </span>
+                  )}
                 </label>
-                <div className="h-10 px-3 bg-surface-card rounded-lg flex items-center justify-between shadow-sm ring-2 ring-btn-primary/30 border border-border-subtle">
-                  <div className="flex items-center gap-2 text-btn-primary">
-                    <span className="material-symbols-outlined text-[18px]">event_available</span>
+                <div className="h-10 px-3 bg-canvas-main rounded-lg flex items-center justify-between shadow-sm border border-border-subtle">
+                  <div className="flex items-center gap-2 text-text-primary w-full">
+                    <span className="material-symbols-outlined text-[18px] text-text-secondary">calendar_today</span>
                     <input
                       type="date"
                       value={targetDate}
+                      min={startDate || undefined}
                       onChange={(e) => setTargetDate(e.target.value)}
-                      className="bg-transparent font-label-md text-label-md font-bold text-btn-primary outline-none cursor-pointer"
+                      className="bg-transparent font-label-md text-label-md font-medium text-text-primary outline-none w-full cursor-pointer"
                     />
                   </div>
-                  <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-status-resolved/15 text-status-resolved font-semibold">
-                    Q1 Milestone
-                  </span>
-                </div>
-
-                {/* Calendar View Subpanel */}
-                <div className="mt-2 p-3 bg-surface-card rounded-xl shadow-lg space-y-2.5 border border-border-subtle">
-                  <div className="flex items-center justify-between">
-                    <span className="font-label-md text-label-md font-bold text-text-primary">March 2026</span>
-                    <div className="flex items-center gap-1 text-text-secondary">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          try {
-                            const d = new Date(targetDate);
-                            d.setMonth(d.getMonth() - 1);
-                            setTargetDate(d.toISOString().split('T')[0]);
-                          } catch (_) {}
-                        }}
-                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender cursor-pointer"
-                        title="Previous Month"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">chevron_left</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          try {
-                            const d = new Date(targetDate);
-                            d.setMonth(d.getMonth() + 1);
-                            setTargetDate(d.toISOString().split('T')[0]);
-                          } catch (_) {}
-                        }}
-                        className="w-6 h-6 rounded flex items-center justify-center hover:bg-canvas-lavender cursor-pointer"
-                        title="Next Month"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-7 text-center font-label-sm text-label-sm text-text-muted">
-                    <span>Mo</span>
-                    <span>Tu</span>
-                    <span>We</span>
-                    <span>Th</span>
-                    <span>Fr</span>
-                    <span>Sa</span>
-                    <span>Su</span>
-                  </div>
-
-                  <div className="grid grid-cols-7 gap-1 text-center font-body-sm text-body-sm">
-                    <span className="py-1 text-text-muted/40">23</span>
-                    <span className="py-1 text-text-muted/40">24</span>
-                    <span className="py-1 text-text-muted/40">25</span>
-                    <span className="py-1 text-text-muted/40">26</span>
-                    <span className="py-1 text-text-muted/40">27</span>
-                    <span className="py-1 text-text-muted/40">28</span>
-                    <span className="py-1 text-text-primary font-medium">1</span>
-                    <span className="py-1 text-text-primary">2</span>
-                    <span className="py-1 text-text-primary">3</span>
-                    <span className="py-1 text-text-primary">4</span>
-                    <span className="py-1 text-text-primary">5</span>
-                    <span className="py-1 text-text-primary">6</span>
-                    <span className="py-1 text-text-secondary">7</span>
-                    <span className="py-1 text-text-secondary">8</span>
-                    <span className="py-1 text-text-primary">9</span>
-                    <span className="py-1 text-text-primary">10</span>
-                    <span className="py-1 text-text-primary">11</span>
-                    <span className="py-1 text-text-primary">12</span>
-                    <span className="py-1 text-text-primary">13</span>
-                    <span className="py-1 text-text-secondary">14</span>
-                    <div className="relative py-1 flex items-center justify-center">
-                      <button
-                        type="button"
-                        onClick={() => setCalendarDay(15)}
-                        className={`w-7 h-7 rounded-full font-bold flex items-center justify-center shadow-xs transition-colors ${
-                          calendarDay === 15 ? 'bg-btn-primary text-on-primary' : 'hover:bg-canvas-lavender text-text-primary'
-                        }`}
-                      >
-                        15
-                      </button>
-                    </div>
-                    <span className="py-1 text-text-primary">16</span>
-                    <span className="py-1 text-text-primary">17</span>
-                    <span className="py-1 text-text-primary">18</span>
-                    <span className="py-1 text-text-primary">19</span>
-                    <span className="py-1 text-text-primary">20</span>
-                    <span className="py-1 text-text-secondary">21</span>
-                    <span className="py-1 text-text-secondary">22</span>
-                  </div>
-
-                  <div className="pt-1 flex items-center justify-between font-label-sm text-label-sm border-t border-surface-container">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-status-resolved"></span>
-                      <span className="text-text-secondary">Final Launch Target</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setTargetDate(new Date().toISOString().split('T')[0])}
-                      className="text-btn-primary font-semibold hover:underline"
-                    >
-                      Set Today
-                    </button>
-                  </div>
+                  {isInvalidDate ? (
+                    <span className="font-label-sm text-label-sm text-error font-medium flex-shrink-0">
+                      Earlier than start
+                    </span>
+                  ) : (
+                    <span className="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-status-resolved/15 text-status-resolved font-semibold flex-shrink-0">
+                      Target
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

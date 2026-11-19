@@ -78,6 +78,8 @@ class TaskCreate(BaseSchema):
     project_id: Optional[str] = None
     assignee_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
 
     @model_validator(mode="after")
     def sync_assignee(self):
@@ -85,6 +87,10 @@ class TaskCreate(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if not self.reporter_id and self.assigner_id:
+            self.reporter_id = self.assigner_id
+        elif not self.assigner_id and self.reporter_id:
+            self.assigner_id = self.reporter_id
         if self.status:
             self.status = self.status.lower().replace("to_do", "todo")
         return self
@@ -101,6 +107,8 @@ class TaskUpdate(BaseSchema):
     project_id: Optional[str] = None
     assignee_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
 
     @model_validator(mode="after")
     def sync_assignee(self):
@@ -108,6 +116,10 @@ class TaskUpdate(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if not self.reporter_id and self.assigner_id:
+            self.reporter_id = self.assigner_id
+        elif not self.assigner_id and self.reporter_id:
+            self.assigner_id = self.reporter_id
         if self.status:
             self.status = self.status.lower().replace("to_do", "todo")
         return self
@@ -137,12 +149,15 @@ class TaskRead(BaseSchema):
     assignee_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
     reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
     organization_id: Optional[str] = "org_01"
     created_at: datetime
     updated_at: Optional[datetime] = None
     comment_count: int = 0
     attachment_count: int = 0
     assignee: Optional[ActorSchema] = None
+    reporter: Optional[ActorSchema] = None
+    assigner: Optional[ActorSchema] = None
 
     @model_validator(mode="after")
     def sync_assignee(self):
@@ -150,6 +165,14 @@ class TaskRead(BaseSchema):
             self.assignee_id = self.assigned_to_id
         elif not self.assigned_to_id and self.assignee_id:
             self.assigned_to_id = self.assignee_id
+        if not self.assigner_id and self.reporter_id:
+            self.assigner_id = self.reporter_id
+        elif not self.reporter_id and self.assigner_id:
+            self.reporter_id = self.assigner_id
+        if not self.assigner and self.reporter:
+            self.assigner = self.reporter
+        elif not self.reporter and self.assigner:
+            self.reporter = self.assigner
         if self.status:
             self.status = self.status.lower().replace("to_do", "todo")
         return self
