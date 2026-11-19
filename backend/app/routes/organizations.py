@@ -428,7 +428,7 @@ async def join_organization(
             actor_id=current_user.id,
             target_id=join_req.id,
             target_type="join_request",
-            target_route=f"/organizations/{org_id}/join-requests",
+            target_route="/workspace/members?tab=join-requests",
             created_at=now,
         )
         db.add(notif)
@@ -591,6 +591,8 @@ async def list_org_join_requests(
             decision_reason=r.decision_reason,
             organization_name=r.organization.name if r.organization else None,
             organization_logo=r.organization.logo_path if r.organization else None,
+            requester_name=r.user.full_name if r.user else None,
+            requester_email=r.user.email if r.user else None,
             user=JoinRequestUser(
                 id=r.user.id,
                 full_name=r.user.full_name,
@@ -725,6 +727,8 @@ async def approve_join_request(
         decided_by=join_req.decided_by,
         decided_at=join_req.decided_at,
         organization_name=org_name,
+        requester_name=join_req.user.full_name if join_req.user else None,
+        requester_email=join_req.user.email if join_req.user else None,
         user=JoinRequestUser(
             id=join_req.user.id,
             full_name=join_req.user.full_name,
@@ -820,6 +824,8 @@ async def reject_join_request(
         decided_at=join_req.decided_at,
         decision_reason=join_req.decision_reason,
         organization_name=org_name,
+        requester_name=join_req.user.full_name if join_req.user else None,
+        requester_email=join_req.user.email if join_req.user else None,
         user=JoinRequestUser(
             id=join_req.user.id,
             full_name=join_req.user.full_name,

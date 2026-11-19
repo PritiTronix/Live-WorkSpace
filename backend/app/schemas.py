@@ -252,6 +252,8 @@ class JoinRequestRead(BaseSchema):
     decision_reason: Optional[str] = None
     organization_name: Optional[str] = None
     organization_logo: Optional[str] = None
+    requester_name: Optional[str] = None
+    requester_email: Optional[str] = None
     user: Optional[JoinRequestUser] = None
 
 

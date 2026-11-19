@@ -14,10 +14,14 @@ import {
   Mail,
   MoreVertical,
   CheckCircle2,
+  KeyRound,
 } from 'lucide-react';
 import { membersService } from '../../../services/membersService';
+import { authService } from '../../../services/api';
 import InviteMemberModal from '../components/InviteMemberModal';
 import MemberDetailDrawer from '../components/MemberDetailDrawer';
+import JoinCodeCard from '../components/JoinCodeCard';
+import JoinRequestsTable from '../components/JoinRequestsTable';
 import Avatar from '../../../components/common/Avatar';
 
 export const TeamMembersPage = () => {
@@ -28,6 +32,43 @@ export const TeamMembersPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTeam = searchParams.get('team') || searchParams.get('department') || 'all';
+  const urlTab = searchParams.get('tab');
+
+  // Authenticated User Context & Join Requests Count (Owner/Admin only)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  const isAdminOrOwner = currentUser?.role === 'owner' || currentUser?.role === 'admin';
+  const activeTab = (isAdminOrOwner && (urlTab === 'join-requests' || urlTab === 'requests')) ? 'join-requests' : 'members';
+
+  const handleTabChange = (tab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'join-requests') {
+        next.set('tab', 'join-requests');
+      } else {
+        next.delete('tab');
+      }
+      return next;
+    }, { replace: true });
+  };
+
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const u = await authService.getMe();
+      setCurrentUser(u);
+      if (u?.organization_id && (u.role === 'owner' || u.role === 'admin')) {
+        try {
+          const reqRes = await membersService.listJoinRequests(u.organization_id, 'pending', 1, 100);
+          setPendingRequestsCount(reqRes?.total ?? reqRes?.items?.length ?? 0);
+        } catch (e) {
+          // handled gracefully
+        }
+      }
+    } catch {
+      // not authenticated
+    }
+  }, []);
 
   // Filters & View State
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +127,7 @@ export const TeamMembersPage = () => {
 
   useEffect(() => {
     fetchMembers();
+    fetchCurrentUser();
 
     const handleProfileUpdated = (e) => {
       if (e.detail?.id) {
@@ -223,24 +265,82 @@ export const TeamMembersPage = () => {
           </div>
 
           <div className="flex items-center gap-3 self-start lg:self-auto">
-            <button
-              onClick={handleExportCsv}
-              className="h-10 px-4 bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#141529] dark:text-white rounded-lg text-sm font-semibold flex items-center gap-2 border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs transition-all cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-[#9C9CA9]" />
-              <span>Export Directory</span>
-            </button>
-            <button
-              onClick={() => setIsInviteModalOpen(true)}
-              className="h-10 px-4 bg-[#6040F0] hover:bg-[#5639D8] text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Invite Member</span>
-            </button>
+            {activeTab === 'members' && (
+              <>
+                <button
+                  onClick={handleExportCsv}
+                  className="h-10 px-4 bg-white dark:bg-[#1a1b32] hover:bg-[#F5F4FC] dark:hover:bg-[#242542] text-[#141529] dark:text-white rounded-lg text-sm font-semibold flex items-center gap-2 border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs transition-all cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#9C9CA9]" />
+                  <span>Export Directory</span>
+                </button>
+                <button
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="h-10 px-4 bg-[#6040F0] hover:bg-[#5639D8] text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>+ Invite Member</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Top Key Metrics Bento Bar */}
+        {/* Admin / Owner Navigation Tabs */}
+        {isAdminOrOwner && (
+          <div className="flex items-center gap-2 border-b border-[#E5E5EF] dark:border-[#2e2f41] pb-0">
+            <button
+              type="button"
+              onClick={() => handleTabChange('members')}
+              className={`pb-3 px-3.5 text-sm font-semibold transition-all relative cursor-pointer flex items-center gap-2 ${
+                activeTab === 'members'
+                  ? 'text-[#6040F0] border-b-2 border-[#6040F0] font-bold'
+                  : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:text-[#141529] dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Team Roster ({members.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('join-requests')}
+              className={`pb-3 px-3.5 text-sm font-semibold transition-all relative cursor-pointer flex items-center gap-2 ${
+                activeTab === 'join-requests'
+                  ? 'text-[#6040F0] border-b-2 border-[#6040F0] font-bold'
+                  : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:text-[#141529] dark:hover:text-white'
+              }`}
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>Join Requests</span>
+              {pendingRequestsCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#6040F0] text-white">
+                  {pendingRequestsCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Tab 2: Join Requests & Join Code (Admin / Owner Only) */}
+        {activeTab === 'join-requests' && isAdminOrOwner ? (
+          <div className="space-y-6">
+            <JoinCodeCard
+              organizationId={currentUser?.organization_id}
+              onNotify={(msg) => triggerToast(msg)}
+            />
+            <JoinRequestsTable
+              organizationId={currentUser?.organization_id}
+              onDecisionSuccess={() => {
+                fetchMembers();
+                fetchCurrentUser();
+              }}
+              onNotify={(msg) => triggerToast(msg)}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Top Key Metrics Bento Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Card 1: Total Members */}
           <div className="bg-white dark:bg-[#1a1b32] rounded-xl p-4 border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs flex flex-col justify-between">
@@ -689,6 +789,8 @@ export const TeamMembersPage = () => {
             </table>
           </div>
         )}
+        </>
+      )}
       </div>
 
       {/* Invite Member Modal */}
