@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TaskStatusBadge from './TaskStatusBadge';
 import TaskPriorityBadge from './TaskPriorityBadge';
 import EditTaskAndStatusPopover from './EditTaskAndStatusPopover';
+import Avatar from '../../../components/common/Avatar';
 import { TASK_TYPE_LABEL } from '../constants/taskEnums';
 
 /**
@@ -104,6 +105,24 @@ export const TaskRow = ({
             <div className="hidden lg:flex items-center gap-1 text-text-secondary font-label-sm text-label-sm">
               <span className="material-symbols-outlined text-[14px]">event</span>
               <span>{formattedDue}</span>
+            </div>
+          )}
+
+          {/* Assignee Avatar */}
+          {task.assignee ? (
+            <div className="flex items-center" title={`Assigned to ${task.assignee.full_name}`}>
+              <Avatar
+                src={task.assignee.avatar_url}
+                name={task.assignee.full_name}
+                size="xs"
+                shape="rounded-full"
+              />
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center text-text-muted" title="Unassigned">
+              <span className="w-6 h-6 rounded-full border border-dashed border-border-subtle flex items-center justify-center">
+                <span className="material-symbols-outlined text-[13px]">person</span>
+              </span>
             </div>
           )}
 

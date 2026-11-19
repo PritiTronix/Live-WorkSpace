@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { authService } from '../../services/api';
 
@@ -6,8 +6,26 @@ export const GlobalPlusMenu = ({ isOpen, onClose, onActionSelect }) => {
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
 
-  const currentUser = authService.getCurrentUserSync();
-  const userRole = (currentUser?.role || '').toLowerCase();
+  const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
+
+  // Keep user and permissions refreshed whenever the menu opens or user profile updates
+  useEffect(() => {
+    if (isOpen) {
+      const syncUser = authService.getCurrentUserSync();
+      if (syncUser) setCurrentUser(syncUser);
+      authService.getCurrentUser().then((u) => {
+        if (u) setCurrentUser(u);
+      }).catch(() => {});
+    }
+
+    const handleUserUpdate = (e) => {
+      if (e.detail) setCurrentUser(e.detail);
+    };
+    window.addEventListener('auth-user-updated', handleUserUpdate);
+    return () => window.removeEventListener('auth-user-updated', handleUserUpdate);
+  }, [isOpen]);
+
+  const userRole = (currentUser?.role || '').toLowerCase().trim();
   const canCreateProject = ['owner', 'admin', 'manager', 'lead'].includes(userRole);
 
   // Focus management & body scroll lock

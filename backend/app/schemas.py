@@ -323,8 +323,11 @@ class TaskCreate(BaseSchema):
     description: Optional[str] = None
     status: Optional[str] = "to_do"
     priority: Optional[str] = "medium"
-    project_id: str
+    project_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
 
 
 class TaskUpdate(BaseSchema):
@@ -333,16 +336,24 @@ class TaskUpdate(BaseSchema):
     status: Optional[str] = None
     priority: Optional[str] = None
     assigned_to_id: Optional[str] = None
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
 
 
 class TaskRead(TaskBase):
     id: str
     task_number: str
-    project_id: str
+    project_id: Optional[str] = None
     assigned_to_id: Optional[str] = None
+    assignee_id: Optional[str] = None
+    reporter_id: Optional[str] = None
+    assigner_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     assignee: Optional[UserRead] = None
+    reporter: Optional[UserRead] = None
+    assigner: Optional[UserRead] = None
 
 
 class TicketBase(BaseSchema):
