@@ -271,6 +271,28 @@ Copy-Item .env.example .env
 ```
 Populate `.env` with your Neon PostgreSQL connection string and security secrets. **Never commit `.env` to Git.**
 
+#### Step 5: Run Database Migrations
+Schema definition and lifecycle are managed strictly via Alembic migrations (automatic application startup DDL has been disabled for production stability). Initialize or upgrade the database to `HEAD`:
+```bash
+# Windows PowerShell:
+.\myenv\Scripts\alembic.exe upgrade head
+# Or using the migration runner:
+.\myenv\Scripts\python.exe -m backend.scripts.run_migrations
+
+# Linux / macOS:
+alembic upgrade head
+```
+
+#### Step 6: (Optional) Seed Initial Data
+Seed canonical administrative accounts, workspace settings, and reference data:
+```bash
+# Windows PowerShell:
+.\myenv\Scripts\python.exe -m backend.scripts.seed_database
+
+# Linux / macOS:
+python -m backend.scripts.seed_database
+```
+
 ---
 
 ### 3. Frontend Setup

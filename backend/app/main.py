@@ -16,36 +16,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup tasks: automatically create database tables and seed if empty
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            try:
-                await conn.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan VARCHAR(50)"))
-            except Exception:
-                try:
-                    await conn.execute(text("ALTER TABLE organizations ADD COLUMN plan VARCHAR(50)"))
-                except Exception:
-                    pass
-            for col_name, col_type in [
-                ("display_name", "VARCHAR(255)"),
-                ("phone", "VARCHAR(50)"),
-                ("slack_handle", "VARCHAR(100)"),
-            ]:
-                try:
-                    await conn.execute(text(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
-                except Exception:
-                    try:
-                        await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
-                    except Exception:
-                        pass
-        async with AsyncSessionLocal() as session:
-            await seed_initial_data_if_empty(session)
-            await session.commit()
-        logger.info("Database initialized and verified on Neon PostgreSQL.")
-    except Exception as e:
-        logger.error(f"Database initialization error: {e}")
-        raise e
+    logger.info("Application startup completed.")
     yield
     # Shutdown tasks: dispose engine pool
     await engine.dispose()

@@ -56,6 +56,21 @@ def do_run_migrations(connection: Connection) -> None:
     )
 
     with context.begin_transaction():
+        from sqlalchemy import text, inspect
+        insp = inspect(connection)
+        if not insp.has_table("alembic_version"):
+            connection.execute(text(
+                "CREATE TABLE IF NOT EXISTS alembic_version ("
+                "version_num VARCHAR(64) NOT NULL, "
+                "CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))"
+            ))
+        else:
+            for col in insp.get_columns("alembic_version"):
+                if col["name"] == "version_num":
+                    col_len = getattr(col["type"], "length", None)
+                    if col_len is not None and col_len < 64:
+                        connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)"))
+
         context.run_migrations()
 
 
