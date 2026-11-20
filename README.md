@@ -18,8 +18,9 @@ Engineered using modern clean architecture, strict client-server decoupling, and
 9. [Industrial Security Architecture (JWT, RBAC, Password & Concurrency)](#security-best-practices--warnings)
 10. [RESTful API Details & Endpoints](#api-details)
 11. [Neon PostgreSQL & S3 Integration](#neon-integration)
-12. [72-Screen Integration & Audit Documentation](#audit-documentation)
-13. [Future Scope & Suggested Architectural Improvements](#future-scope--architectural-improvements)
+12. [Production Deployment (Cloudflare Pages, Render & Neon DB)](#production-deployment)
+13. [72-Screen Integration & Audit Documentation](#audit-documentation)
+14. [Future Scope & Suggested Architectural Improvements](#future-scope--architectural-improvements)
 
 ---
 
@@ -520,6 +521,43 @@ The Live Workspace platform is configured to run directly against hosted **Neon 
 - **Realtime Endpoint:** Supported via Neon Realtime WebSocket subscriptions
 - **Connection Pooling:** AsyncPG pooler configured with `pool_size=10`, `max_overflow=20`, `pool_recycle=300`, `pool_pre_ping=True`.
 - **Zero SQLite Fallback:** Database queries strictly mandate PostgreSQL. No silent fallbacks to local SQLite.
+
+---
+
+<a name="production-deployment"></a>
+## Production Deployment (Cloudflare Pages, Render & Neon DB)
+
+The Live Workspace system is architected for turnkey, zero-downtime hosting using a decoupled cloud model:
+- **Database Layer**: Hosted on **Neon Serverless PostgreSQL** (`aws-ap-southeast-1` Singapore).
+- **Backend Layer**: Hosted on **Render** as a Python Web Service provisioned via `render.yaml` Blueprint.
+- **Frontend Layer**: Hosted on **Cloudflare Pages** edge network with instant SPA routing fallback.
+
+For complete step-by-step instructions, see the dedicated [Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md).
+
+### 1. Render Blueprint (`render.yaml`)
+A native `render.yaml` file is placed in the project root. It automates:
+- Dependency installation (`pip install -r requirements.txt`)
+- Production ASGI server startup (`uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT --workers 2`)
+- Automated health monitoring on `/health`
+- Cryptographic generation of `SECRET_KEY` and `JWT_SECRET`
+- Zero database mutations: connects directly to your existing hosted database without running migrations or seeding
+
+### 2. Cloudflare Pages Configuration
+- **Framework Preset**: Vite
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build`
+- **Build Output Directory**: `dist`
+- **Environment Variables**:
+  - `VITE_API_BASE_URL`: `https://live-workspace-api.onrender.com/api/v1`
+  - `VITE_WS_URL`: `wss://live-workspace-api.onrender.com`
+  - `NODE_VERSION`: `20`
+- **SPA Routing Fallback**: Provided by `frontend/public/_redirects` (`/*  /index.html  200`).
+- **Edge Cache Headers**: Configured in `frontend/public/_headers` for static asset optimization.
+
+### 3. Neon Database Connection (Single URL)
+In your [Neon Console](https://console.neon.tech/), copy your connection string:
+- Provide only **one** `DATABASE_URL` in `.env` or Render. All asyncpg, psycopg2, and driver parameters are automatically derived.
+- No account provisioning or data seeding is executed; existing accounts, records, and schemas remain 100% untouched.
 
 ---
 

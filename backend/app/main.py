@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base, AsyncSessionLocal, get_db
-from backend.app.seed import seed_initial_data_if_empty
 from backend.app.middleware import (
     SecurityHeadersMiddleware,
     RateLimitMiddleware,

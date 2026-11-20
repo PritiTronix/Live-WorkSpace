@@ -1,6 +1,6 @@
 import re
 from typing import List, Optional, Union
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Database (Neon PostgreSQL / Hosted PostgreSQL)
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/live_workspace"
     DATABASE_URL_POOLED: Optional[str] = None
-    SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/live_workspace"
+    SYNC_DATABASE_URL: Optional[str] = None
 
     # S3 Object Storage (Neon S3 Compatible)
     STORAGE_PROVIDER: str = "local"  # "s3" or "local"
@@ -80,9 +80,9 @@ class Settings(BaseSettings):
 
     @field_validator("SYNC_DATABASE_URL", mode="before")
     @classmethod
-    def assemble_sync_db_url(cls, v: Optional[str]) -> str:
+    def assemble_sync_db_url(cls, v: Optional[str]) -> Optional[str]:
         if not v:
-            return ""
+            return None
         url = v.strip().strip('"').strip("'")
         if url.startswith("postgresql+asyncpg://"):
             url = "postgresql+psycopg2://" + url[len("postgresql+asyncpg://"):]
@@ -91,6 +91,32 @@ class Settings(BaseSettings):
         elif url.startswith("postgresql://") and not url.startswith("postgresql+psycopg2://"):
             url = "postgresql+psycopg2://" + url[len("postgresql://"):]
         return url
+
+    @model_validator(mode="after")
+    def derive_database_urls(self) -> "Settings":
+        """Automatically derives SYNC_DATABASE_URL and DATABASE_URL_POOLED from a single DATABASE_URL."""
+        if not self.SYNC_DATABASE_URL and self.DATABASE_URL:
+            raw = self.DATABASE_URL
+            if raw.startswith("postgresql+asyncpg://"):
+                sync_url = "postgresql+psycopg2://" + raw[len("postgresql+asyncpg://"):]
+            elif raw.startswith("postgres://"):
+                sync_url = "postgresql+psycopg2://" + raw[len("postgres://"):]
+            elif raw.startswith("postgresql://") and not raw.startswith("postgresql+psycopg2://"):
+                sync_url = "postgresql+psycopg2://" + raw[len("postgresql://"):]
+            elif raw.startswith("sqlite+aiosqlite:///"):
+                sync_url = "sqlite:///" + raw[len("sqlite+aiosqlite:///"):]
+            else:
+                sync_url = raw
+
+            # Normalize SSL for psycopg2: replace ssl=require with sslmode=require
+            if "ssl=require" in sync_url and "sslmode=require" not in sync_url:
+                sync_url = sync_url.replace("ssl=require", "sslmode=require")
+            self.SYNC_DATABASE_URL = sync_url
+
+        if not self.DATABASE_URL_POOLED:
+            self.DATABASE_URL_POOLED = self.DATABASE_URL
+
+        return self
 
     model_config = SettingsConfigDict(
         env_file=(".env", "backend/.env", "../.env"),
