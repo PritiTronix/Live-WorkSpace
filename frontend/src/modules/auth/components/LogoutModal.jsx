@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LogOut, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import Modal from '../../design-system/components/Modal';
 import Avatar from '../../../components/common/Avatar';
 
@@ -17,12 +18,13 @@ export const LogoutModal = ({
   triggerRef,
 }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleConfirmLogout = () => {
     setIsLoggingOut(true);
     try {
-      authService.logout();
+      logout();
     } finally {
       setIsLoggingOut(false);
       onClose();

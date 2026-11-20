@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Building2, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { Building2, ArrowLeft, AlertCircle, CheckCircle2, Loader2, RefreshCw, Send, ArrowRight } from 'lucide-react';
 import { organizationService, authService, getApiErrorMessage } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 export const INDUSTRY_OPTIONS = [
   { value: 'technology', label: 'Technology & Software' },
@@ -27,19 +28,22 @@ export const SIZE_RANGE_OPTIONS = [
  * CreateOrgPage
  * Route: /onboarding/create-org
  * Owner Onboarding: Authenticated user creates an organization, receives owner membership,
- * and seamlessly transitions to /workspace/dashboard.
+ * updates centralized AuthContext with fresh session check, and smoothly transitions to /workspace/dashboard.
  */
 export const CreateOrgPage = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
-  // All fields empty by default
+  // All fields empty by default on placeholder options
   const [name, setName] = useState('');
   const [industry, setIndustry] = useState('');
   const [sizeRange, setSizeRange] = useState('');
 
   const [touched, setTouched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [serverError, setServerError] = useState(null);
+  const [errorState, setErrorState] = useState(null);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendStatus, setResendStatus] = useState(null);
 
   // Client validation: name must be between 2 and 80 characters
   const trimmedName = name.trim();
@@ -48,10 +52,35 @@ export const CreateOrgPage = () => {
     ? trimmedName.length === 0
       ? 'Organization name is required.'
       : 'Organization name must be between 2 and 80 characters.'
-    : null;
+    : (errorState?.fieldErrors?.name || null);
+
+  const handleResendEmail = async () => {
+    setResendingEmail(true);
+    setResendStatus(null);
+    try {
+      await authService.resendVerification();
+      setResendStatus({
+        success: true,
+        message: 'Verification email resent successfully. Please check your inbox.',
+      });
+    } catch (err) {
+      setResendStatus({
+        success: false,
+        message: getApiErrorMessage(err, 'Failed to resend verification email.'),
+      });
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+
+    // Prevent duplicate submits while request is in-flight
+    if (loading) {
+      return;
+    }
+
     setTouched(true);
 
     if (!isNameValid) {
@@ -59,23 +88,99 @@ export const CreateOrgPage = () => {
     }
 
     setLoading(true);
-    setServerError(null);
+    setErrorState(null);
+    setResendStatus(null);
 
     try {
       await organizationService.createOrganization({
         name: trimmedName,
-        industry: industry || undefined,
-        size_range: sizeRange || undefined,
+        industry: industry && industry.trim() ? industry.trim() : null,
+        size_range: sizeRange && sizeRange.trim() ? sizeRange.trim() : null,
       });
 
-      // Refresh authenticated session context
-      await authService.getMe();
+      // Force authoritative fresh session check: clears in-flight promise and cached user
+      const refreshedUser = await refreshUser({ force: true });
 
-      // Navigate directly to dashboard on success
-      navigate('/workspace/dashboard', { replace: true });
+      // Only navigate to dashboard when the refreshed user has organization_required false
+      if (refreshedUser && !refreshedUser.organization_required) {
+        navigate('/workspace/dashboard', { replace: true });
+      } else {
+        setErrorState({
+          type: 'server_error',
+          message: 'Organization created successfully, but workspace authorization is still syncing. Please retry.',
+        });
+      }
     } catch (err) {
-      const errorMsg = getApiErrorMessage(err, 'Failed to create organization. Please review the inputs and retry.');
-      setServerError(errorMsg);
+      const status = err.response?.status;
+      const data = err.response?.data;
+      const detail = data?.detail;
+      const code = data?.error?.code || detail?.code || err.errorCode;
+
+      // 1. 422 Field Validation Errors
+      if (status === 422) {
+        const fieldMap = {};
+        let summaryMsg = 'Validation failed. Please review the highlighted fields.';
+        if (Array.isArray(detail)) {
+          detail.forEach((item) => {
+            const field = item.loc?.[item.loc.length - 1];
+            if (field) fieldMap[field] = item.msg;
+          });
+          summaryMsg = detail.map((d) => d.msg).join('; ');
+        } else if (typeof detail === 'string') {
+          summaryMsg = detail;
+        } else if (data?.error?.message) {
+          summaryMsg = data.error.message;
+        }
+        setErrorState({
+          type: 'validation',
+          message: summaryMsg,
+          fieldErrors: fieldMap,
+        });
+      }
+      // 2. 409 Conflict: user already has an active organization
+      else if (status === 409 || code === 'organization_already_exists') {
+        const msg = typeof detail === 'object' && detail?.message
+          ? detail.message
+          : (data?.error?.message || typeof detail === 'string' ? detail : 'User already has an active organization membership.');
+        setErrorState({
+          type: 'already_exists',
+          message: msg,
+        });
+      }
+      // 3. Email verification required with Resend button
+      else if (
+        status === 403 &&
+        (code === 'email_verification_required' || (typeof detail === 'string' && detail.includes('Email verification')))
+      ) {
+        setErrorState({
+          type: 'email_verification',
+          message: 'Email verification is required before creating an organization.',
+        });
+      }
+      // 4. 429 Rate limited with wait time
+      else if (status === 429) {
+        const retryAfterHeader = err.response?.headers?.['retry-after'] || err.response?.headers?.['Retry-After'];
+        const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) || retryAfterHeader : null;
+        setErrorState({
+          type: 'rate_limited',
+          message: `Too many requests. Please wait ${retryAfter ? `${retryAfter} seconds` : 'a moment'} before trying again.`,
+          retryAfter,
+        });
+      }
+      // 5. 5xx Server Error with Retry
+      else if (status >= 500 && status <= 599) {
+        setErrorState({
+          type: 'server_error',
+          message: 'An unexpected server error occurred while establishing the organization. Please retry.',
+        });
+      }
+      // Generic fallback
+      else {
+        setErrorState({
+          type: 'generic',
+          message: getApiErrorMessage(err, 'Failed to create organization. Please review the inputs and retry.'),
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -109,16 +214,64 @@ export const CreateOrgPage = () => {
           </div>
         </div>
 
-        {/* Server error alert */}
-        {serverError && (
+        {/* Mapped Error Alerts */}
+        {errorState && (
           <div
             role="alert"
-            className="mb-6 p-4 rounded-xl bg-severity-blocker/10 border border-severity-blocker/20 flex items-start gap-3 text-severity-blocker"
+            className="mb-6 p-4 rounded-xl bg-severity-blocker/10 border border-severity-blocker/20 flex flex-col gap-3 text-severity-blocker"
           >
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div className="flex-1 text-sm font-medium leading-relaxed">
-              {serverError}
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm font-medium leading-relaxed">
+                {errorState.message}
+              </div>
             </div>
+
+            {/* Error Cause Specific Action Controls */}
+            {errorState.type === 'already_exists' && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => navigate('/workspace/dashboard', { replace: true })}
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-btn-primary-hover text-white text-xs font-semibold transition-colors shadow-xs"
+                >
+                  <span>Go to Workspace Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {errorState.type === 'email_verification' && (
+              <div className="pt-1 flex flex-col gap-2">
+                <button
+                  type="button"
+                  disabled={resendingEmail}
+                  onClick={handleResendEmail}
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-btn-primary-hover text-white text-xs font-semibold transition-colors shadow-xs w-fit disabled:opacity-60 cursor-pointer"
+                >
+                  <Send className={`w-3.5 h-3.5 ${resendingEmail ? 'animate-pulse' : ''}`} />
+                  <span>{resendingEmail ? 'Sending...' : 'Resend Verification Email'}</span>
+                </button>
+                {resendStatus && (
+                  <p className={`text-xs font-medium ${resendStatus.success ? 'text-emerald-700' : 'text-severity-blocker'}`}>
+                    {resendStatus.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {errorState.type === 'server_error' && (
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleSubmit()}
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-btn-primary hover:bg-btn-primary-hover text-white text-xs font-semibold transition-colors shadow-xs w-fit"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Retry Submission</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -163,7 +316,7 @@ export const CreateOrgPage = () => {
             )}
           </div>
 
-          {/* Industry (Dropdown from lowercase constants) */}
+          {/* Industry (Dropdown starts empty on placeholder) */}
           <div className="space-y-1.5">
             <label
               htmlFor="org-industry"
@@ -186,7 +339,7 @@ export const CreateOrgPage = () => {
             </select>
           </div>
 
-          {/* Size Range (Dropdown from lowercase constants) */}
+          {/* Size Range (Dropdown starts empty on placeholder) */}
           <div className="space-y-1.5">
             <label
               htmlFor="org-size-range"
@@ -208,8 +361,6 @@ export const CreateOrgPage = () => {
               ))}
             </select>
           </div>
-
-          {/* Note: Logo field is hidden per project specification */}
 
           {/* Submit Button */}
           <div className="pt-2">

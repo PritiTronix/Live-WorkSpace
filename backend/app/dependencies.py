@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.database import get_db
@@ -85,8 +86,15 @@ async def get_current_active_user(
     except JWTError:
         raise credentials_exception
 
-    res = await db.execute(select(User).where(User.id == user_id))
-    user = res.scalars().first()
+    res = await db.execute(
+        select(User)
+        .options(
+            joinedload(User.organization),
+            joinedload(User.memberships).joinedload(Membership.organization),
+        )
+        .where(User.id == user_id)
+    )
+    user = res.unique().scalars().first()
 
     if not user:
         raise credentials_exception
@@ -99,27 +107,14 @@ async def get_current_active_user(
 
     # Server-side authorization: users without active organization can only call onboarding, profile, and auth
     if request is not None and not is_onboarding_or_profile_path(request.url.path, request.method):
-        # Verify active membership in memberships table
+        # Verify active membership in memberships table using loaded relationships (zero extra queries)
+        active_memberships = [m for m in (user.memberships or []) if m.status == "active"]
         membership = None
         if user.organization_id:
-            m_res = await db.execute(
-                select(Membership).where(
-                    Membership.user_id == user.id,
-                    Membership.organization_id == user.organization_id,
-                    Membership.status == "active"
-                )
-            )
-            membership = m_res.scalars().first()
+            membership = next((m for m in active_memberships if m.organization_id == user.organization_id), None)
 
-        if not membership:
-            # Fallback: check if user has any active membership
-            any_m = await db.execute(
-                select(Membership).where(
-                    Membership.user_id == user.id,
-                    Membership.status == "active"
-                )
-            )
-            membership = any_m.scalars().first()
+        if not membership and active_memberships:
+            membership = active_memberships[0]
 
         if membership:
             user.organization_id = membership.organization_id

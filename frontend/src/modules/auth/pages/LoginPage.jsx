@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, AlertCircle, ArrowRight, Zap, Ticket, Users, ShieldCheck, BarChart3 } from 'lucide-react';
 import { authService } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 import AuthBrandShowcase from '../components/AuthBrandShowcase';
 import SocialAuthButtons from '../components/SocialAuthButtons';
 import AppLogo from '../components/AppLogo';
@@ -20,6 +21,7 @@ import { AUTH_TEXT, AUTH_FEATURES } from '../constants/authConstants';
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshUser } = useAuth();
 
   // Form states - starting strictly EMPTY with no demo or prefilled values
   const [email, setEmail] = useState('');
@@ -59,8 +61,13 @@ export const LoginPage = () => {
         email: email.trim().toLowerCase(),
         password: password,
       });
-      const destination = location.state?.from?.pathname || '/workspace/dashboard';
-      navigate(destination, { replace: true });
+      const refreshedUser = await refreshUser({ force: true });
+      if (refreshedUser && !refreshedUser.organization_required) {
+        const destination = location.state?.from?.pathname || '/workspace/dashboard';
+        navigate(destination, { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
     } catch (err) {
       // Security requirement: Error messages stay generic and never reveal whether an account exists
       if (!err.response) {

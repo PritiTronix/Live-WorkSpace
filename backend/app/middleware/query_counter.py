@@ -9,6 +9,11 @@ from backend.app.database import engine
 from backend.app.core.config import settings
 
 logger = logging.getLogger("api.performance")
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+    logger.addHandler(_handler)
+logger.setLevel(logging.INFO)
 
 _query_count_var: ContextVar[int] = ContextVar("query_count_var", default=-1)
 
@@ -18,6 +23,12 @@ def before_cursor_execute(conn, cursor, statement, parameters, context, executem
     count = _query_count_var.get()
     if count >= 0:
         _query_count_var.set(count + 1)
+
+
+def get_current_query_count() -> int:
+    """Return the total number of database queries executed in the current request context."""
+    cnt = _query_count_var.get()
+    return cnt if cnt >= 0 else 0
 
 
 class DevQueryLoggingMiddleware(BaseHTTPMiddleware):

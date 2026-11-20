@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, ArrowLeft, Loader2, Building, Radio, RefreshCw } from 'lucide-react';
 import { organizationService, authService, connectNotificationsWebSocket, getApiErrorMessage } from '../../../services/api';
+import { useAuth } from '../../../context/AuthContext';
 
 /**
  * WaitingApprovalPage
@@ -15,6 +16,7 @@ import { organizationService, authService, connectNotificationsWebSocket, getApi
  */
 export const WaitingApprovalPage = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [activeRequest, setActiveRequest] = useState(null);
@@ -44,11 +46,12 @@ export const WaitingApprovalPage = () => {
         return;
       }
 
-      // If approved -> refresh user profile -> dashboard
+      // If approved -> force fresh session check -> dashboard
       if (targetReq.status === 'approved') {
-        try {
-          await authService.getMe();
-        } finally {
+        const refreshedUser = await refreshUser({ force: true });
+        if (refreshedUser && !refreshedUser.organization_required) {
+          navigate('/workspace/dashboard', { replace: true });
+        } else {
           navigate('/workspace/dashboard', { replace: true });
         }
         return;

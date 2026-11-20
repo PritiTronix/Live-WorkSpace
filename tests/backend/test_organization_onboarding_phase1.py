@@ -168,6 +168,21 @@ async def run_test_suite():
             assert resp_proj.status_code in (200, 404), f"Unexpected status: {resp_proj.status_code}"
             print("Scenario 2 PASSED.")
 
+            print("--- Scenario 2b: User with existing organization receives 409 Conflict ---")
+            resp_dup = await client.post(
+                "/api/v1/organizations",
+                json={"name": "Second Organization"},
+                headers=auth_header,
+            )
+            assert resp_dup.status_code == 409, f"Expected 409, got {resp_dup.status_code}: {resp_dup.text}"
+            dup_data = resp_dup.json()
+            assert (
+                dup_data.get("error", {}).get("code") == "organization_already_exists"
+                or dup_data.get("detail", {}).get("code") == "organization_already_exists"
+                or "organization_already_exists" in str(dup_data)
+            )
+            print("Scenario 2b PASSED (409 Conflict on duplicate organization creation).")
+
             print("--- Scenario 3: Join code lookup (valid, invalid, expired, revoked) ---")
             resp_code = await client.post(f"/api/v1/organizations/{org_id}/join-code", headers=auth_header)
             assert resp_code.status_code == 200, f"Generate code failed: {resp_code.text}"

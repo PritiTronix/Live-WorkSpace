@@ -235,9 +235,13 @@ export const DEFAULT_USER = {
   avatar_url: '',
 };
 
+// In-flight promise tracker to deduplicate concurrent /auth/me calls
+let inFlightMePromise = null;
+
 // Authentication & Profile Services
 export const authService = {
   login: async (credentials) => {
+    inFlightMePromise = null;
     const response = await apiClient.post('/auth/login', credentials);
     if (response.data?.access_token) {
       localStorage.setItem('access_token', response.data.access_token);
@@ -251,6 +255,7 @@ export const authService = {
     return response.data;
   },
   refreshToken: async () => {
+    inFlightMePromise = null;
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) throw new Error('No refresh token available');
     const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
@@ -286,9 +291,30 @@ export const authService = {
     const response = await apiClient.post('/auth/verify-email', { token });
     return response.data;
   },
-  getMe: async () => {
-    const response = await apiClient.get('/auth/me');
+  resendVerification: async () => {
+    const response = await apiClient.post('/auth/resend-verification');
     return response.data;
+  },
+  getMe: async (options = {}) => {
+    if (options?.force) {
+      inFlightMePromise = null;
+      localStorage.removeItem('user');
+    }
+    if (inFlightMePromise) {
+      return inFlightMePromise;
+    }
+    inFlightMePromise = apiClient
+      .get('/auth/me')
+      .then((response) => {
+        if (response.data) {
+          localStorage.setItem('user', JSON.stringify(response.data));
+        }
+        return response.data;
+      })
+      .finally(() => {
+        inFlightMePromise = null;
+      });
+    return inFlightMePromise;
   },
   getCurrentUserSync: () => {
     try {
@@ -326,22 +352,24 @@ export const authService = {
   },
   getCurrentUser: async () => {
     try {
-      let response;
+      let data;
       try {
-        response = await apiClient.get('/auth/me');
+        data = await authService.getMe();
       } catch {
         try {
-          response = await apiClient.get('/members/me');
+          const response = await apiClient.get('/members/me');
+          data = response.data;
         } catch {
-          response = await apiClient.get('/users/me');
+          const response = await apiClient.get('/users/me');
+          data = response.data;
         }
       }
-      if (response?.data) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+      if (data) {
+        localStorage.setItem('user', JSON.stringify(data));
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('auth-user-updated', { detail: response.data }));
+          window.dispatchEvent(new CustomEvent('auth-user-updated', { detail: data }));
         }
-        return response.data;
+        return data;
       }
       return authService.getCurrentUserSync();
     } catch {
@@ -362,6 +390,7 @@ export const authService = {
     }
   },
   logout: () => {
+    inFlightMePromise = null;
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
@@ -417,7 +446,14 @@ export const organizationService = {
     }
   },
   createOrganization: async (data) => {
-    const response = await apiClient.post('/organizations', data);
+    const payload = {
+      name: data.name ? data.name.trim() : '',
+      industry: data.industry && data.industry.trim() ? data.industry.trim() : null,
+      size_range: data.size_range && data.size_range.trim() ? data.size_range.trim() : null,
+      logo_path: data.logo_path && data.logo_path.trim() ? data.logo_path.trim() : null,
+      plan: data.plan || null,
+    };
+    const response = await apiClient.post('/organizations', payload);
     return response.data;
   },
   lookupJoinCode: async (code) => {
