@@ -80,7 +80,7 @@ Engineered using modern clean architecture, strict client-server decoupling, and
 | Layer | Technology | Version | Purpose |
 | :--- | :--- | :--- | :--- |
 | **Frontend Framework** | React | `^18.3.1` | Declarative component UI rendering |
-| **Frontend Tooling** | Vite | `^5.4.21` | Fast ESM build tooling & Hot Module Replacement |
+| **Frontend Tooling** | Vite | `^6.4.6` | Fast ESM build tooling & Hot Module Replacement |
 | **Client Routing** | React Router DOM | `^6.23.1` | Client-side routing, protected auth routes & layouts |
 | **State & Cache** | TanStack React Query | `^5.45.0` | Asynchronous data fetching, optimistic caching & refetching |
 | **Styling** | Tailwind CSS | `^3.4.4` | Utility styling mapped to official Stitch design tokens |
@@ -198,7 +198,7 @@ Live-Workspace/
 - `lucide-react` (`^0.395.0`) $\rightarrow$ Tree-shakable SVG icon set matching Stitch specifications.
 - `clsx` (`^2.1.1`) & `tailwind-merge` (`^2.3.0`) $\rightarrow$ Dynamically constructing and resolving Tailwind CSS classes.
 - `tailwindcss` (`^3.4.4`), `postcss` (`^8.4.38`), `autoprefixer` (`^10.4.19`) $\rightarrow$ Utility-first CSS engine.
-- `vite` (`^5.4.21`) & `@vitejs/plugin-react` (`^4.3.0`) $\rightarrow$ Fast development server and production Rollup bundler.
+- `vite` (`^6.4.6`) & `@vitejs/plugin-react` (`^4.7.0`) $\rightarrow$ Fast development server and production Rollup bundler compatible with Cloudflare Workers/Pages deployment.
 
 ### Backend Packages (`requirements.txt`)
 All backend packages are installed strictly inside the `myenv` virtual environment:
