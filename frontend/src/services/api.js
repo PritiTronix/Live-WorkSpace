@@ -617,25 +617,152 @@ export const dashboardService = {
   },
 };
 
-// WebSocket Real-time Connection Helper
+// WebSocket URL Builder & Lifecycle Helpers
+export const buildWebSocketUrl = (path, token) => {
+  if (!path || typeof path !== 'string') {
+    throw new Error('WebSocket path must be a non-empty string');
+  }
+
+  let rawBase = import.meta.env.VITE_WS_URL;
+  if (!rawBase || typeof rawBase !== 'string' || !rawBase.trim()) {
+    if (typeof window !== 'undefined' && window.location) {
+      const isHttps = window.location.protocol === 'https:';
+      const wsProto = isHttps ? 'wss:' : 'ws:';
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const host = isLocalhost ? `${window.location.hostname}:8000` : window.location.host;
+      rawBase = `${wsProto}//${host}`;
+    } else {
+      rawBase = 'ws://localhost:8000';
+    }
+  }
+
+  rawBase = rawBase.trim();
+
+  let targetProtocol = 'ws:';
+  let httpEquivalent = rawBase;
+
+  if (rawBase.startsWith('wss://')) {
+    targetProtocol = 'wss:';
+    httpEquivalent = 'https://' + rawBase.slice(6);
+  } else if (rawBase.startsWith('ws://')) {
+    targetProtocol = 'ws:';
+    httpEquivalent = 'http://' + rawBase.slice(5);
+  } else if (rawBase.startsWith('https://')) {
+    targetProtocol = 'wss:';
+  } else if (rawBase.startsWith('http://')) {
+    targetProtocol = 'ws:';
+  } else {
+    throw new Error(`Unsupported WebSocket base URL protocol: ${rawBase.split('://')[0] || rawBase}`);
+  }
+
+  let parsedBase;
+  try {
+    parsedBase = new URL(httpEquivalent, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+  } catch (_) {
+    throw new Error('Invalid base URL for WebSocket connection');
+  }
+
+  // Preserve existing path and query parameters from path argument
+  const [pathnamePart, queryPart] = path.split('?');
+  const cleanPath = pathnamePart.startsWith('/') ? pathnamePart : `/${pathnamePart}`;
+  const basePath = parsedBase.pathname === '/' ? '' : parsedBase.pathname.replace(/\/$/, '');
+  const combinedPath = `${basePath}${cleanPath}`;
+
+  const wsUrl = new URL(`${targetProtocol}//${parsedBase.host}${combinedPath}`);
+
+  // Preserve any base URL query parameters
+  parsedBase.searchParams.forEach((val, key) => {
+    wsUrl.searchParams.set(key, val);
+  });
+
+  // Preserve query parameters from path argument
+  if (queryPart) {
+    const pathParams = new URLSearchParams(queryPart);
+    pathParams.forEach((val, key) => {
+      wsUrl.searchParams.set(key, val);
+    });
+  }
+
+  // Safely append JWT token if present without exposing it in logs
+  if (token && typeof token === 'string' && token.trim() && token !== 'null' && token !== 'undefined') {
+    wsUrl.searchParams.set('token', token.trim());
+  }
+
+  return wsUrl.toString();
+};
+
+export const safeCloseWebSocket = (ws) => {
+  if (!ws || typeof ws.close !== 'function') return;
+
+  // Guard against re-entrancy / infinite recursion
+  if (ws._isClosing) return;
+  ws._isClosing = true;
+
+  // Run the socket's disposal callback once to disable handlers & state updates
+  if (typeof ws._dispose === 'function') {
+    const disposeFn = ws._dispose;
+    ws._dispose = null;
+    try {
+      disposeFn();
+    } catch (_) {}
+  }
+
+  if (ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) {
+    return;
+  }
+
+  if (ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.close(1000, 'Normal component unmount');
+    } catch (_) {}
+    return;
+  }
+
+  if (ws.readyState === WebSocket.CONNECTING) {
+    const handleOpen = () => {
+      try {
+        ws.close(1000, 'Normal component unmount');
+      } catch (_) {}
+    };
+
+    ws.addEventListener('open', handleOpen, { once: true });
+
+    const handleCleanup = () => {
+      ws.removeEventListener('open', handleOpen);
+    };
+    ws.addEventListener('error', handleCleanup, { once: true });
+    ws.addEventListener('close', handleCleanup, { once: true });
+  }
+};
+
 export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) => {
   const token = localStorage.getItem('access_token');
   if (!token) {
     onStatusChange?.('offline');
     return null;
   }
-  const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-  const urlObj = new URL('/api/v1/dashboard/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
-  const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
-  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}?token=${encodeURIComponent(token)}`;
+
+  const fullWsUrl = buildWebSocketUrl('/api/v1/dashboard/ws', token);
+
+  let isDisposed = false;
+  let ws = null;
 
   try {
     onStatusChange?.('reconnecting');
-    const ws = new WebSocket(fullWsUrl);
+    ws = new WebSocket(fullWsUrl);
+
     ws.onopen = () => {
+      if (isDisposed) {
+        try {
+          ws.close(1000, 'Normal component unmount');
+        } catch (_) {}
+        return;
+      }
       onStatusChange?.('connected');
     };
+
     ws.onmessage = (event) => {
+      if (isDisposed) return;
       try {
         const data = JSON.parse(event.data);
         if (onMessage) onMessage(data);
@@ -643,13 +770,22 @@ export const connectDashboardWebSocket = (onMessage, onError, onStatusChange) =>
         console.error('WebSocket parse error:', err);
       }
     };
+
     ws.onerror = (err) => {
+      if (isDisposed || ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) return;
       onStatusChange?.('offline');
       if (onError) onError(err);
     };
+
     ws.onclose = () => {
+      if (isDisposed) return;
       onStatusChange?.('offline');
     };
+
+    ws._dispose = () => {
+      isDisposed = true;
+    };
+
     return ws;
   } catch (err) {
     onStatusChange?.('offline');
@@ -706,18 +842,31 @@ export const notificationService = {
 
 export const connectNotificationsWebSocket = (onMessage, onError, onStatusChange) => {
   const token = localStorage.getItem('access_token');
-  const baseWs = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
-  const urlObj = new URL('/api/v1/notifications/ws', baseWs.startsWith('ws') ? baseWs.replace('ws', 'http') : baseWs);
-  const protocol = baseWs.startsWith('https') || baseWs.startsWith('wss') ? 'wss:' : 'ws:';
-  const fullWsUrl = `${protocol}//${urlObj.host}${urlObj.pathname}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  if (!token) {
+    if (onStatusChange) onStatusChange('closed');
+    return null;
+  }
+
+  const wsUrl = buildWebSocketUrl('/api/v1/notifications/ws', token);
+
+  let isDisposed = false;
+  let ws = null;
 
   try {
-    const ws = new WebSocket(fullWsUrl);
-    if (onStatusChange) {
-      ws.onopen = () => onStatusChange('open');
-      ws.onclose = () => onStatusChange('closed');
-    }
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      if (isDisposed) {
+        try {
+          ws.close(1000, 'Normal component unmount');
+        } catch (_) {}
+        return;
+      }
+      if (onStatusChange) onStatusChange('open');
+    };
+
     ws.onmessage = (event) => {
+      if (isDisposed) return;
       try {
         const data = JSON.parse(event.data);
         if (onMessage) onMessage(data);
@@ -725,12 +874,28 @@ export const connectNotificationsWebSocket = (onMessage, onError, onStatusChange
         console.error('Notifications WS parse error:', err);
       }
     };
+
     ws.onerror = (err) => {
+      if (isDisposed || ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) return;
+      if (onStatusChange) onStatusChange('closed');
       if (onError) onError(err);
+      else console.warn('Notifications WebSocket error:', err);
     };
+
+    ws.onclose = () => {
+      if (isDisposed) return;
+      if (onStatusChange) onStatusChange('closed');
+    };
+
+    ws._dispose = () => {
+      isDisposed = true;
+    };
+
     return ws;
   } catch (err) {
+    if (onStatusChange) onStatusChange('closed');
     console.warn('Notifications WebSocket unavailable:', err);
+    if (onError) onError(err);
     return null;
   }
 };
