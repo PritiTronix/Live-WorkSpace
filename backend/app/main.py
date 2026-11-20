@@ -2,6 +2,7 @@ import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -94,7 +95,7 @@ def create_application() -> FastAPI:
                     "code": "validation_error",
                     "message": "Request validation failed",
                 },
-                "detail": exc.errors(),
+                "detail": jsonable_encoder(exc.errors()),
             },
         )
 

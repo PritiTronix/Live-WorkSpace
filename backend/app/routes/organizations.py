@@ -201,12 +201,18 @@ async def create_organization(
     now = _utc_now()
     org_id = f"org_{uuid.uuid4().hex[:8]}"
 
+    industry_clean = payload.industry.strip().lower() if payload.industry and payload.industry.strip() else None
+    industry_other_clean = payload.industry_other.strip() if payload.industry_other and payload.industry_other.strip() else None
+    if industry_clean != "other":
+        industry_other_clean = None
+
     # 5. Create Organization
     new_org = Organization(
         id=org_id,
         name=name_clean,
         slug=slug,
-        industry=payload.industry.strip() if payload.industry and payload.industry.strip() else None,
+        industry=industry_clean,
+        industry_other=industry_other_clean,
         size_range=payload.size_range.strip() if payload.size_range and payload.size_range.strip() else None,
         logo_path=payload.logo_path.strip() if payload.logo_path else None,
         plan=payload.plan.strip().lower() if payload.plan else None,

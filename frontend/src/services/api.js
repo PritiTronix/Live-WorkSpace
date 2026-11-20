@@ -449,6 +449,7 @@ export const organizationService = {
     const payload = {
       name: data.name ? data.name.trim() : '',
       industry: data.industry && data.industry.trim() ? data.industry.trim() : null,
+      industry_other: data.industry_other && data.industry_other.trim() ? data.industry_other.trim() : null,
       size_range: data.size_range && data.size_range.trim() ? data.size_range.trim() : null,
       logo_path: data.logo_path && data.logo_path.trim() ? data.logo_path.trim() : null,
       plan: data.plan || null,

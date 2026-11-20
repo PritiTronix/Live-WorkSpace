@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, ArrowLeft, AlertCircle, CheckCircle2, Loader2, RefreshCw, Send, ArrowRight } from 'lucide-react';
 import { organizationService, authService, getApiErrorMessage } from '../../../services/api';
@@ -37,13 +37,17 @@ export const CreateOrgPage = () => {
   // All fields empty by default on placeholder options
   const [name, setName] = useState('');
   const [industry, setIndustry] = useState('');
+  const [industryOther, setIndustryOther] = useState('');
   const [sizeRange, setSizeRange] = useState('');
 
   const [touched, setTouched] = useState(false);
+  const [industryOtherTouched, setIndustryOtherTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorState, setErrorState] = useState(null);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendStatus, setResendStatus] = useState(null);
+
+  const industryOtherInputRef = useRef(null);
 
   // Client validation: name must be between 2 and 80 characters
   const trimmedName = name.trim();
@@ -53,6 +57,54 @@ export const CreateOrgPage = () => {
       ? 'Organization name is required.'
       : 'Organization name must be between 2 and 80 characters.'
     : (errorState?.fieldErrors?.name || null);
+
+  // Client validation: industryOther required when industry is 'other'
+  const validateIndustryOther = (val) => {
+    if (!val || val.length === 0) {
+      return 'Specify your industry is required.';
+    }
+    if (val.startsWith(' ') || val.endsWith(' ')) {
+      return 'Industry cannot have leading or trailing spaces.';
+    }
+    for (let i = 0; i < val.length; i++) {
+      const code = val.charCodeAt(i);
+      if (code < 32 || (code >= 127 && code <= 159)) {
+        return 'Control characters are not allowed.';
+      }
+    }
+    const allowedRegex = /^[a-zA-Z0-9 &/'.-]+$/;
+    if (!allowedRegex.test(val)) {
+      return "Industry can only contain letters, numbers, spaces, and basic punctuation (&, -, /, ', .).";
+    }
+    const trimmed = val.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) {
+      return 'Industry must be between 2 and 60 characters.';
+    }
+    return null;
+  };
+
+  const industryOtherClientError = industry === 'other' ? validateIndustryOther(industryOther) : null;
+  const isIndustryOtherValid = industry !== 'other' || !industryOtherClientError;
+
+  const industryOtherError = (touched || industryOtherTouched) && industry === 'other' && industryOtherClientError
+    ? industryOtherClientError
+    : (errorState?.fieldErrors?.industry_other || null);
+
+  // Move focus to industry-other input when "other" is selected
+  useEffect(() => {
+    if (industry === 'other') {
+      industryOtherInputRef.current?.focus();
+    }
+  }, [industry]);
+
+  const handleIndustryChange = (e) => {
+    const val = e.target.value;
+    setIndustry(val);
+    if (val !== 'other') {
+      setIndustryOther('');
+      setIndustryOtherTouched(false);
+    }
+  };
 
   const handleResendEmail = async () => {
     setResendingEmail(true);
@@ -82,8 +134,11 @@ export const CreateOrgPage = () => {
     }
 
     setTouched(true);
+    if (industry === 'other') {
+      setIndustryOtherTouched(true);
+    }
 
-    if (!isNameValid) {
+    if (!isNameValid || !isIndustryOtherValid) {
       return;
     }
 
@@ -95,6 +150,7 @@ export const CreateOrgPage = () => {
       await organizationService.createOrganization({
         name: trimmedName,
         industry: industry && industry.trim() ? industry.trim() : null,
+        industry_other: industry === 'other' && industryOther && industryOther.trim() ? industryOther.trim() : null,
         size_range: sizeRange && sizeRange.trim() ? sizeRange.trim() : null,
       });
 
@@ -327,7 +383,7 @@ export const CreateOrgPage = () => {
             <select
               id="org-industry"
               value={industry}
-              onChange={(e) => setIndustry(e.target.value)}
+              onChange={handleIndustryChange}
               className="w-full h-11 px-3.5 rounded-xl bg-canvas-main border border-border-subtle text-text-primary font-body text-sm transition-colors focus:outline-none focus:border-btn-primary focus:ring-2 focus:ring-btn-primary/20"
             >
               <option value="">Select industry</option>
@@ -338,6 +394,49 @@ export const CreateOrgPage = () => {
               ))}
             </select>
           </div>
+
+          {/* Specify your industry (Visible when 'other' is chosen) */}
+          {industry === 'other' && (
+            <div className="space-y-1.5 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="org-industry-other"
+                  className="font-label-md text-sm font-medium text-text-primary"
+                >
+                  Specify your industry <span className="text-severity-blocker">*</span>
+                </label>
+                <span className={`text-xs ${industryOther.length > 60 ? 'text-severity-blocker font-semibold' : 'text-text-muted'}`}>
+                  {industryOther.length} / 60
+                </span>
+              </div>
+              <input
+                id="org-industry-other"
+                ref={industryOtherInputRef}
+                type="text"
+                value={industryOther}
+                onChange={(e) => {
+                  setIndustryOther(e.target.value);
+                  if (!industryOtherTouched) setIndustryOtherTouched(true);
+                }}
+                onBlur={() => setIndustryOtherTouched(true)}
+                maxLength={65}
+                placeholder="e.g. Logistics or Non-profit"
+                required
+                aria-invalid={Boolean(industryOtherError)}
+                aria-describedby={industryOtherError ? 'org-industry-other-error' : undefined}
+                className={`w-full h-11 px-3.5 rounded-xl bg-canvas-main border text-text-primary font-body text-sm transition-colors focus:outline-none focus:ring-2 ${
+                  industryOtherError
+                    ? 'border-severity-blocker focus:border-severity-blocker focus:ring-severity-blocker/20'
+                    : 'border-border-subtle focus:border-btn-primary focus:ring-btn-primary/20'
+                }`}
+              />
+              {industryOtherError && (
+                <p id="org-industry-other-error" className="text-xs text-severity-blocker font-medium mt-1">
+                  {industryOtherError}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Size Range (Dropdown starts empty on placeholder) */}
           <div className="space-y-1.5">
@@ -366,7 +465,7 @@ export const CreateOrgPage = () => {
           <div className="pt-2">
             <button
               type="submit"
-              disabled={loading || (touched && !isNameValid)}
+              disabled={loading || (touched && (!isNameValid || !isIndustryOtherValid))}
               className="w-full h-11 rounded-xl bg-btn-primary text-white font-label-md text-sm font-semibold hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-btn-primary/30 transition-all flex items-center justify-center gap-2 shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

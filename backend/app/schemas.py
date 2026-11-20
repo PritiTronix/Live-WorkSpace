@@ -1,7 +1,11 @@
+import html
 import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel, EmailStr, ConfigDict, Field,
+    field_validator, model_validator, ValidationInfo, field_serializer
+)
 from backend.app.core.security import validate_password_strength
 
 
@@ -106,6 +110,14 @@ class OrganizationSummary(BaseSchema):
     id: str
     name: str
     plan: Optional[str] = None
+    industry: Optional[str] = None
+    industry_other: Optional[str] = None
+
+    @field_serializer("industry_other", when_used="json-unless-none")
+    def serialize_industry_other(self, v: Optional[str]) -> Optional[str]:
+        if v:
+            return html.escape(v)
+        return v
 
 
 class UserMembershipRead(BaseSchema):
@@ -263,16 +275,57 @@ class OrganizationBase(BaseSchema):
     slug: Optional[str] = None
     plan: Optional[str] = None
     industry: Optional[str] = None
+    industry_other: Optional[str] = None
     size_range: Optional[str] = None
     logo_path: Optional[str] = None
+
+    @field_serializer("industry_other", when_used="json-unless-none")
+    def serialize_industry_other(self, v: Optional[str]) -> Optional[str]:
+        if v:
+            return html.escape(v)
+        return v
 
 
 class OrganizationCreateRequest(BaseSchema):
     name: str = Field(..., min_length=2, max_length=100)
     industry: Optional[str] = Field(None, max_length=100)
+    industry_other: Optional[str] = Field(None, validate_default=True, max_length=60)
     size_range: Optional[str] = Field(None, max_length=50)
     logo_path: Optional[str] = Field(None, max_length=500)
     plan: Optional[str] = None
+
+    @field_validator("industry_other", mode="after")
+    @classmethod
+    def validate_industry_other(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        industry_val = (info.data.get("industry") or "").strip().lower()
+        if industry_val != "other":
+            return None
+
+        if not v or not v.strip():
+            raise ValueError("Specify your industry is required when 'Other' is selected.")
+
+        # Reject control characters
+        for ch in v:
+            code = ord(ch)
+            if code < 32 or (127 <= code <= 159):
+                raise ValueError("Control characters are not allowed.")
+
+        # Reject leading or trailing spaces
+        if v.startswith(" ") or v.endswith(" "):
+            raise ValueError("Industry cannot have leading or trailing spaces.")
+
+        # Normalize internal whitespace
+        normalized = re.sub(r"[ \t]+", " ", v)
+
+        # Allowed characters: letters, numbers, spaces and basic punctuation (&, -, /, ', .) only
+        # No emoji or control characters
+        if not re.match(r"^[A-Za-z0-9 &/'\.\-]+$", normalized):
+            raise ValueError("Industry can only contain letters, numbers, spaces, and basic punctuation (&, -, /, ', .).")
+
+        if len(normalized) < 2 or len(normalized) > 60:
+            raise ValueError("Industry must be between 2 and 60 characters.")
+
+        return normalized
 
 
 class OrganizationRead(OrganizationBase):

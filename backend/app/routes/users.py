@@ -128,7 +128,9 @@ async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:
             org_summary = OrganizationSummary(
                 id=org.id,
                 name=org.name,
-                plan=getattr(org, "plan", None)
+                plan=getattr(org, "plan", None),
+                industry=getattr(org, "industry", None),
+                industry_other=getattr(org, "industry_other", None),
             )
 
     # 1b. Active Memberships

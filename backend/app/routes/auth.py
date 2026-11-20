@@ -95,6 +95,8 @@ async def build_user_auth_response(user: User, db: AsyncSession) -> UserRead:
                 id=org.id,
                 name=org.name,
                 plan=org.plan,
+                industry=getattr(org, "industry", None),
+                industry_other=getattr(org, "industry_other", None),
             )
 
     return UserRead(

@@ -22,6 +22,7 @@ class Organization(Base):
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     logo_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    industry_other: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     size_range: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     plan: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default=None)
     created_by: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
