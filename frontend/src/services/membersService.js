@@ -1,8 +1,13 @@
 import { apiClient, organizationService } from './api';
 
 export const membersService = {
-  listMembers: async () => {
-    const response = await apiClient.get('/users');
+  listMembers: async (params = {}) => {
+    const response = await apiClient.get('/users', { params });
+    return response.data;
+  },
+
+  updatePresence: async (presence) => {
+    const response = await apiClient.patch('/users/me/presence', { presence });
     return response.data;
   },
 

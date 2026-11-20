@@ -46,6 +46,7 @@ from backend.app.services.metrics import (
     get_work_in_progress_count,
 )
 from backend.app.core.websockets import ws_manager, authenticate_ws
+from backend.app.services.workforce import get_organization_workforce_data
 
 router = APIRouter()
 
@@ -118,12 +119,17 @@ class ProjectProgressItem(BaseModel):
 
 class TeamWorkloadItem(BaseModel):
     name: str
-    capacity: int  # Returns availability (100 - utilization)
+    key: Optional[str] = None
+    capacity: Optional[int] = None  # Returns availability (100 - utilization), or None if no assigned work
     availability: Optional[int] = None
     utilization: Optional[int] = None
+    member_count: Optional[int] = None
+    available_members: Optional[int] = None
+    active_items: Optional[int] = None
     status: str
     color: str
     desc: str
+    threshold: Optional[int] = 80
 
 
 class PriorityTicketItem(BaseModel):
@@ -743,96 +749,43 @@ async def get_team_workload(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Aggregate member workloads by normalized teams across the organization."""
+    """
+    Aggregate member workloads by normalized teams using the single authoritative
+    workforce domain service. Reused identically on Members Page and Dashboard.
+    """
     org_id = current_user.organization_id
+    if not org_id:
+        return []
+
     eff_project_id = project_id or project
     eff_department = department or team
     now = datetime.now(timezone.utc)
     period_start = _get_period_start(period, now)
 
-    # Fetch users in organization (both active memberships and legacy users.organization_id)
-    mem_q = (
-        select(User)
-        .join(Membership, Membership.user_id == User.id)
-        .where(Membership.organization_id == org_id, Membership.status == "active")
+    wf_data = await get_organization_workforce_data(
+        db,
+        organization_id=org_id,
+        department=eff_department,
+        project_id=eff_project_id,
+        period_start=period_start,
     )
-    if eff_department:
-        mem_q = mem_q.where(User.department.ilike(eff_department.strip()))
-    mem_users = (await db.execute(mem_q)).scalars().all()
-
-    leg_q = select(User).where(User.organization_id == org_id)
-    if eff_department:
-        leg_q = leg_q.where(User.department.ilike(eff_department.strip()))
-    leg_users = (await db.execute(leg_q)).scalars().all()
-
-    users_map = {u.id: u for u in mem_users}
-    for u in leg_users:
-        if u.id not in users_map:
-            users_map[u.id] = u
-    users = list(users_map.values())
-    if not users:
-        return []
-
-    # Active tasks in org matching filters
-    t_q = select(Task.assignee_id).where(
-        Task.organization_id == org_id,
-        Task.status.notin_(["done", "cancelled"])
-    )
-    if eff_project_id:
-        t_q = t_q.where(Task.project_id == eff_project_id)
-    if period_start:
-        t_q = t_q.where(Task.created_at >= period_start)
-    t_res = await db.execute(t_q)
-    active_tasks = t_res.scalars().all()
-
-    # Active tickets in org matching filters
-    tk_q = select(Ticket.assignee_id).join(Ticket.project).where(
-        Project.organization_id == org_id,
-        Ticket.status.notin_(["resolved", "closed"])
-    )
-    if eff_project_id:
-        tk_q = tk_q.where(Ticket.project_id == eff_project_id)
-    if period_start:
-        tk_q = tk_q.where(Ticket.created_at >= period_start)
-    tk_res = await db.execute(tk_q)
-    active_tickets = tk_res.scalars().all()
-
-    # Group by normalized department name (trim, lowercase so Engineering and engineering are one team)
-    dept_map: Dict[str, List[User]] = {}
-    dept_display: Dict[str, str] = {}
-    for u in users:
-        raw_dept = (u.department or "General").strip()
-        if not raw_dept:
-            raw_dept = "General"
-        norm_key = raw_dept.lower()
-        if norm_key not in dept_display:
-            dept_display[norm_key] = raw_dept.title()
-        dept_map.setdefault(norm_key, []).append(u)
 
     workloads = []
-    # Sort teams by member count descending then name
-    sorted_teams = sorted(dept_map.items(), key=lambda x: (-len(x[1]), x[0]))
-
-    for norm_key, dept_users in sorted_teams:
-        dept_user_ids = {u.id for u in dept_users}
-        dept_tasks_count = sum(1 for a_id in active_tasks if a_id in dept_user_ids)
-        dept_tickets_count = sum(1 for a_id in active_tickets if a_id in dept_user_ids)
-        total_items = dept_tasks_count + dept_tickets_count
-
-        member_count = len(dept_users)
-        capacity_info = calculate_team_capacity(total_items, member_count)
-
-        desc = f"{pluralize(member_count, 'Member')} • {pluralize(total_items, 'active item')}"
-
+    for d in wf_data["departments"]:
         workloads.append(
             TeamWorkloadItem(
-                name=dept_display[norm_key],
-                capacity=capacity_info["availability"],
-                availability=capacity_info["availability"],
-                utilization=capacity_info["utilization"],
-                status=capacity_info["status"],
-                color=capacity_info["color"],
-                desc=desc,
+                name=d["name"],
+                key=d["key"],
+                member_count=d["member_count"],
+                available_members=d["available_members"],
+                active_items=d["active_items"],
+                capacity=d["capacity"],
+                availability=d["availability"],
+                utilization=d["utilization"],
+                status=d["status"],
+                color=d["color"],
+                desc=d["desc"],
+                threshold=d.get("threshold", 80),
             )
         )
 
@@ -1637,15 +1590,54 @@ async def dashboard_websocket_endpoint(
         return
 
     target_ws = user.organization_id
-    await ws_manager.connect(websocket, target_ws)
+    await ws_manager.connect(websocket, target_ws, user_id=user.id)
     await websocket.send_text(
         json.dumps({"type": "CONNECTION_ESTABLISHED", "payload": {"workspace_id": target_ws}})
     )
     try:
         while True:
-            data = await websocket.receive_text()
-            await websocket.send_text(json.dumps({"type": "PONG", "payload": {"received": data}}))
+            raw_data = await websocket.receive_text()
+            now = datetime.now(timezone.utc)
+            ws_manager.touch_user_activity(user.id, now)
+
+            should_update_dt = False
+            if not user.last_active_at:
+                should_update_dt = True
+            else:
+                last_dt = user.last_active_at if user.last_active_at.tzinfo else user.last_active_at.replace(tzinfo=timezone.utc)
+                if (now - last_dt).total_seconds() >= 60:
+                    should_update_dt = True
+
+            if should_update_dt:
+                user.last_active_at = now
+                try:
+                    await db.commit()
+                except Exception:
+                    await db.rollback()
+
+            try:
+                msg = json.loads(raw_data)
+                ev = (msg.get("event") or msg.get("type") or "").lower()
+                if ev in ("heartbeat", "ping"):
+                    await websocket.send_text(json.dumps({"type": "PONG", "event": "pong", "timestamp": now.isoformat()}))
+                elif ev in ("presence", "set_presence"):
+                    new_pres = (msg.get("presence") or msg.get("status") or "").lower()
+                    if new_pres in ("online", "away", "busy", "offline"):
+                        ws_manager.set_user_status(user.id, new_pres)
+                        await ws_manager.broadcast(
+                            target_ws,
+                            "presence_updated",
+                            {
+                                "user_id": user.id,
+                                "presence": new_pres,
+                                "last_active_at": user.last_active_at.isoformat() if user.last_active_at else None,
+                            }
+                        )
+                else:
+                    await websocket.send_text(json.dumps({"type": "PONG", "payload": {"received": raw_data}}))
+            except Exception:
+                await websocket.send_text(json.dumps({"type": "PONG", "payload": {"received": raw_data}}))
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket, target_ws)
+        ws_manager.disconnect(websocket, target_ws, user_id=user.id)
     except Exception:
-        ws_manager.disconnect(websocket, target_ws)
+        ws_manager.disconnect(websocket, target_ws, user_id=user.id)

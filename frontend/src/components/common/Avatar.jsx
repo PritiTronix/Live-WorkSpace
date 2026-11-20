@@ -45,7 +45,9 @@ export const Avatar = ({
 
   const selectedSizeClass = sizeClasses[size] || sizeClasses.md;
 
-  if (src && !imageError) {
+  const isDicebear = typeof src === 'string' && src.toLowerCase().includes('dicebear.com');
+
+  if (src && !imageError && !isDicebear) {
     return (
       <img
         src={src}

@@ -163,7 +163,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         role=role,
         title=user_in.title or "Software Engineer",
         department=user_in.department or "Engineering",
-        avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
+        avatar_url=user_in.avatar_url,
         is_active=True,
         email_verified=False,
         onboarding_completed=onboarding_completed,

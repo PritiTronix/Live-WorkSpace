@@ -1074,30 +1074,36 @@ export const DashboardOverviewPage = () => {
 
             <div className="space-y-4">
               {teamWorkload.length > 0 ? (
-                teamWorkload.map((team, idx) => (
-                  <Link
-                    key={idx}
-                    to={DASHBOARD_ROUTES.MEMBERS_BY_TEAM(team.name)}
-                    aria-label={`View members for ${team.name}: ${team.status}`}
-                    title="Team availability percentage calculated as 100% minus utilization (baseline: 5 concurrent active items per member = 100% load)"
-                    className="block p-3 rounded-lg border bg-surface-container-low border-border-subtle hover:border-primary/50 hover:bg-canvas-lavender/20 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
-                  >
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-semibold text-text-primary group-hover:text-primary transition-colors flex items-center gap-1">
-                        <span>{team.name}</span>
-                        <span className="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
-                      </span>
-                      <span className="font-bold text-primary">{team.status}</span>
-                    </div>
-                    <div className="w-full bg-white rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`${team.color} h-2 rounded-full transition-all`}
-                        style={{ width: `${team.capacity}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-[11px] text-text-secondary mt-1.5">{team.desc}</p>
-                  </Link>
-                ))
+                teamWorkload.map((team, idx) => {
+                  const hasCapacity = team.capacity !== null && team.capacity !== undefined;
+                  const barColor = hasCapacity ? team.color : 'bg-surface-outline';
+                  const teamKey = team.key || team.name.toLowerCase();
+
+                  return (
+                    <Link
+                      key={idx}
+                      to={DASHBOARD_ROUTES.MEMBERS_BY_TEAM(teamKey)}
+                      aria-label={`View members for ${team.name}: ${team.status}`}
+                      title={hasCapacity ? `Team availability: ${team.capacity}% (baseline: 5 items/member)` : 'No open work assigned to this team'}
+                      className="block p-3 rounded-lg border bg-surface-container-low border-border-subtle hover:border-primary/50 hover:bg-canvas-lavender/20 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-semibold text-text-primary group-hover:text-primary transition-colors flex items-center gap-1">
+                          <span>{team.name}</span>
+                          <span className="material-symbols-outlined text-xs opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+                        </span>
+                        <span className={`font-bold ${hasCapacity ? 'text-primary' : 'text-text-muted font-medium'}`}>{team.status}</span>
+                      </div>
+                      <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`${barColor} h-2 rounded-full transition-all`}
+                          style={{ width: `${hasCapacity ? team.capacity : 0}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-[11px] text-text-secondary mt-1.5">{team.desc}</p>
+                    </Link>
+                  );
+                })
               ) : (
                 <p className="text-xs text-text-muted py-4 text-center">No team workloads recorded.</p>
               )}

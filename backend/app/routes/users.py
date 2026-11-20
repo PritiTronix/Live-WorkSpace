@@ -27,6 +27,16 @@ from backend.app.schemas import (
     UserRead, UserUpdateProfile, UserChangePassword, UserInviteRequest, UserUpdateRole,
     OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary, UserMembershipRead
 )
+from backend.app.core.websockets import ws_manager
+from backend.app.services.workforce import (
+    get_organization_workforce_data,
+    compute_user_presence,
+    is_member_available,
+    normalize_department,
+    compute_team_capacity,
+    DEFAULT_CAPACITY_THRESHOLD,
+    PER_MEMBER_CAPACITY,
+)
 
 logger = logging.getLogger("tronix.users")
 
@@ -750,6 +760,8 @@ async def get_organization_team_members(
 async def list_team_members(
     department: Optional[str] = Query(None, description="Filter by department / team"),
     team: Optional[str] = Query(None, description="Alias for department filter"),
+    status: Optional[str] = Query(None, description="Filter by account status (active, inactive, pending)"),
+    presence: Optional[str] = Query(None, description="Filter by presence (online, away, busy, offline)"),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -758,18 +770,50 @@ async def list_team_members(
         return [current_user]
 
     eff_dept = department or team
-    return await get_organization_team_members(db, current_user.organization_id, department=eff_dept)
+    wf_data = await get_organization_workforce_data(db, current_user.organization_id, department=eff_dept)
+    members = wf_data["members"]
+
+    if status and status.lower() != "all":
+        stat_lower = status.strip().lower()
+        if stat_lower == "active":
+            members = [m for m in members if m.get("account_state") == "active"]
+        elif stat_lower == "inactive":
+            members = [m for m in members if m.get("account_state") == "inactive"]
+
+    if presence and presence.lower() != "all":
+        pres_lower = presence.strip().lower()
+        members = [m for m in members if m.get("presence") == pres_lower]
+
+    return members
+
+
+class TeamWorkloadSummaryItem(BaseModel):
+    name: str
+    key: str
+    member_count: int
+    available_members: int
+    active_items: int
+    capacity: Optional[int] = None
+    availability: Optional[int] = None
+    utilization: Optional[int] = None
+    status: str
+    color: str
+    desc: str
+    threshold: int = 80
 
 
 class TeamSummaryResponse(BaseModel):
     total_members: int
     active_count: int
     inactive_count: int
+    pending_count: int = 0
     pending_invitations_count: int
+    online_count: int = 0
     department_counts: Dict[str, int]
     role_counts: Dict[str, int]
     average_workload: Optional[float] = None
     workload_status: Optional[str] = None
+    departments: List[TeamWorkloadSummaryItem] = []
 
 
 class UserInvitationItem(BaseModel):
@@ -786,89 +830,114 @@ async def get_team_members_summary(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Calculated workforce summary scoped to user's organization."""
+    """Calculated workforce summary scoped strictly to user's verified organization."""
     if not current_user.organization_id:
         return TeamSummaryResponse(
             total_members=1,
             active_count=1,
             inactive_count=0,
+            pending_count=0,
             pending_invitations_count=0,
+            online_count=1,
             department_counts={current_user.department or "General": 1},
             role_counts={current_user.role or "member": 1},
             average_workload=None,
             workload_status=None,
+            departments=[],
         )
 
-    # All users in org (memberships + users.organization_id deduplicated)
-    users = await get_organization_team_members(db, current_user.organization_id)
-
-    total = len(users)
-    active = sum(1 for u in users if u.is_active)
-    inactive = total - active
-
-    # Pending invitations
-    inv_res = await db.execute(
-        select(UserInvitation).where(
-            UserInvitation.organization_id == current_user.organization_id,
-            UserInvitation.status == "pending"
-        )
-    )
-    invitations = inv_res.scalars().all()
-    pending_invs = len(invitations)
-
-    # Department breakdown
-    dept_counts: Dict[str, int] = {}
-    for u in users:
-        dept = u.department or "Engineering"
-        dept_counts[dept] = dept_counts.get(dept, 0) + 1
-
-    # Role breakdown
-    role_counts: Dict[str, int] = {}
-    for u in users:
-        r = u.role or "member"
-        role_counts[r] = role_counts.get(r, 0) + 1
-
-    # Real workload calculation across members from assigned active tickets and tasks
-    # Active tickets per user
-    tk_res = await db.execute(
-        select(Ticket.assignee_id)
-        .join(Project, Ticket.project_id == Project.id)
-        .where(
-            Project.organization_id == current_user.organization_id,
-            Ticket.status.notin_(["closed", "resolved"]),
-            Ticket.assignee_id.isnot(None)
-        )
-    )
-    active_tk_assignees = tk_res.scalars().all()
-
-    task_res = await db.execute(
-        select(Task.assignee_id).where(
-            Task.organization_id == current_user.organization_id,
-            Task.status.notin_(["done", "cancelled"]),
-            Task.assignee_id.isnot(None)
-        )
-    )
-    active_task_assignees = task_res.scalars().all()
-
-    total_active_items = len(active_tk_assignees) + len(active_task_assignees)
-    if total > 0 and total_active_items > 0:
-        avg_items_per_user = total_active_items / total
-        avg_workload = min(100.0, max(15.0, round(avg_items_per_user * 18.0, 1)))
-        status_label = "Optimal" if avg_workload < 80 else "High"
-    else:
-        avg_workload = None
-        status_label = None
-
+    wf_data = await get_organization_workforce_data(db, current_user.organization_id)
     return TeamSummaryResponse(
-        total_members=total,
-        active_count=active,
-        inactive_count=inactive,
-        pending_invitations_count=pending_invs,
-        department_counts=dept_counts,
-        role_counts=role_counts,
-        average_workload=avg_workload,
-        workload_status=status_label,
+        total_members=wf_data["total_members"],
+        active_count=wf_data["active_count"],
+        inactive_count=wf_data["inactive_count"],
+        pending_count=wf_data["pending_count"],
+        pending_invitations_count=wf_data["pending_invitations_count"],
+        online_count=wf_data["online_count"],
+        department_counts=wf_data["department_counts"],
+        role_counts=wf_data["role_counts"],
+        average_workload=wf_data["average_workload"],
+        workload_status=wf_data["workload_status"],
+        departments=[
+            TeamWorkloadSummaryItem(
+                name=d["name"],
+                key=d["key"],
+                member_count=d["member_count"],
+                available_members=d["available_members"],
+                active_items=d["active_items"],
+                capacity=d["capacity"],
+                availability=d["availability"],
+                utilization=d["utilization"],
+                status=d["status"],
+                color=d["color"],
+                desc=d["desc"],
+                threshold=d.get("threshold", 80),
+            )
+            for d in wf_data["departments"]
+        ],
     )
+
+
+class UserPresenceUpdateRequest(BaseModel):
+    presence: str
+
+
+@router.patch("/me/presence")
+async def update_my_presence(
+    payload: UserPresenceUpdateRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Update caller's live presence status (online, away, busy, offline).
+    User-set status overrides online; away and busy reduce available capacity.
+    Throttles last_active_at update to at most once per minute.
+    Broadcasts real-time presence change event strictly across caller's organization.
+    """
+    clean_presence = (payload.presence or "").strip().lower()
+    if clean_presence not in ("online", "away", "busy", "offline"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid presence. Allowed values: online, away, busy, offline"
+        )
+
+    ws_manager.set_user_status(current_user.id, clean_presence)
+    now = datetime.now(timezone.utc)
+    ws_manager.touch_user_activity(current_user.id, now)
+
+    # Throttled update of last_active_at (at most once per minute)
+    should_update_dt = False
+    if not current_user.last_active_at:
+        should_update_dt = True
+    else:
+        last_dt = current_user.last_active_at if current_user.last_active_at.tzinfo else current_user.last_active_at.replace(tzinfo=timezone.utc)
+        if (now - last_dt).total_seconds() >= 60:
+            should_update_dt = True
+
+    if should_update_dt:
+        current_user.last_active_at = now
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+
+    if current_user.organization_id:
+        await ws_manager.broadcast(
+            current_user.organization_id,
+            "presence_updated",
+            {
+                "user_id": current_user.id,
+                "presence": clean_presence,
+                "last_active_at": current_user.last_active_at.isoformat() if current_user.last_active_at else None,
+            }
+        )
+
+    return {
+        "status": "success",
+        "user_id": current_user.id,
+        "presence": clean_presence,
+        "last_active_at": current_user.last_active_at.isoformat() if current_user.last_active_at else None,
+    }
 
 
 @router.get("/invitations", response_model=List[UserInvitationItem])
@@ -1039,6 +1108,14 @@ async def get_user_member_detail(
 
     workload_val = compute_member_workload(len(open_tickets), len(open_tasks), len(blockers))
 
+    # Evaluate presence & availability using unified domain definitions
+    has_ws = ws_manager.is_user_connected(user_id)
+    user_set = ws_manager.get_user_status(user_id)
+    presence = compute_user_presence(user, has_ws, now, user_set_status=user_set)
+    is_active_account = bool(user.is_active)
+    is_avail = is_member_available(is_active_account, presence, user_set_status=user_set)
+    account_state = "active" if is_active_account else "inactive"
+
     return {
         "id": user.id,
         "email": user.email,
@@ -1049,8 +1126,12 @@ async def get_user_member_detail(
         "role": user.role,
         "title": user.title,  # Real value or None, no demo fallbacks
         "department": user.department,  # Real value or None
-        "avatar_url": user.avatar_url,
-        "is_active": user.is_active,
+        "avatar_url": None if (user.avatar_url and "dicebear.com" in user.avatar_url.lower()) else user.avatar_url,
+        "is_active": is_active_account,
+        "account_state": account_state,
+        "presence": presence.value,
+        "user_set_status": user_set,
+        "is_available": is_avail,
         "timezone": user.timezone,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "joined_date": user.created_at.isoformat() if user.created_at else None,

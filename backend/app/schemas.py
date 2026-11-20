@@ -26,6 +26,21 @@ class UserBase(BaseSchema):
     timezone: Optional[str] = None
     last_active_at: Optional[datetime] = None
     on_call_role: Optional[str] = None
+    presence: Optional[str] = "offline"
+    account_state: Optional[str] = "active"
+    is_available: Optional[bool] = True
+    department_key: Optional[str] = None
+    user_set_status: Optional[str] = None
+    active_tasks_count: Optional[int] = 0
+    active_tickets_count: Optional[int] = 0
+    active_items_count: Optional[int] = 0
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def sanitize_avatar(cls, v: Optional[str]) -> Optional[str]:
+        if v and isinstance(v, str) and "dicebear.com" in v.lower():
+            return None
+        return v
 
 
 class UserUpdateRole(BaseSchema):
