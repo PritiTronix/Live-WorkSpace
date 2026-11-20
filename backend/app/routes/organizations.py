@@ -147,7 +147,33 @@ async def create_organization(
             },
         )
 
-    # 2. Validate and sanitize name
+    # 2. Prevent user who already has an active organization from creating another one (409 Conflict)
+    has_active_org = False
+    if current_user.organization_id:
+        has_active_org = True
+    elif current_user.memberships:
+        has_active_org = any(m.status == "active" for m in current_user.memberships)
+
+    if not has_active_org:
+        existing_active_m = await db.execute(
+            select(Membership.id).where(
+                Membership.user_id == current_user.id,
+                Membership.status == "active",
+            )
+        )
+        if existing_active_m.scalars().first():
+            has_active_org = True
+
+    if has_active_org:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "organization_already_exists",
+                "message": "User already has an active organization membership. You cannot create multiple organizations.",
+            },
+        )
+
+    # 3. Validate and sanitize name
     name_clean = payload.name.strip()
     if len(name_clean) < 2 or len(name_clean) > 100:
         raise HTTPException(
@@ -158,7 +184,7 @@ async def create_organization(
             },
         )
 
-    # 3. Generate unique slug
+    # 4. Generate unique slug
     base_slug = re.sub(r"[^a-z0-9]+", "-", name_clean.lower()).strip("-")
     if not base_slug:
         base_slug = "org"
@@ -175,13 +201,19 @@ async def create_organization(
     now = _utc_now()
     org_id = f"org_{uuid.uuid4().hex[:8]}"
 
-    # 4. Create Organization
+    industry_clean = payload.industry.strip().lower() if payload.industry and payload.industry.strip() else None
+    industry_other_clean = payload.industry_other.strip() if payload.industry_other and payload.industry_other.strip() else None
+    if industry_clean != "other":
+        industry_other_clean = None
+
+    # 5. Create Organization
     new_org = Organization(
         id=org_id,
         name=name_clean,
         slug=slug,
-        industry=payload.industry.strip() if payload.industry else None,
-        size_range=payload.size_range.strip() if payload.size_range else None,
+        industry=industry_clean,
+        industry_other=industry_other_clean,
+        size_range=payload.size_range.strip() if payload.size_range and payload.size_range.strip() else None,
         logo_path=payload.logo_path.strip() if payload.logo_path else None,
         plan=payload.plan.strip().lower() if payload.plan else None,
         created_by=current_user.id,

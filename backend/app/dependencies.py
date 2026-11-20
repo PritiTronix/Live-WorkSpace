@@ -1,12 +1,15 @@
+from datetime import datetime, timezone
 from typing import List, Optional, Callable, Dict
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.database import get_db
 from backend.app.models import User, Membership
+from backend.app.core.websockets import ws_manager
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_PREFIX}/auth/login",
@@ -85,8 +88,15 @@ async def get_current_active_user(
     except JWTError:
         raise credentials_exception
 
-    res = await db.execute(select(User).where(User.id == user_id))
-    user = res.scalars().first()
+    res = await db.execute(
+        select(User)
+        .options(
+            joinedload(User.organization),
+            joinedload(User.memberships).joinedload(Membership.organization),
+        )
+        .where(User.id == user_id)
+    )
+    user = res.unique().scalars().first()
 
     if not user:
         raise credentials_exception
@@ -97,29 +107,34 @@ async def get_current_active_user(
             detail="Inactive user account. Contact your workspace administrator.",
         )
 
+    # Throttled update of last_active_at on authenticated activity (at most once per minute)
+    now = datetime.now(timezone.utc)
+    ws_manager.touch_user_activity(user.id, now)
+    should_update_dt = False
+    if not user.last_active_at:
+        should_update_dt = True
+    else:
+        dt_val = user.last_active_at if user.last_active_at.tzinfo else user.last_active_at.replace(tzinfo=timezone.utc)
+        if (now - dt_val).total_seconds() >= 60:
+            should_update_dt = True
+
+    if should_update_dt:
+        user.last_active_at = now
+        try:
+            await db.commit()
+        except Exception:
+            await db.rollback()
+
     # Server-side authorization: users without active organization can only call onboarding, profile, and auth
     if request is not None and not is_onboarding_or_profile_path(request.url.path, request.method):
-        # Verify active membership in memberships table
+        # Verify active membership in memberships table using loaded relationships (zero extra queries)
+        active_memberships = [m for m in (user.memberships or []) if m.status == "active"]
         membership = None
         if user.organization_id:
-            m_res = await db.execute(
-                select(Membership).where(
-                    Membership.user_id == user.id,
-                    Membership.organization_id == user.organization_id,
-                    Membership.status == "active"
-                )
-            )
-            membership = m_res.scalars().first()
+            membership = next((m for m in active_memberships if m.organization_id == user.organization_id), None)
 
-        if not membership:
-            # Fallback: check if user has any active membership
-            any_m = await db.execute(
-                select(Membership).where(
-                    Membership.user_id == user.id,
-                    Membership.status == "active"
-                )
-            )
-            membership = any_m.scalars().first()
+        if not membership and active_memberships:
+            membership = active_memberships[0]
 
         if membership:
             user.organization_id = membership.organization_id

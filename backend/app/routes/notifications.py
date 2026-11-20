@@ -297,7 +297,46 @@ async def notifications_ws(
 
     try:
         while True:
-            await websocket.receive_text()
+            raw_data = await websocket.receive_text()
+            now = datetime.now(timezone.utc)
+            ws_manager.touch_user_activity(user.id, now)
+
+            # Throttle last_active_at update to at most once per minute
+            should_update_dt = False
+            if not user.last_active_at:
+                should_update_dt = True
+            else:
+                last_dt = user.last_active_at if user.last_active_at.tzinfo else user.last_active_at.replace(tzinfo=timezone.utc)
+                if (now - last_dt).total_seconds() >= 60:
+                    should_update_dt = True
+
+            if should_update_dt:
+                user.last_active_at = now
+                try:
+                    await db.commit()
+                except Exception:
+                    await db.rollback()
+
+            try:
+                msg = json.loads(raw_data)
+                ev = (msg.get("event") or msg.get("type") or "").lower()
+                if ev in ("heartbeat", "ping"):
+                    await websocket.send_text(json.dumps({"event": "pong", "timestamp": now.isoformat()}))
+                elif ev in ("presence", "set_presence"):
+                    new_pres = (msg.get("presence") or msg.get("status") or "").lower()
+                    if new_pres in ("online", "away", "busy", "offline"):
+                        ws_manager.set_user_status(user.id, new_pres)
+                        await ws_manager.broadcast(
+                            target_ws,
+                            "presence_updated",
+                            {
+                                "user_id": user.id,
+                                "presence": new_pres,
+                                "last_active_at": user.last_active_at.isoformat() if user.last_active_at else None,
+                            }
+                        )
+            except Exception:
+                pass
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket, target_ws, user_id=user.id)
     except Exception:

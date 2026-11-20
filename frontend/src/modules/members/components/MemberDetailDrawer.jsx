@@ -19,6 +19,7 @@ import { membersService } from '../../../services/membersService';
 import { projectsService } from '../../../services/projectsService';
 import { authService } from '../../../services/api';
 import Avatar from '../../../components/common/Avatar';
+import { PRESENCE_CONFIG, formatLastActive } from '../../../constants/presence';
 
 export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData, onMemberUpdated }) => {
   const navigate = useNavigate();
@@ -242,9 +243,9 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData, onMemb
               />
               <span
                 className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full shadow-xs ring-2 ring-white dark:ring-[#1a1b32] ${
-                  member?.is_active !== false ? 'bg-[#28C078]' : 'bg-[#9C9CA9]'
+                  (PRESENCE_CONFIG[member?.presence] || PRESENCE_CONFIG.offline).dotClass
                 }`}
-                title={member?.is_active !== false ? 'Active' : 'Inactive'}
+                title={`Presence: ${(PRESENCE_CONFIG[member?.presence] || PRESENCE_CONFIG.offline).label}`}
               ></span>
             </div>
 
@@ -253,22 +254,33 @@ export const MemberDetailDrawer = ({ isOpen, onClose, userId, memberData, onMemb
                 <h3 className="text-base font-bold text-[#141529] dark:text-white truncate">
                   {member?.full_name || 'Loading...'}
                 </h3>
-                {member?.role && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] text-[10px] font-bold shrink-0 capitalize">
-                    {member.role}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      (PRESENCE_CONFIG[member?.presence] || PRESENCE_CONFIG.offline).badgeClass
+                    }`}
+                  >
+                    {(PRESENCE_CONFIG[member?.presence] || PRESENCE_CONFIG.offline).label}
                   </span>
-                )}
+                  {member?.role && (
+                    <span className="px-2 py-0.5 rounded-full bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] text-[10px] font-bold capitalize">
+                      {member.role}
+                    </span>
+                  )}
+                </div>
               </div>
               {member?.title && (
                 <p className="text-xs font-semibold text-[#5C5C70] dark:text-[#cabeff] mt-0.5 truncate">
                   {member.title}
                 </p>
               )}
-              {member?.department && (
-                <span className="text-[11px] text-[#9C9CA9] mt-0.5 truncate">
-                  {member.department}
+              <div className="flex items-center gap-2 text-[11px] text-[#9C9CA9] mt-0.5">
+                {member?.department && <span className="truncate">{member.department}</span>}
+                <span>•</span>
+                <span title="Real last active timestamp">
+                  {formatLastActive(member?.last_active_at || member?.last_active)}
                 </span>
-              )}
+              </div>
             </div>
           </div>
 

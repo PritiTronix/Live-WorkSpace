@@ -75,16 +75,22 @@ export const GlobalTopBar = ({
   }, [isProfileOpen]);
 
   const handlePresenceChange = async (newPresence) => {
-    setPresence(newPresence);
-    await authService.updatePresence(newPresence);
+    const clean = String(newPresence).toLowerCase();
+    setPresence(clean);
+    await authService.updatePresence(clean);
+    window.dispatchEvent(new CustomEvent('presence-updated', { detail: { presence: clean } }));
   };
 
   const getPresenceColor = (status) => {
-    switch (status) {
-      case 'AWAY':
+    const s = String(status || '').toLowerCase();
+    switch (s) {
+      case 'away':
         return 'bg-status-on-hold';
-      case 'DND':
+      case 'busy':
+      case 'dnd':
         return 'bg-severity-blocker';
+      case 'offline':
+        return 'bg-surface-outline';
       default:
         return 'bg-status-resolved';
     }
@@ -269,12 +275,12 @@ export const GlobalTopBar = ({
                   Presence Status
                 </label>
                 <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-surface-container">
-                  {[['ONLINE', 'bg-status-resolved', 'Online'], ['AWAY', 'bg-status-on-hold', 'Away'], ['DND', 'bg-severity-blocker', 'DND']].map(([val, dotCls, label]) => (
+                  {[['online', 'bg-status-resolved', 'Online'], ['away', 'bg-status-on-hold', 'Away'], ['busy', 'bg-severity-blocker', 'Busy']].map(([val, dotCls, label]) => (
                     <button
                       key={val}
                       onClick={() => handlePresenceChange(val)}
                       className={`py-1 px-2 rounded-md font-label-sm text-label-sm flex items-center justify-center gap-1.5 transition-all ${
-                        presence === val
+                        presence?.toLowerCase() === val
                           ? 'bg-surface-card shadow-sm text-text-primary font-semibold'
                           : 'text-text-secondary hover:text-text-primary'
                       }`}

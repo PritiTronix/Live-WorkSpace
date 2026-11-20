@@ -1,7 +1,9 @@
 import uuid
+import time
+import logging
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +17,11 @@ from backend.app.schemas import (
     UserCreate, UserRead, Token, TokenRefreshRequest,
     OnboardingCompleteResponse, UserMembershipRead, OrganizationSummary
 )
-from sqlalchemy.orm import selectinload
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.orm import selectinload, joinedload 
+from backend.app.middleware.query_counter import get_current_query_count
+
+logger = logging.getLogger("api.auth")
 from backend.app.core.security import (
     get_password_hash,
     verify_password,
@@ -45,12 +51,18 @@ class LoginResponse(BaseModel):
 
 async def build_user_auth_response(user: User, db: AsyncSession) -> UserRead:
     """Build standardized user auth response including organization_required and active memberships."""
-    m_res = await db.execute(
-        select(Membership)
-        .options(selectinload(Membership.organization))
-        .where(Membership.user_id == user.id, Membership.status == "active")
-    )
-    memberships = m_res.scalars().all()
+    insp = sa_inspect(user)
+
+    if "memberships" not in insp.unloaded:
+        memberships = [m for m in (user.memberships or []) if m.status == "active"]
+    else:
+        m_res = await db.execute(
+            select(Membership)
+            .options(joinedload(Membership.organization))
+            .where(Membership.user_id == user.id, Membership.status == "active")
+        )
+        memberships = m_res.unique().scalars().all()
+
     user_memberships = [
         UserMembershipRead(
             id=m.organization_id,
@@ -65,13 +77,26 @@ async def build_user_auth_response(user: User, db: AsyncSession) -> UserRead:
 
     org_summary = None
     if user.organization_id:
-        org_res = await db.execute(select(Organization).where(Organization.id == user.organization_id))
-        org = org_res.scalars().first()
+        org = None
+        if "organization" not in insp.unloaded and user.organization is not None and user.organization.id == user.organization_id:
+            org = user.organization
+        elif memberships:
+            for m in memberships:
+                if m.organization_id == user.organization_id and m.organization:
+                    org = m.organization
+                    break
+
+        if not org:
+            org_res = await db.execute(select(Organization).where(Organization.id == user.organization_id))
+            org = org_res.scalars().first()
+
         if org:
             org_summary = OrganizationSummary(
                 id=org.id,
                 name=org.name,
                 plan=org.plan,
+                industry=getattr(org, "industry", None),
+                industry_other=getattr(org, "industry_other", None),
             )
 
     return UserRead(
@@ -140,7 +165,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         role=role,
         title=user_in.title or "Software Engineer",
         department=user_in.department or "Engineering",
-        avatar_url=user_in.avatar_url or f"https://api.dicebear.com/7.x/initials/svg?seed={user_in.full_name}",
+        avatar_url=user_in.avatar_url,
         is_active=True,
         email_verified=False,
         onboarding_completed=onboarding_completed,
@@ -251,11 +276,20 @@ async def refresh_access_token(payload: TokenRefreshRequest, db: AsyncSession = 
 
 @router.get("/me", response_model=UserRead)
 async def get_current_authenticated_user(
+    request: Request,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve verified profile of currently authenticated user session including onboarding status."""
-    return await build_user_auth_response(current_user, db)
+    start_time = time.perf_counter()
+    response = await build_user_auth_response(current_user, db)
+    if settings.ENVIRONMENT == "development" or settings.DEBUG:
+        duration_ms = (time.perf_counter() - start_time) * 1000
+        query_count = get_current_query_count()
+        logger.info(
+            f"[DEV] GET /auth/me finished in {duration_ms:.2f}ms with {query_count} DB queries"
+        )
+    return response
 
 
 @router.post("/onboarding/complete", response_model=OnboardingCompleteResponse)
@@ -385,4 +419,19 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(g
         "verified": True,
         "email": user.email,
         "message": "Email signature successfully verified.",
+    }
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend email verification token for the authenticated user."""
+    token = create_email_verification_token(current_user.email)
+    return {
+        "success": True,
+        "message": "Verification email resent successfully.",
+        "email": current_user.email,
+        "token": token,
     }

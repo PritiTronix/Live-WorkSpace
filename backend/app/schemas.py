@@ -1,7 +1,11 @@
+import html
 import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel, EmailStr, ConfigDict, Field,
+    field_validator, model_validator, ValidationInfo, field_serializer
+)
 from backend.app.core.security import validate_password_strength
 
 
@@ -26,6 +30,21 @@ class UserBase(BaseSchema):
     timezone: Optional[str] = None
     last_active_at: Optional[datetime] = None
     on_call_role: Optional[str] = None
+    presence: Optional[str] = "offline"
+    account_state: Optional[str] = "active"
+    is_available: Optional[bool] = True
+    department_key: Optional[str] = None
+    user_set_status: Optional[str] = None
+    active_tasks_count: Optional[int] = 0
+    active_tickets_count: Optional[int] = 0
+    active_items_count: Optional[int] = 0
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def sanitize_avatar(cls, v: Optional[str]) -> Optional[str]:
+        if v and isinstance(v, str) and "dicebear.com" in v.lower():
+            return None
+        return v
 
 
 class UserUpdateRole(BaseSchema):
@@ -91,13 +110,34 @@ class OrganizationSummary(BaseSchema):
     id: str
     name: str
     plan: Optional[str] = None
+    industry: Optional[str] = None
+    industry_other: Optional[str] = None
+
+    @field_serializer("industry_other", when_used="json-unless-none")
+    def serialize_industry_other(self, v: Optional[str]) -> Optional[str]:
+        if v:
+            return html.escape(v)
+        return v
 
 
 class UserMembershipRead(BaseSchema):
     id: str
-    name: str
-    role: str
+    name: str = ""
+    role: str = "member"
     plan: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_orm_membership(cls, data: Any) -> Any:
+        if hasattr(data, "__table__") and getattr(data, "__tablename__", None) == "memberships":
+            org = getattr(data, "__dict__", {}).get("organization") or getattr(data, "organization", None)
+            return {
+                "id": getattr(data, "organization_id", getattr(data, "id", "")),
+                "name": getattr(org, "name", "") if org else "",
+                "role": getattr(data, "role", "member"),
+                "plan": getattr(org, "plan", None) if org else None,
+            }
+        return data
 
 
 class UserRead(UserBase):
@@ -123,7 +163,21 @@ class UserRead(UserBase):
             raw_dict["organization_summary"] = getattr(data, "organization_summary", None)
             mems = getattr(data, "__dict__", {}).get("memberships")
             if isinstance(mems, list):
-                raw_dict["memberships"] = mems
+                converted = []
+                for m in mems:
+                    if hasattr(m, "__table__") and getattr(m, "__tablename__", None) == "memberships":
+                        org = getattr(m, "__dict__", {}).get("organization") or getattr(m, "organization", None)
+                        converted.append(
+                            UserMembershipRead(
+                                id=getattr(m, "organization_id", getattr(m, "id", "")),
+                                name=getattr(org, "name", "") if org else "",
+                                role=getattr(m, "role", "member"),
+                                plan=getattr(org, "plan", None) if org else None,
+                            )
+                        )
+                    else:
+                        converted.append(m)
+                raw_dict["memberships"] = converted
             else:
                 raw_dict["memberships"] = []
             return raw_dict
@@ -221,16 +275,57 @@ class OrganizationBase(BaseSchema):
     slug: Optional[str] = None
     plan: Optional[str] = None
     industry: Optional[str] = None
+    industry_other: Optional[str] = None
     size_range: Optional[str] = None
     logo_path: Optional[str] = None
+
+    @field_serializer("industry_other", when_used="json-unless-none")
+    def serialize_industry_other(self, v: Optional[str]) -> Optional[str]:
+        if v:
+            return html.escape(v)
+        return v
 
 
 class OrganizationCreateRequest(BaseSchema):
     name: str = Field(..., min_length=2, max_length=100)
     industry: Optional[str] = Field(None, max_length=100)
+    industry_other: Optional[str] = Field(None, validate_default=True, max_length=60)
     size_range: Optional[str] = Field(None, max_length=50)
     logo_path: Optional[str] = Field(None, max_length=500)
     plan: Optional[str] = None
+
+    @field_validator("industry_other", mode="after")
+    @classmethod
+    def validate_industry_other(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        industry_val = (info.data.get("industry") or "").strip().lower()
+        if industry_val != "other":
+            return None
+
+        if not v or not v.strip():
+            raise ValueError("Specify your industry is required when 'Other' is selected.")
+
+        # Reject control characters
+        for ch in v:
+            code = ord(ch)
+            if code < 32 or (127 <= code <= 159):
+                raise ValueError("Control characters are not allowed.")
+
+        # Reject leading or trailing spaces
+        if v.startswith(" ") or v.endswith(" "):
+            raise ValueError("Industry cannot have leading or trailing spaces.")
+
+        # Normalize internal whitespace
+        normalized = re.sub(r"[ \t]+", " ", v)
+
+        # Allowed characters: letters, numbers, spaces and basic punctuation (&, -, /, ', .) only
+        # No emoji or control characters
+        if not re.match(r"^[A-Za-z0-9 &/'\.\-]+$", normalized):
+            raise ValueError("Industry can only contain letters, numbers, spaces, and basic punctuation (&, -, /, ', .).")
+
+        if len(normalized) < 2 or len(normalized) > 60:
+            raise ValueError("Industry must be between 2 and 60 characters.")
+
+        return normalized
 
 
 class OrganizationRead(OrganizationBase):

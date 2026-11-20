@@ -12,6 +12,19 @@ class OrganizationPlan(str, Enum):
     enterprise = "enterprise"
 
 
+class PresenceStatus(str, Enum):
+    online = "online"
+    away = "away"
+    busy = "busy"
+    offline = "offline"
+
+
+class AccountState(str, Enum):
+    active = "active"
+    inactive = "inactive"
+    pending = "pending"
+
+
 class MembershipRole(str, Enum):
     owner = "owner"
     admin = "admin"
