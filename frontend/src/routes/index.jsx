@@ -63,27 +63,27 @@ const OnboardingLayout = ({ currentUser }) => {
 
   return (
     <div className="min-h-screen bg-canvas-main flex flex-col text-text-primary font-body">
-      <header className="h-16 px-6 bg-surface-card border-b border-border-subtle flex items-center justify-between shrink-0 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-btn-primary flex items-center justify-center text-white font-bold shadow-sm">
+      <header className="h-16 px-4 sm:px-6 bg-surface-card border-b border-border-subtle flex items-center justify-between shrink-0 shadow-xs">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-9 h-9 rounded-xl bg-btn-primary flex items-center justify-center text-white font-bold shadow-sm shrink-0">
             <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
-          <span className="font-headline font-bold text-lg text-text-primary tracking-tight">
+          <span className="font-headline font-bold text-base sm:text-lg text-text-primary tracking-tight truncate">
             Live Workspace
           </span>
         </div>
         <button
           type="button"
           onClick={() => setShowLogoutModal(true)}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-border-subtle bg-surface-card hover:bg-canvas-lavender text-text-secondary hover:text-text-primary text-sm font-medium transition-colors shadow-xs"
+          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 min-h-[40px] sm:min-h-[36px] rounded-lg border border-border-subtle bg-surface-card hover:bg-canvas-lavender text-text-secondary hover:text-text-primary text-xs sm:text-sm font-medium transition-colors shadow-xs cursor-pointer shrink-0"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
         </button>
       </header>
-      <main className="flex-1 flex flex-col justify-center items-center p-6">
+      <main className="flex-1 flex flex-col justify-center items-center p-3 sm:p-6 w-full max-w-full">
         <Outlet context={{ currentUser }} />
       </main>
       <LogoutModal

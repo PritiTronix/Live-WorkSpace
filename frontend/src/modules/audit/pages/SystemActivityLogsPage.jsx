@@ -166,7 +166,7 @@ export const SystemActivityLogsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas-default text-text-primary p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-canvas-default text-text-primary p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* ── 1. Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border-subtle">
         <div>
@@ -185,7 +185,7 @@ export const SystemActivityLogsPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           <div className="px-3 py-1.5 rounded-lg bg-canvas-lavender border border-primary/20 text-primary font-label-sm text-label-sm font-semibold flex items-center gap-1.5 shadow-sm">
             <span className="material-symbols-outlined text-[16px]">domain</span>
             <span>Organization Scoped</span>
@@ -194,7 +194,7 @@ export const SystemActivityLogsPage = () => {
           <button
             onClick={() => setIsExportOpen(true)}
             type="button"
-            className="px-4 py-2 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all transform active:scale-98"
+            className="px-4 py-2 min-h-[40px] sm:min-h-[44px] rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all transform active:scale-98"
           >
             <span className="material-symbols-outlined text-[18px]">file_download</span>
             <span>Export Logs</span>
@@ -415,7 +415,7 @@ export const SystemActivityLogsPage = () => {
       {/* ── 5. Audit Ledger Table ── */}
       <div className="bg-surface-card rounded-2xl border border-border-subtle shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[850px] text-left border-collapse">
             <thead>
               <tr className="bg-canvas-default border-b border-border-subtle text-text-muted font-label-sm text-label-sm uppercase tracking-wider">
                 <th className="py-3 px-5">Date & Time (UTC)</th>
@@ -565,18 +565,18 @@ export const SystemActivityLogsPage = () => {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
               type="button"
-              className="p-1 rounded border border-border-subtle hover:bg-canvas-lavender disabled:opacity-40 transition-colors"
+              className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded border border-border-subtle hover:bg-canvas-lavender disabled:opacity-40 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">chevron_left</span>
             </button>
-            <span className="font-semibold text-text-primary">
+            <span className="font-semibold text-text-primary px-1">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
               type="button"
-              className="p-1 rounded border border-border-subtle hover:bg-canvas-lavender disabled:opacity-40 transition-colors"
+              className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded border border-border-subtle hover:bg-canvas-lavender disabled:opacity-40 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">chevron_right</span>
             </button>

@@ -1044,7 +1044,7 @@ export const TeamMembersPage = () => {
             {/* MAIN MEMBER VIEW: TABLE */}
             {viewMode === 'table' && filteredMembers.length > 0 && (
               <div className="overflow-x-auto bg-white dark:bg-[#1a1b32] rounded-xl border border-[#E5E5EF] dark:border-[#2e2f41] shadow-xs">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[720px] text-left text-xs">
                   <thead className="bg-[#F5F4FC] dark:bg-[#242542] text-[#9C9CA9] uppercase tracking-wider font-bold">
                     <tr>
                       <th className="px-5 py-3.5">Member</th>

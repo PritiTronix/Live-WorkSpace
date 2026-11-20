@@ -323,7 +323,7 @@ export const CentralFilesPage = () => {
         viewMode === 'table' ? (
           <div className="bg-surface-card rounded-xl border border-border-subtle shadow-sm overflow-hidden mb-8">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full min-w-[640px] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border-subtle bg-canvas-lavender/60 text-text-secondary text-xs uppercase tracking-wider font-semibold">
                     <th className="py-3 px-4 w-10">
@@ -423,7 +423,7 @@ export const CentralFilesPage = () => {
         /* Primary Files Table */
         <div className="bg-surface-card rounded-xl border border-border-subtle shadow-sm overflow-hidden mb-8">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[680px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-border-subtle bg-canvas-lavender/60 text-text-secondary text-xs uppercase tracking-wider font-semibold">
                   <th className="py-3 px-4 w-10">

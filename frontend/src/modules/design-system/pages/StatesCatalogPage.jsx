@@ -25,7 +25,7 @@ export const StatesCatalogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas-main p-6 lg:p-10">
+    <div className="min-h-screen bg-canvas-main p-4 sm:p-6 lg:p-10">
       {/* Toast Feedback */}
       {feedback && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-text-primary text-white font-label-md text-label-md shadow-2xl flex items-center gap-2 animate-in fade-in duration-200">
@@ -53,11 +53,11 @@ export const StatesCatalogPage = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center p-1 rounded-xl bg-white border border-border-subtle shadow-sm self-start">
+          <div className="flex items-center p-1 rounded-xl bg-white border border-border-subtle shadow-sm self-start overflow-x-auto w-full sm:w-auto max-w-full">
             <button
               type="button"
               onClick={() => setActiveTab('skeletons')}
-              className={`px-4 py-2 rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 min-h-[40px] rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'skeletons'
                   ? 'bg-btn-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text-primary'
@@ -69,7 +69,7 @@ export const StatesCatalogPage = () => {
             <button
               type="button"
               onClick={() => setActiveTab('errors')}
-              className={`px-4 py-2 rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 min-h-[40px] rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'errors'
                   ? 'bg-btn-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text-primary'
@@ -81,7 +81,7 @@ export const StatesCatalogPage = () => {
             <button
               type="button"
               onClick={() => setActiveTab('rbac')}
-              className={`px-4 py-2 rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 ${
+              className={`px-4 py-2 min-h-[40px] rounded-lg font-label-md text-label-md transition-all flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'rbac'
                   ? 'bg-btn-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text-primary'
@@ -99,7 +99,7 @@ export const StatesCatalogPage = () => {
         {activeTab === 'skeletons' && (
           <div className="space-y-8 animate-in fade-in duration-200">
             {/* Control Bar */}
-            <div className="p-4 rounded-xl bg-white border border-border-subtle shadow-sm flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-white border border-border-subtle shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="font-headline text-headline-sm text-text-primary block">
                   Skeleton Loading Matrix
@@ -111,7 +111,7 @@ export const StatesCatalogPage = () => {
               <button
                 type="button"
                 onClick={() => setShowLoadedState(!showLoadedState)}
-                className="px-4 py-2 rounded-lg border border-border-subtle bg-canvas-main hover:bg-canvas-lavender font-label-md text-label-md text-text-primary transition-all flex items-center gap-2"
+                className="px-4 py-2 min-h-[40px] rounded-lg border border-border-subtle bg-canvas-main hover:bg-canvas-lavender font-label-md text-label-md text-text-primary transition-all flex items-center gap-2 self-start sm:self-auto"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-primary" />
                 <span>{showLoadedState ? 'Show Shimmer Placeholders' : 'Show Loaded State'}</span>

@@ -83,7 +83,7 @@ export const AuditExportDialog = ({ isOpen, onClose, defaultTimeHorizon = '7d' }
             <label className="block font-label-md text-label-md font-semibold text-text-primary mb-2">
               Audit Time Horizon
             </label>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
               {[
                 { id: 'today', label: 'Last 24 Hours' },
                 { id: '7d', label: 'Last 7 Days' },
@@ -93,7 +93,7 @@ export const AuditExportDialog = ({ isOpen, onClose, defaultTimeHorizon = '7d' }
                   key={opt.id}
                   type="button"
                   onClick={() => setTimeHorizon(opt.id)}
-                  className={`py-2 px-3 rounded-lg border font-label-sm text-label-sm font-medium transition-all ${
+                  className={`py-2 px-3 min-h-[40px] rounded-lg border font-label-sm text-label-sm font-medium transition-all ${
                     timeHorizon === opt.id
                       ? 'border-primary bg-primary/10 text-primary font-bold'
                       : 'border-border-subtle text-text-secondary hover:bg-canvas-lavender'

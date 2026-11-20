@@ -54,7 +54,7 @@ export const AnalyticsExportModal = ({ isOpen, onClose, timeHorizon, projectId, 
           <button
             onClick={onClose}
             type="button"
-            className="w-8 h-8 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors"
+            className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary flex items-center justify-center transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
@@ -74,7 +74,7 @@ export const AnalyticsExportModal = ({ isOpen, onClose, timeHorizon, projectId, 
             <label className="block font-label-md text-label-md font-semibold text-text-primary mb-2.5">
               Export Format
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {/* CSV: Supported */}
               <button
                 type="button"

@@ -290,7 +290,7 @@ export const DashboardOverviewPage = () => {
     <div className="flex flex-col gap-6 max-w-7xl mx-auto pb-12 font-['Inter']">
       {/* Top Header Content */}
       <div className="flex flex-wrap justify-between items-start gap-4">
-        <div className="flex min-w-72 flex-col gap-1.5">
+        <div className="flex min-w-0 sm:min-w-72 flex-1 flex-col gap-1.5">
           <h1 className="text-text-primary text-3xl lg:text-4xl font-extrabold leading-tight tracking-[-0.033em] font-['Plus_Jakarta_Sans']">
             {greeting}
           </h1>
@@ -1172,7 +1172,7 @@ export const DashboardOverviewPage = () => {
 
           {/* Interactive Tickets Table */}
           <div className="overflow-x-auto">
-            <div className="table w-full text-left text-xs" role="table">
+            <div className="table w-full min-w-[640px] text-left text-xs" role="table">
               <div className="table-header-group bg-surface-container-low text-text-secondary uppercase tracking-wider font-semibold border-b border-border-subtle" role="rowgroup">
                 <div className="table-row" role="row">
                   <div className="table-cell py-3 px-4 font-semibold" role="columnheader">Ticket ID & Summary</div>

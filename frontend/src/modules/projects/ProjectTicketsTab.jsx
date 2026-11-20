@@ -168,7 +168,7 @@ export const ProjectTicketsTab = () => {
       ) : (
         <div className="bg-surface-card rounded-xl shadow-sm border border-border-subtle/50 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[680px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-border-subtle bg-canvas-main/40 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
                   <th className="py-3 px-4">Ticket</th>

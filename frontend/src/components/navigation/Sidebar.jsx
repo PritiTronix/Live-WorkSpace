@@ -19,15 +19,16 @@ const getInitials = (str) => {
 };
 
 /** Single nav link with optional badge and tooltip for collapsed state */
-const NavItem = ({ to, icon, label, badge, isCollapsed }) => {
+const NavItem = ({ to, icon, label, badge, isCollapsed, onClick }) => {
   const location = useLocation();
   const isActive = isSidebarItemActive(location.pathname, to);
 
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       title={isCollapsed ? label : undefined}
-      className={`relative flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
+      className={`relative flex items-center justify-between px-space-sm py-2.5 min-h-[44px] rounded-lg transition-colors ${
         isActive
           ? 'bg-canvas-lavender text-primary font-semibold'
           : 'text-text-secondary hover:bg-canvas-lavender hover:text-text-primary'
@@ -91,12 +92,13 @@ const ExpandableNavItem = ({ to, icon, label, isCollapsed, children }) => {
 };
 
 /** Sub-nav leaf link (indented under expandable parent) */
-const SubNavItem = ({ to, label, end = false }) => (
+const SubNavItem = ({ to, label, end = false, onClick }) => (
   <NavLink
     to={to}
     end={end}
+    onClick={onClick}
     className={({ isActive }) =>
-      `flex items-center px-2 py-1.5 rounded-lg font-label-sm text-label-sm transition-colors ${
+      `flex items-center px-2 py-2 min-h-[40px] rounded-lg font-label-sm text-label-sm transition-colors ${
         isActive
           ? 'text-primary font-semibold bg-canvas-lavender'
           : 'text-text-secondary hover:text-text-primary hover:bg-canvas-lavender'
@@ -126,6 +128,7 @@ export const Sidebar = ({
   priorityIssuesCount = 0,
   isMobile = false,
   onOpenShortcuts,
+  onNavigate,
 }) => {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
@@ -180,8 +183,10 @@ export const Sidebar = ({
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto border-r border-border-subtle transition-all duration-200 ${
-        isCollapsed ? 'w-20' : 'w-72'
+      className={`${
+        isMobile ? 'relative w-full min-h-full' : 'fixed left-0 top-0 h-full'
+      } bg-surface-sidebar flex flex-col justify-between shadow-[0_1px_8px_rgba(20,21,41,0.04)] z-50 overflow-y-auto border-r border-border-subtle transition-all duration-200 ${
+        isCollapsed ? 'w-20' : isMobile ? 'w-full' : 'w-72'
       }`}
     >
       {/* ── Top: Brand + Toggle ── */}
@@ -254,14 +259,15 @@ export const Sidebar = ({
           <div className="space-y-space-xs">
             <SectionLabel label="Workspace" isCollapsed={isCollapsed} />
             <div className="space-y-0.5">
-              <NavItem to="/workspace/dashboard" icon="home" label="Home" isCollapsed={isCollapsed} end />
-              <NavItem to="/workspace/tasks/my-tasks" icon="task_alt" label="My Tasks" isCollapsed={isCollapsed} />
+              <NavItem to="/workspace/dashboard" icon="home" label="Home" isCollapsed={isCollapsed} onClick={onNavigate} end />
+              <NavItem to="/workspace/tasks/my-tasks" icon="task_alt" label="My Tasks" isCollapsed={isCollapsed} onClick={onNavigate} />
               <NavItem
                 to="/workspace/notifications"
                 icon="notifications"
                 label="Notifications"
                 badge={unreadNotifications > 0 ? unreadNotifications : null}
                 isCollapsed={isCollapsed}
+                onClick={onNavigate}
               />
               <NavItem
                 to="/workspace/inbox"
@@ -269,6 +275,7 @@ export const Sidebar = ({
                 label="Inbox"
                 badge={inboxCount > 0 ? inboxCount : null}
                 isCollapsed={isCollapsed}
+                onClick={onNavigate}
               />
             </div>
           </div>
@@ -277,8 +284,8 @@ export const Sidebar = ({
           <div className="space-y-space-xs">
             <SectionLabel label="Project Management" isCollapsed={isCollapsed} />
             <div className="space-y-0.5">
-              <NavItem to="/workspace/projects" icon="folder_open" label="Projects" isCollapsed={isCollapsed} />
-              <NavItem to="/workspace/tasks/all" icon="format_list_bulleted" label="All Tasks" isCollapsed={isCollapsed} />
+              <NavItem to="/workspace/projects" icon="folder_open" label="Projects" isCollapsed={isCollapsed} onClick={onNavigate} />
+              <NavItem to="/workspace/tasks/all" icon="format_list_bulleted" label="All Tasks" isCollapsed={isCollapsed} onClick={onNavigate} />
               {/* Expandable Tickets with sub-nav */}
               <ExpandableNavItem
                 to="/workspace/tickets"
@@ -292,6 +299,7 @@ export const Sidebar = ({
                     to={view.route}
                     label={view.label}
                     end={view.end}
+                    onClick={onNavigate}
                   />
                 ))}
               </ExpandableNavItem>
@@ -302,9 +310,9 @@ export const Sidebar = ({
           <div className="space-y-space-xs">
             <SectionLabel label="Collaboration" isCollapsed={isCollapsed} />
             <div className="space-y-0.5">
-              <NavItem to="/workspace/members" icon="group" label="Team Members" isCollapsed={isCollapsed} />
-              <NavItem to="/workspace/discussions" icon="forum" label="Discussions" isCollapsed={isCollapsed} />
-              <NavItem to="/workspace/files" icon="attach_file" label="Files" isCollapsed={isCollapsed} />
+              <NavItem to="/workspace/members" icon="group" label="Team Members" isCollapsed={isCollapsed} onClick={onNavigate} />
+              <NavItem to="/workspace/discussions" icon="forum" label="Discussions" isCollapsed={isCollapsed} onClick={onNavigate} />
+              <NavItem to="/workspace/files" icon="attach_file" label="Files" isCollapsed={isCollapsed} onClick={onNavigate} />
             </div>
           </div>
 
@@ -314,6 +322,7 @@ export const Sidebar = ({
             <div className="space-y-0.5">
               <NavLink
                 to={PRIORITY_ISSUES_NAV.route}
+                onClick={onNavigate}
                 title={isCollapsed ? PRIORITY_ISSUES_NAV.label : undefined}
                 className={
                   `flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors ${
@@ -329,9 +338,9 @@ export const Sidebar = ({
                 </div>
                 {priorityIssuesCount > 0 && <span className="w-2 h-2 rounded-full bg-severity-blocker" />}
               </NavLink>
-              <NavItem to="/workspace/sla" icon="timer" label="SLA Overview" isCollapsed={isCollapsed} />
-              <NavItem to="/workspace/audit-logs" icon="history" label="Activity Logs" isCollapsed={isCollapsed} />
-              <NavItem to="/workspace/analytics" icon="analytics" label="Reports" isCollapsed={isCollapsed} />
+              <NavItem to="/workspace/sla" icon="timer" label="SLA Overview" isCollapsed={isCollapsed} onClick={onNavigate} />
+              <NavItem to="/workspace/audit-logs" icon="history" label="Activity Logs" isCollapsed={isCollapsed} onClick={onNavigate} />
+              <NavItem to="/workspace/analytics" icon="analytics" label="Reports" isCollapsed={isCollapsed} onClick={onNavigate} />
             </div>
           </div>
         </nav>
@@ -345,6 +354,7 @@ export const Sidebar = ({
             icon="settings"
             label="Settings"
             isCollapsed={isCollapsed}
+            onClick={onNavigate}
           />
           <button
             ref={helpButtonRef}
@@ -362,6 +372,7 @@ export const Sidebar = ({
         {!isCollapsed && (
           <NavLink
             to="/workspace/settings/profile"
+            onClick={onNavigate}
             className="pt-space-sm flex items-center justify-between px-space-sm py-space-xs rounded-xl hover:bg-canvas-lavender transition-colors cursor-pointer border border-border-subtle"
           >
             <div className="flex items-center gap-space-sm min-w-0">

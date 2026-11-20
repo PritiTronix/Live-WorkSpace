@@ -55,7 +55,7 @@ export const NotificationCenterPage = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="font-headline-lg text-headline-lg text-text-primary">
             {isInbox ? 'Inbox' : 'Notifications'}
@@ -74,7 +74,7 @@ export const NotificationCenterPage = () => {
           <button
             onClick={markAllRead}
             type="button"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border-subtle text-primary font-label-md text-label-md hover:bg-canvas-lavender transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-lg border border-border-subtle text-primary font-label-md text-label-md hover:bg-canvas-lavender transition-colors self-start sm:self-auto"
           >
             <span className="material-symbols-outlined text-[16px]">done_all</span>
             <span>Mark all read</span>

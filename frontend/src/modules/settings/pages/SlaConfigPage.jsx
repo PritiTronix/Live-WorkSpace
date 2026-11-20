@@ -572,7 +572,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
           <nav className="flex items-center gap-1 min-w-max">
             <button
               onClick={() => handleTabSwitch('workspace')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'workspace'
                   ? 'bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] font-bold'
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
@@ -583,7 +583,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
             </button>
             <button
               onClick={() => handleTabSwitch('roles')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'roles'
                   ? 'bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] font-bold'
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
@@ -594,14 +594,14 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
             </button>
             <button
               onClick={() => handleTabSwitch('members', '/workspace/members')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d] cursor-pointer"
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d] cursor-pointer"
             >
               <Users className="w-4 h-4" />
               <span>Member Management</span>
             </button>
             <button
               onClick={() => handleTabSwitch('sla', '/workspace/settings/sla')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'sla'
                   ? 'bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] font-bold shadow-xs'
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
@@ -613,7 +613,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
             </button>
             <button
               onClick={() => handleTabSwitch('notifications', '/workspace/settings/notifications')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'notifications'
                   ? 'bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] font-bold shadow-xs'
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
@@ -624,7 +624,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
             </button>
             <button
               onClick={() => handleTabSwitch('appearance', '/workspace/settings/appearance')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 cursor-pointer ${
                 activeTab === 'appearance'
                   ? 'bg-[#eeecff] dark:bg-[#2e2f41] text-[#6040F0] font-bold shadow-xs'
                   : 'text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d]'
@@ -635,7 +635,7 @@ export const SlaConfigPage = ({ initialTab = 'sla' }) => {
             </button>
             <button
               onClick={() => handleTabSwitch('profile', '/workspace/settings/profile')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d] cursor-pointer"
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-[#5C5C70] dark:text-[#a0a0b8] hover:bg-[#F5F4FC] dark:hover:bg-[#23243d] cursor-pointer"
             >
               <Users className="w-4 h-4" />
               <span>User Profile</span>

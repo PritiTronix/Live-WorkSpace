@@ -125,7 +125,7 @@ export const TicketsDashboardPage = () => {
       />
 
       {/* Summary KPI Stat Cards Row (Screen 61) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-sm" role="region" aria-label="Ticket Summary Cards">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-sm" role="region" aria-label="Ticket Summary Cards">
         {/* Total */}
         <button
           type="button"
@@ -456,7 +456,7 @@ export const TicketsDashboardPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-body-sm text-body-sm">
+            <table className="w-full min-w-[700px] text-left font-body-sm text-body-sm">
               <thead className="bg-canvas-lavender/70 font-label-sm text-label-sm text-text-muted uppercase tracking-wider border-b border-border-subtle select-none">
                 <tr>
                   <th className="py-3 px-4">Ticket</th>

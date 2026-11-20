@@ -157,7 +157,7 @@ export const ProjectKanbanTab = () => {
             setNewTaskColumn('to_do');
             setShowCreateTask(true);
           }}
-          className="h-9 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all"
+          className="h-10 sm:h-9 px-3.5 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           <span>New Task</span>
@@ -170,8 +170,8 @@ export const ProjectKanbanTab = () => {
           <span className="ml-3 font-body-md text-text-secondary">Loading tasks...</span>
         </div>
       ) : (
-        /* Kanban Columns Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md items-start">
+        /* Kanban Columns Container: Smooth Horizontal Scroll on mobile/tablet, 4-col Grid on Desktop */
+        <div className="flex overflow-x-auto pb-4 gap-space-md xl:grid xl:grid-cols-4 xl:overflow-x-visible items-start">
           {columns.map((col) => {
             const colTasks = filteredTasks.filter((t) => {
               const s = (t.status || 'to_do').toLowerCase().replace('_', '');
@@ -184,7 +184,7 @@ export const ProjectKanbanTab = () => {
                 key={col.key}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, col.key)}
-                className="bg-canvas-main/80 rounded-xl p-space-md flex flex-col gap-space-sm min-h-[600px] border border-border-subtle/50 transition-colors hover:bg-canvas-lavender/30"
+                className="w-[280px] sm:w-[320px] shrink-0 xl:w-auto xl:shrink bg-canvas-main/80 rounded-xl p-space-md flex flex-col gap-space-sm min-h-[600px] border border-border-subtle/50 transition-colors hover:bg-canvas-lavender/30"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-space-xs border-b border-border-subtle/60">

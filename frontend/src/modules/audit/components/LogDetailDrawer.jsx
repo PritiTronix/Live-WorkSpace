@@ -83,7 +83,7 @@ export const LogDetailDrawer = ({ logId, isOpen, onClose }) => {
               onClick={handleCopyId}
               type="button"
               title="Copy Event ID"
-              className="p-1.5 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors"
+              className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">
                 {copiedId ? 'check' : 'content_copy'}
@@ -93,7 +93,7 @@ export const LogDetailDrawer = ({ logId, isOpen, onClose }) => {
               <Link
                 to={`/workspace/tickets/${logDetail.ticket_id}`}
                 title="View Target Ticket"
-                className="p-1.5 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors inline-flex"
+                className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors inline-flex"
               >
                 <span className="material-symbols-outlined text-[18px]">open_in_new</span>
               </Link>
@@ -101,7 +101,7 @@ export const LogDetailDrawer = ({ logId, isOpen, onClose }) => {
             <button
               onClick={onClose}
               type="button"
-              className="p-1.5 rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors"
+              className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg hover:bg-canvas-lavender text-text-muted hover:text-text-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>

@@ -84,7 +84,7 @@ export const MyTasksPage = () => {
       </div>
 
       {/* Summary Stat Cards (Strictly dynamic from API data) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Assigned */}
         <div className="p-4 rounded-2xl bg-surface-card border border-border-subtle shadow-xs flex items-center justify-between">
           <div>
@@ -147,7 +147,7 @@ export const MyTasksPage = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center gap-1.5 p-1 bg-surface-card rounded-xl border border-border-subtle shadow-xs w-fit">
+      <div className="flex items-center gap-1.5 p-1 bg-surface-card rounded-xl border border-border-subtle shadow-xs w-full sm:w-fit overflow-x-auto">
         {[
           { id: 'all', label: 'All Tasks', count: stats.total },
           { id: TASK_STATUS.IN_PROGRESS, label: 'In Progress', count: stats.in_progress },

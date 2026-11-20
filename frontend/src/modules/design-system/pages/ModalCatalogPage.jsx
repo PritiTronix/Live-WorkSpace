@@ -30,7 +30,7 @@ export const ModalCatalogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas-main p-6 lg:p-10">
+    <div className="min-h-screen bg-canvas-main p-4 sm:p-6 lg:p-10">
       {/* Toast Feedback */}
       {feedbackMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-text-primary text-white font-label-md text-label-md shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -228,7 +228,7 @@ export const ModalCatalogPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="p-6 rounded-2xl bg-white border border-border-subtle flex items-center justify-between gap-4">
+            <div className="p-6 rounded-2xl bg-white border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="font-headline text-headline-sm text-text-primary flex items-center gap-2">
                   <Trash2 className="w-4 h-4 text-severity-blocker" />
@@ -241,13 +241,13 @@ export const ModalCatalogPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveModal('delete-ticket')}
-                className="px-4 py-2 rounded-lg bg-severity-blocker text-white font-label-md text-label-md hover:bg-red-600 transition-all flex-shrink-0"
+                className="px-4 py-2 min-h-[40px] rounded-lg bg-severity-blocker text-white font-label-md text-label-md hover:bg-red-600 transition-all flex-shrink-0 self-start sm:self-auto"
               >
                 Open Dialog
               </button>
             </div>
 
-            <div className="p-6 rounded-2xl bg-white border border-border-subtle flex items-center justify-between gap-4">
+            <div className="p-6 rounded-2xl bg-white border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="font-headline text-headline-sm text-text-primary flex items-center gap-2">
                   <Download className="w-4 h-4 text-primary" />
@@ -260,7 +260,7 @@ export const ModalCatalogPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveModal('export-data')}
-                className="px-4 py-2 rounded-lg bg-btn-primary text-white font-label-md text-label-md hover:bg-primary-hover transition-all flex-shrink-0"
+                className="px-4 py-2 min-h-[40px] rounded-lg bg-btn-primary text-white font-label-md text-label-md hover:bg-primary-hover transition-all flex-shrink-0 self-start sm:self-auto"
               >
                 Open Dialog
               </button>

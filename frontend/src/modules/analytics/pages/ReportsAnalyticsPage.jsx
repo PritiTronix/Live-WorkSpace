@@ -163,7 +163,7 @@ export const ReportsAnalyticsPage = () => {
   const highPriorityPct = totalSevCount > 0 ? ((highPriorityCount / totalSevCount) * 100).toFixed(0) : '0';
 
   return (
-    <div className="min-h-screen bg-canvas-default text-text-primary p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-canvas-default text-text-primary p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       {/* ── 1. Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border-subtle">
         <div>
@@ -183,7 +183,7 @@ export const ReportsAnalyticsPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           {/* Neutral status indicator (Removed fake live-sync ping F-11) */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-card border border-border-subtle text-body-sm text-text-secondary shadow-sm">
             <span className="w-2 h-2 rounded-full bg-primary" />
@@ -206,7 +206,7 @@ export const ReportsAnalyticsPage = () => {
           <button
             type="button"
             onClick={() => setIsExportModalOpen(true)}
-            className="px-4 py-2 rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all transform active:scale-98"
+            className="px-4 py-2 min-h-[40px] sm:min-h-[44px] rounded-lg bg-btn-primary hover:bg-primary-hover text-on-primary font-label-md text-label-md flex items-center gap-2 shadow-[0_2px_8px_rgba(104,72,232,0.25)] transition-all transform active:scale-98"
           >
             <span className="material-symbols-outlined text-[18px]">file_download</span>
             <span>Export Report</span>
@@ -282,7 +282,7 @@ export const ReportsAnalyticsPage = () => {
       </div>
 
       {/* ── 3. Six KPI Cards (Handling null/unavailable values gracefully F-02) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {/* Total Tickets */}
         <div className="bg-surface-card p-4 rounded-xl border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between text-text-secondary mb-1.5">
@@ -535,7 +535,7 @@ export const ReportsAnalyticsPage = () => {
           </div>
 
           {/* Summary Strip (Handling null values F-02) */}
-          <div className="mt-4 pt-4 border-t border-border-subtle grid grid-cols-2 gap-4">
+          <div className="mt-4 pt-4 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm ${velocityTrend.net_velocity_ratio !== null ? 'bg-status-resolved/10 text-status-resolved' : 'bg-canvas-default text-text-muted border border-border-subtle'}`}>
                 {velocityTrend.net_velocity_ratio !== null ? `${velocityTrend.net_velocity_ratio}x` : 'N/A'}
@@ -672,7 +672,7 @@ export const ReportsAnalyticsPage = () => {
           </div>
 
           {/* Mini Status Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 pt-2">
             {statusItems.map((st) => {
               const borderColors = {
                 open: 'border-l-[#3888F8]',
@@ -758,7 +758,7 @@ export const ReportsAnalyticsPage = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[680px] text-left border-collapse">
             <thead>
               <tr className="bg-canvas-default border-b border-border-subtle text-text-muted font-label-sm text-label-sm uppercase tracking-wider">
                 <th className="py-3 px-6">Member</th>

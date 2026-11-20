@@ -137,7 +137,7 @@ export const Modal = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 md:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6"
     >
       {/* Fixed Backdrop Overlay */}
       <div
@@ -154,10 +154,10 @@ export const Modal = ({
       >
         {/* Sticky Header with Title and Always-Visible Close Button */}
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between px-6 py-4 border-b border-border-subtle/80 bg-surface-card sticky top-0 z-20 flex-shrink-0">
-            <div className="flex items-center gap-3 min-w-0 pr-3 text-left">
+          <div className="flex items-start justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border-subtle/80 bg-surface-card sticky top-0 z-20 flex-shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2 sm:pr-3 text-left">
               {Icon && (
-                <div className="w-10 h-10 rounded-xl bg-canvas-lavender text-btn-primary flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-canvas-lavender text-btn-primary flex items-center justify-center flex-shrink-0">
                   {typeof Icon === 'string' ? (
                     <span className="material-symbols-outlined text-[20px]">{Icon}</span>
                   ) : (
@@ -167,12 +167,12 @@ export const Modal = ({
               )}
               <div className="min-w-0">
                 {title && (
-                  <h3 id={titleId} className="font-headline text-headline-sm text-text-primary tracking-tight truncate">
+                  <h3 id={titleId} className="font-headline text-headline-sm text-text-primary tracking-tight truncate text-sm sm:text-base md:text-lg">
                     {title}
                   </h3>
                 )}
                 {subtitle && (
-                  <p className="font-body text-body-sm text-text-secondary mt-0.5 truncate">
+                  <p className="font-body text-body-sm text-text-secondary mt-0.5 truncate text-xs sm:text-sm">
                     {subtitle}
                   </p>
                 )}
@@ -183,10 +183,10 @@ export const Modal = ({
               <button
                 type="button"
                 onClick={handleCloseAttempt}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-canvas-lavender transition-colors flex-shrink-0 cursor-pointer"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-canvas-lavender transition-colors flex-shrink-0 cursor-pointer"
                 aria-label="Close dialog"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 sm:w-4 sm:h-4" />
               </button>
             )}
           </div>
@@ -194,7 +194,7 @@ export const Modal = ({
 
         {/* Scrollable Content Body with overscroll-behavior: contain */}
         <div
-          className="p-6 overflow-y-auto flex-1 overscroll-contain text-left"
+          className="p-4 sm:p-6 overflow-y-auto flex-1 overscroll-contain text-left"
           style={{ overscrollBehavior: 'contain' }}
         >
           {children}
@@ -202,7 +202,7 @@ export const Modal = ({
 
         {/* Sticky Footer */}
         {footer && (
-          <div className="px-6 py-4 bg-canvas-main/80 border-t border-border-subtle flex items-center justify-end gap-3 sticky bottom-0 z-20 flex-shrink-0">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-canvas-main/80 border-t border-border-subtle flex items-center justify-end flex-wrap sm:flex-nowrap gap-2 sm:gap-3 sticky bottom-0 z-20 flex-shrink-0">
             {footer}
           </div>
         )}

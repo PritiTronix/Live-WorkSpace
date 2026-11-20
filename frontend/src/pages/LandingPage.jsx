@@ -342,7 +342,7 @@ export const LandingPage = () => {
               onClick={() => setIsMobileMenuOpen((prev) => !prev)}
               aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={isMobileMenuOpen}
-              className="md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender focus:outline-none focus:ring-2 focus:ring-btn-primary/30 transition-colors"
+              className="md:hidden w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-canvas-lavender focus:outline-none focus:ring-2 focus:ring-btn-primary/30 transition-colors cursor-pointer"
             >
               <span className="material-symbols-outlined text-2xl">
                 {isMobileMenuOpen ? 'close' : 'menu'}
@@ -368,8 +368,8 @@ export const LandingPage = () => {
                     aria-current={isActive ? 'true' : undefined}
                     className={
                       isActive
-                        ? 'text-btn-primary font-label-lg font-semibold py-2 px-3 rounded-lg bg-canvas-lavender transition-colors'
-                        : 'font-body-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/60 py-2 px-3 rounded-lg transition-colors'
+                        ? 'text-btn-primary font-label-lg font-semibold py-2.5 px-3 min-h-[44px] flex items-center rounded-lg bg-canvas-lavender transition-colors'
+                        : 'font-body-md text-text-secondary hover:text-text-primary hover:bg-canvas-lavender/60 py-2.5 px-3 min-h-[44px] flex items-center rounded-lg transition-colors'
                     }
                   >
                     {link.label}
@@ -382,14 +382,14 @@ export const LandingPage = () => {
                 <Link
                   to="/auth/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-lg border border-border-subtle bg-surface-card font-label-lg text-text-primary hover:bg-canvas-lavender transition-all"
+                  className="w-full text-center py-2.5 min-h-[44px] flex items-center justify-center rounded-lg border border-border-subtle bg-surface-card font-label-lg text-text-primary hover:bg-canvas-lavender transition-all"
                 >
                   Login
                 </Link>
                 <Link
                   to="/workspace/dashboard"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-lg bg-btn-primary font-label-lg text-on-primary hover:bg-primary-hover shadow-sm transition-all"
+                  className="w-full text-center py-2.5 min-h-[44px] flex items-center justify-center rounded-lg bg-btn-primary font-label-lg text-on-primary hover:bg-primary-hover shadow-sm transition-all"
                 >
                   Get Started
                 </Link>
