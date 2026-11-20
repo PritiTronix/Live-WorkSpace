@@ -19,6 +19,7 @@ from backend.app.dependencies import get_current_active_user
 from backend.app.models import Task, Project, User, ProjectActivity, TaskComment, TaskAttachment
 from backend.app.enums import TaskStatus, TaskPriority, TaskType
 from backend.app.core.websockets import ws_manager, authenticate_ws
+from backend.app.services.metrics import get_my_tasks_stats
 from backend.app.routes.tasks_schemas import (
     TaskCreate,
     TaskUpdate,
@@ -170,7 +171,7 @@ async def list_my_tasks(
     db: AsyncSession = Depends(get_db),
 ):
     """Return tasks assigned to current authenticated user within their organization."""
-    return await list_tasks(
+    resp = await list_tasks(
         page=page,
         page_size=page_size,
         status=status,
@@ -183,6 +184,18 @@ async def list_my_tasks(
         current_user=current_user,
         db=db,
     )
+    my_stats = await get_my_tasks_stats(
+        db=db,
+        user_id=current_user.id,
+        organization_id=current_user.organization_id,
+    )
+    resp.stats = my_stats
+    resp.todo_count = my_stats["todo"]
+    resp.in_progress_count = my_stats["in_progress"]
+    resp.done_count = my_stats["done"]
+    if not status or status.lower() == "all":
+        resp.total = my_stats["total"]
+    return resp
 
 
 # ---------------------------------------------------------------------------

@@ -81,3 +81,27 @@ export const isSidebarItemActive = (currentPath, target) => {
 
   return false;
 };
+
+/**
+ * Determines whether a given pathname belongs to the onboarding route hierarchy.
+ *
+ * @param {string} path - Current router pathname (e.g., location.pathname)
+ * @returns {boolean} True if the path is an onboarding route
+ */
+export const isOnboardingPath = (path) => {
+  if (!path) return false;
+  const clean = path.replace(/\/+$/, '');
+  return clean === '/onboarding' || clean.startsWith('/onboarding/');
+};
+
+/**
+ * Determines whether a given pathname belongs to the workspace route hierarchy.
+ *
+ * @param {string} path - Current router pathname (e.g., location.pathname)
+ * @returns {boolean} True if the path is a workspace route
+ */
+export const isWorkspacePath = (path) => {
+  if (!path) return false;
+  const clean = path.replace(/\/+$/, '');
+  return clean === '/workspace' || clean.startsWith('/workspace/');
+};

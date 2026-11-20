@@ -10,7 +10,7 @@ export const GlobalTopBar = ({
   onOpenSearch,
   onTogglePlusMenu,
   isPlusMenuOpen,
-  activeBreadcrumbs = [authService.getCurrentUserSync()?.organization?.name || ''],
+  activeBreadcrumbs = [authService.getCurrentUserSync()?.memberships?.[0]?.organization_name || authService.getCurrentUserSync()?.organization_summary?.name || authService.getCurrentUserSync()?.organization?.name || ''],
   unreadNotifications = 0,
   slaBreachCount = 0,
   isCollapsed = false,
@@ -50,7 +50,11 @@ export const GlobalTopBar = ({
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target) &&
+        !event.target.closest?.('[role="dialog"]')
+      ) {
         setIsNotifOpen(false);
       }
     };

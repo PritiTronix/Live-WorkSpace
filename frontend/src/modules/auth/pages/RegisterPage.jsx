@@ -239,11 +239,13 @@ export const RegisterPage = () => {
           className="lg:hidden w-full max-w-full sm:max-w-[460px] text-center mx-auto pt-2 min-w-0"
           data-purpose="mobile-header"
         >
-          <AppLogo size="md" className="justify-center mb-4" />
-          <h1 className="font-headline text-2xl sm:text-[26px] font-extrabold text-text-primary leading-snug tracking-tight">
-            <span>{AUTH_TEXT.headlineMain}</span>
-            <br />
-            <span className="text-btn-primary">{AUTH_TEXT.headlineAccent}</span>
+          <AppLogo size="md" className="justify-center mb-5 sm:mb-6" />
+          <h1
+            className="font-headline text-2xl sm:text-[26px] font-extrabold tracking-tight leading-[1.14] sm:leading-[1.14]"
+            style={{ lineHeight: 1.14 }}
+          >
+            <span className="text-text-primary block">{AUTH_TEXT.headlineMain}</span>
+            <span className="text-btn-primary block">{AUTH_TEXT.headlineAccent}</span>
           </h1>
           <p className="font-body text-xs sm:text-sm text-text-secondary mt-2 max-w-xs mx-auto leading-relaxed">
             {AUTH_TEXT.subtext}

@@ -117,7 +117,7 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
               </div>
               <p className="font-label-md text-text-primary font-semibold max-w-xs truncate">{file.name}</p>
               <p className="font-body-sm text-text-muted mt-0.5">
-                {file.size_bytes ? `${(file.size_bytes / 1024).toFixed(0)} KB` : 'Verified Spec'} • {file.file_type || 'document'}
+                {file.size_bytes ? `${(file.size_bytes / 1024).toFixed(0)} KB` : '0 KB'} • {file.file_type || 'document'}
               </p>
             </div>
           </div>
@@ -137,13 +137,13 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Storage Size</span>
               <span className="font-semibold text-text-primary">
-                {file.size_bytes ? `${(file.size_bytes / 1024).toFixed(1)} KB` : 'Unknown'}
+                {file.size_bytes ? `${(file.size_bytes / 1024).toFixed(1)} KB` : '0 KB'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Uploaded Date</span>
               <span className="font-medium text-text-secondary">
-                {file.created_at ? new Date(file.created_at).toLocaleString() : 'Recent'}
+                {file.created_at ? new Date(file.created_at).toLocaleString() : 'N/A'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -209,14 +209,14 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
             <span className="material-symbols-outlined text-[16px]">{copied ? 'check' : 'link'}</span>
             <span>{copied ? 'Copied!' : 'Share Link'}</span>
           </button>
-          <a
-            href={downloadUrl}
-            download={file.name}
-            className="px-4 py-2 bg-btn-primary hover:bg-primary-hover text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm"
+          <button
+            type="button"
+            onClick={() => filesService.downloadFile(file.id, file.name)}
+            className="px-4 py-2 bg-btn-primary hover:bg-primary-hover text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">download</span>
             <span>Download</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>

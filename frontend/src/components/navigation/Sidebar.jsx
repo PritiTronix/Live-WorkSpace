@@ -129,12 +129,14 @@ export const Sidebar = ({
 }) => {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUserSync());
-  const [organizations, setOrganizations] = useState([]);
-  const [currentOrg, setCurrentOrg] = useState(() => {
+  const [orgData, setOrgData] = useState(() => {
     const user = authService.getCurrentUserSync();
-    return user?.organization ? { name: user.organization.name, plan: user.organization.plan } : null;
+    const mem = user?.memberships?.[0];
+    return {
+      name: mem?.organization_name || user?.organization_summary?.name || user?.organization?.name || '',
+      role: mem?.role || user?.role || 'member',
+    };
   });
-  const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const helpButtonRef = useRef(null);
@@ -144,30 +146,10 @@ export const Sidebar = ({
     authService.getCurrentUser().then((user) => {
       if (mounted && user) {
         setCurrentUser(user);
-        if (user.organization?.name) {
-          setCurrentOrg((prev) => ({
-            ...prev,
-            name: user.organization.name,
-            plan: user.organization.plan || prev?.plan || null,
-          }));
-        }
-      }
-    });
-
-    organizationService.list().then((orgs) => {
-      if (mounted && orgs && orgs.length > 0) {
-        setOrganizations(orgs);
-        setCurrentOrg(orgs[0]);
-      }
-    });
-
-    organizationService.getCurrent().then((workspace) => {
-      if (mounted && workspace?.name) {
-        setCurrentOrg((prev) => ({
-          ...prev,
-          name: workspace.name,
-          plan: workspace.plan || prev?.plan || null,
-        }));
+        const mem = user.memberships?.[0];
+        const name = mem?.organization_name || user.organization_summary?.name || user.organization?.name || '';
+        const role = mem?.role || user.role || 'member';
+        setOrgData({ name, role });
       }
     });
 
@@ -181,12 +163,11 @@ export const Sidebar = ({
     const handleProfileUpdated = (e) => {
       if (e.detail) {
         setCurrentUser((prev) => ({ ...prev, ...e.detail }));
-        if (e.detail.organization?.name) {
-          setCurrentOrg((prev) => ({
-            ...prev,
-            name: e.detail.organization.name,
-            plan: e.detail.organization.plan || prev?.plan || null,
-          }));
+        const mem = e.detail.memberships?.[0];
+        const name = mem?.organization_name || e.detail.organization_summary?.name || e.detail.organization?.name || '';
+        const role = mem?.role || e.detail.role || 'member';
+        if (name) {
+          setOrgData({ name, role });
         }
       }
     };
@@ -194,7 +175,8 @@ export const Sidebar = ({
     return () => window.removeEventListener('user-profile-updated', handleProfileUpdated);
   }, []);
 
-  const organizationName = currentOrg?.name || currentUser?.organization?.name || '';
+  const organizationName = orgData.name;
+  const organizationRole = orgData.role;
 
   return (
     <aside
@@ -234,59 +216,22 @@ export const Sidebar = ({
           </button>
         </div>
 
-        {/* Org Switcher (Real Organization Data Only) */}
-        {!isCollapsed && (
-          <div className="relative">
-            <div
-              onClick={() => organizations.length > 1 && setIsOrgDropdownOpen((p) => !p)}
-              className={`mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between border border-border-subtle transition-colors ${
-                organizations.length > 1 ? 'cursor-pointer hover:bg-canvas-lavender' : ''
-              }`}
-            >
-              <div className="flex items-center gap-space-sm min-w-0 flex-1">
-                <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
-                  {getInitials(organizationName) || 'AT'}
+        {/* Organization Information: real name and role, no plan label, no fallback names */}
+        {!isCollapsed && organizationName && (
+          <div className="mt-space-md mb-space-sm p-space-sm rounded-lg bg-surface-card shadow-[0_1px_3px_rgba(20,21,41,0.04)] flex items-center justify-between border border-border-subtle">
+            <div className="flex items-center gap-space-sm min-w-0">
+              <span className="w-6 h-6 rounded bg-canvas-lavender flex items-center justify-center text-primary font-label-sm text-label-sm font-bold flex-shrink-0">
+                {getInitials(organizationName) || 'LW'}
+              </span>
+              <div className="flex flex-col text-left min-w-0">
+                <span className="font-label-md text-label-md text-text-primary truncate max-w-[140px] font-semibold">
+                  {organizationName}
                 </span>
-                <div className="flex flex-col text-left min-w-0 flex-1">
-                  <span className="font-label-md text-label-md text-text-primary truncate" title={organizationName}>
-                    {organizationName}
-                  </span>
-                  {currentOrg?.plan ? (
-                    <span className="font-label-sm text-label-sm text-primary capitalize">
-                      {currentOrg.plan}
-                    </span>
-                  ) : null}
-                </div>
+                <span className="font-label-sm text-xs text-text-muted capitalize">
+                  {organizationRole}
+                </span>
               </div>
-              {organizations.length > 1 && (
-                <span className="material-symbols-outlined text-text-muted text-[16px] flex-shrink-0">unfold_more</span>
-              )}
             </div>
-
-            {isOrgDropdownOpen && organizations.length > 1 && (
-              <div className="absolute top-full left-0 right-0 z-50 bg-surface-card border border-border-subtle rounded-lg shadow-lg p-1 space-y-1 mt-1">
-                {organizations.map((org) => (
-                  <div
-                    key={org.id}
-                    onClick={() => {
-                      setCurrentOrg(org);
-                      setIsOrgDropdownOpen(false);
-                    }}
-                    className="flex items-center justify-between px-2 py-1.5 rounded hover:bg-canvas-lavender cursor-pointer text-xs"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="w-5 h-5 rounded bg-canvas-lavender flex items-center justify-center text-primary font-bold text-[10px] flex-shrink-0">
-                        {getInitials(org.name)}
-                      </span>
-                      <span className="font-semibold text-text-primary truncate">{org.name}</span>
-                    </div>
-                    {org.plan ? (
-                      <span className="text-[10px] text-primary capitalize flex-shrink-0">{org.plan}</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 

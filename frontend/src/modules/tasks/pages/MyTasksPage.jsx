@@ -14,6 +14,7 @@ export const MyTasksPage = () => {
   const {
     tasks,
     total,
+    stats: apiStats,
     loading,
     filters,
     selectedTask,
@@ -28,24 +29,33 @@ export const MyTasksPage = () => {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'todo' | 'in_progress' | 'done'
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Dynamic statistics calculated strictly from loaded tasks
+  // Dynamic statistics from verified backend totals, falling back to loaded tasks
   const stats = useMemo(() => {
+    if (apiStats) {
+      return {
+        total: apiStats.total ?? total,
+        todo: apiStats.todo ?? 0,
+        in_progress: apiStats.in_progress ?? 0,
+        done: apiStats.done ?? 0,
+      };
+    }
     const todoCount = tasks.filter((t) => t.status === TASK_STATUS.TODO).length;
     const wipCount = tasks.filter((t) => t.status === TASK_STATUS.IN_PROGRESS).length;
     const doneCount = tasks.filter((t) => t.status === TASK_STATUS.DONE).length;
     return {
-      total: tasks.length,
+      total: total || tasks.length,
       todo: todoCount,
       in_progress: wipCount,
       done: doneCount,
     };
-  }, [tasks]);
+  }, [tasks, total, apiStats]);
 
-  // Client filter based on tab
-  const displayedTasks = useMemo(() => {
-    if (activeTab === 'all') return tasks;
-    return tasks.filter((t) => t.status === activeTab);
-  }, [tasks, activeTab]);
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    updateFilter('status', tabId === 'all' ? '' : tabId);
+  };
+
+  const displayedTasks = tasks;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -149,7 +159,7 @@ export const MyTasksPage = () => {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-label-md text-label-md transition-all ${
                 isActive
                   ? 'bg-primary text-on-primary shadow-xs font-semibold'

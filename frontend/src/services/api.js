@@ -44,6 +44,65 @@ apiClient.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+
+    const status = error.response?.status;
+    const data = error.response?.data;
+    const retryAfterHeader =
+      error.response?.headers?.['retry-after'] || error.response?.headers?.['Retry-After'];
+    const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) || retryAfterHeader : null;
+
+    let errorCode = null;
+    if (data?.error && typeof data.error === 'object' && data.error.code) {
+      errorCode = data.error.code;
+    } else if (data?.detail && typeof data.detail === 'object' && data.detail.code) {
+      errorCode = data.detail.code;
+    } else if (typeof data?.code === 'string') {
+      errorCode = data.code;
+    } else if (typeof data?.error === 'string') {
+      errorCode = data.error;
+    }
+
+    let cause = 'unknown';
+    if (!error.response) {
+      cause = 'network';
+      errorCode = errorCode || (error.code === 'ECONNABORTED' ? 'timeout' : 'network_error');
+    } else if (status === 401) {
+      cause = '401';
+      errorCode = errorCode || 'unauthorized';
+    } else if (status === 403) {
+      cause = '403';
+      errorCode = errorCode || 'forbidden';
+    } else if (status === 404) {
+      cause = '404';
+      errorCode = errorCode || 'not_found';
+    } else if (status === 422) {
+      cause = '422';
+      errorCode = errorCode || 'validation_error';
+    } else if (status === 429) {
+      cause = '429';
+      errorCode = errorCode || 'rate_limited';
+    } else if (status >= 500 && status <= 599) {
+      cause = '5xx';
+      errorCode = errorCode || (status === 503 ? 'service_unavailable' : 'server_error');
+    }
+
+    error.errorCode = errorCode;
+    error.cause = cause;
+    if (retryAfter !== null) {
+      error.retryAfter = retryAfter;
+    }
+
+    // Treat 403 whose error code is 'organization_required' by redirecting to /onboarding
+    if (status === 403 && errorCode === 'organization_required') {
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.pathname.startsWith('/onboarding') &&
+        !window.location.pathname.startsWith('/auth')
+      ) {
+        window.location.assign('/onboarding');
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -51,11 +110,13 @@ apiClient.interceptors.response.use(
 /**
  * Shared API Error Helper
  * Maps HTTP and network errors to consistent user-facing error messages:
+ * - Network / Timeout: 'Cannot reach the server' / 'The server took too long to respond. Please retry.'
+ * - 401: 'Authentication required. Please sign in.'
+ * - 403: 'Access denied.' or detail message
+ * - 404: 'The requested resource was not found.'
  * - 422: 'The filter is not valid'
- * - 429: 'Too many requests. Please wait a moment and try again.'
+ * - 429: 'Too many requests. Please wait a moment and try again.' (includes Retry-After when available)
  * - 5xx: 'An unexpected server error occurred. Please retry.' (503: 'Service temporarily unavailable. Please retry.')
- * - Connection failure (no response): 'Cannot reach the server'
- * Never labels a non-503 error as 503.
  */
 export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error occurred.') => {
   if (!error) return defaultMessage;
@@ -76,10 +137,17 @@ export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error 
   const statusCode = error.response.status;
 
   if (statusCode === 422) {
+    const detail = error.response.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail.trim();
+    if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg;
     return 'The filter is not valid';
   }
 
   if (statusCode === 429) {
+    const retryAfter = error.retryAfter || error.response?.headers?.['retry-after'];
+    if (retryAfter) {
+      return `Too many requests. Please wait ${retryAfter} second${retryAfter === 1 ? '' : 's'} and try again.`;
+    }
     return 'Too many requests. Please wait a moment and try again.';
   }
 
@@ -90,12 +158,69 @@ export const getApiErrorMessage = (error, defaultMessage = 'An unexpected error 
     return 'An unexpected server error occurred. Please retry.';
   }
 
+  if (statusCode === 401) {
+    const detail = error.response.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail.trim();
+    return 'Authentication required. Please sign in.';
+  }
+
+  if (statusCode === 403) {
+    const detail = error.response.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail.trim();
+    if (detail && typeof detail === 'object' && detail.message) return detail.message;
+    if (error.response.data?.error?.message) return error.response.data.error.message;
+    return 'Access denied. You do not have permission to perform this action.';
+  }
+
+  if (statusCode === 404) {
+    const detail = error.response.data?.detail;
+    if (typeof detail === 'string' && detail.trim()) return detail.trim();
+    return 'The requested resource was not found.';
+  }
+
+  if (error.response.data?.error?.message) {
+    return error.response.data.error.message;
+  }
+
   const detail = error.response.data?.detail;
   if (typeof detail === 'string' && detail.trim()) {
     return detail.trim();
   }
+  if (detail && typeof detail === 'object' && detail.message) {
+    return detail.message;
+  }
 
   return error.message || defaultMessage;
+};
+
+/**
+ * Exposes full parsed error object to callers (cause, code, status, message, retryAfter).
+ */
+export const parseApiError = (error) => {
+  if (!error) {
+    return {
+      cause: 'unknown',
+      code: null,
+      status: null,
+      message: 'An unexpected error occurred.',
+      retryAfter: null,
+    };
+  }
+
+  const status = error.response?.status || null;
+  const retryAfter =
+    error.retryAfter ||
+    (error.response?.headers?.['retry-after']
+      ? parseInt(error.response.headers['retry-after'], 10) || error.response.headers['retry-after']
+      : null);
+
+  return {
+    cause: error.cause || (!error.response ? 'network' : String(status)),
+    code: error.errorCode || error.code || null,
+    status,
+    message: getApiErrorMessage(error),
+    retryAfter,
+  };
 };
 
 // Fallback user context
@@ -159,6 +284,10 @@ export const authService = {
   },
   verifyEmail: async (token) => {
     const response = await apiClient.post('/auth/verify-email', { token });
+    return response.data;
+  },
+  getMe: async () => {
+    const response = await apiClient.get('/auth/me');
     return response.data;
   },
   getCurrentUserSync: () => {
@@ -279,14 +408,6 @@ export const searchService = {
 
 // Organization Services
 export const organizationService = {
-  list: async () => {
-    try {
-      const response = await apiClient.get('/organizations');
-      return response.data || [];
-    } catch {
-      return [];
-    }
-  },
   getCurrent: async () => {
     try {
       const response = await apiClient.get('/settings/workspace');
@@ -294,6 +415,66 @@ export const organizationService = {
     } catch {
       return null;
     }
+  },
+  createOrganization: async (data) => {
+    const response = await apiClient.post('/organizations', data);
+    return response.data;
+  },
+  lookupJoinCode: async (code) => {
+    const payload = typeof code === 'string' ? { code: code.trim().toUpperCase() } : code;
+    const response = await apiClient.post('/organizations/join/lookup', payload);
+    return response.data;
+  },
+  requestJoin: async (payloadOrCode, message) => {
+    const payload =
+      typeof payloadOrCode === 'string'
+        ? { code: payloadOrCode.trim().toUpperCase(), ...(message ? { message: message.trim() } : {}) }
+        : payloadOrCode;
+    const response = await apiClient.post('/organizations/join', payload);
+    return response.data;
+  },
+  myJoinRequests: async () => {
+    const response = await apiClient.get('/organizations/join-requests/mine');
+    return response.data;
+  },
+  cancelJoinRequest: async (requestId) => {
+    const response = await apiClient.post(`/organizations/join-requests/${requestId}/cancel`);
+    return response.data;
+  },
+  listJoinRequests: async (organizationId, status, page = 1, pageSize = 20) => {
+    const params = { page, page_size: pageSize };
+    if (status) {
+      params.status = String(status).toLowerCase().trim();
+    }
+    const response = await apiClient.get(`/organizations/${organizationId}/join-requests`, { params });
+    return response.data;
+  },
+  approveJoinRequest: async (organizationId, requestId) => {
+    const response = await apiClient.post(
+      `/organizations/${organizationId}/join-requests/${requestId}/approve`
+    );
+    return response.data;
+  },
+  rejectJoinRequest: async (organizationId, requestId, reason) => {
+    let payload = {};
+    if (typeof reason === 'string') {
+      if (reason.trim()) payload = { decision_reason: reason.trim() };
+    } else if (reason && typeof reason === 'object') {
+      payload = reason;
+    }
+    const response = await apiClient.post(
+      `/organizations/${organizationId}/join-requests/${requestId}/reject`,
+      payload
+    );
+    return response.data;
+  },
+  generateJoinCode: async (organizationId, options = {}) => {
+    const response = await apiClient.post(`/organizations/${organizationId}/join-code`, options);
+    return response.data;
+  },
+  revokeJoinCode: async (organizationId) => {
+    const response = await apiClient.delete(`/organizations/${organizationId}/join-code`);
+    return response.data;
   },
 };
 
@@ -659,9 +840,10 @@ export const notificationService = {
   },
 };
 
-export const connectNotificationsWebSocket = (onMessage, onError) => {
+export const connectNotificationsWebSocket = (onMessage, onError, onStatusChange) => {
   const token = localStorage.getItem('access_token');
   if (!token) {
+    if (onStatusChange) onStatusChange('closed');
     return null;
   }
 
@@ -678,7 +860,9 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
         try {
           ws.close(1000, 'Normal component unmount');
         } catch (_) {}
+        return;
       }
+      if (onStatusChange) onStatusChange('open');
     };
 
     ws.onmessage = (event) => {
@@ -693,8 +877,14 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
 
     ws.onerror = (err) => {
       if (isDisposed || ws.readyState === WebSocket.CLOSING || ws.readyState === WebSocket.CLOSED) return;
+      if (onStatusChange) onStatusChange('closed');
       if (onError) onError(err);
       else console.warn('Notifications WebSocket error:', err);
+    };
+
+    ws.onclose = () => {
+      if (isDisposed) return;
+      if (onStatusChange) onStatusChange('closed');
     };
 
     ws._dispose = () => {
@@ -703,7 +893,9 @@ export const connectNotificationsWebSocket = (onMessage, onError) => {
 
     return ws;
   } catch (err) {
+    if (onStatusChange) onStatusChange('closed');
     console.warn('Notifications WebSocket unavailable:', err);
+    if (onError) onError(err);
     return null;
   }
 };

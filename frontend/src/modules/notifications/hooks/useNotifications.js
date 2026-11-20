@@ -3,20 +3,22 @@
  * Used by NotificationDropdown (top bar) and NotificationCenterPage (full page).
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { notificationService, connectNotificationsWebSocket, safeCloseWebSocket } from '../../../services/api';
+import { notificationService, connectNotificationsWebSocket, safeCloseWebSocket, authService } from '../../../services/api';
 
-export const useNotifications = ({ autoConnect = true } = {}) => {
+export const useNotifications = ({ autoConnect = true, inboxOnly = false } = {}) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const wsRef = useRef(null);
+  const currentUserId = authService.getCurrentUserSync()?.id;
 
   const fetchNotifications = useCallback(async (params = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await notificationService.list(params);
+      const mergedParams = { ...(inboxOnly ? { inbox_only: true } : {}), ...params };
+      const data = await notificationService.list(mergedParams);
       setNotifications(data.items || []);
       setUnreadCount(data.unread_count ?? 0);
     } catch (err) {
@@ -24,7 +26,7 @@ export const useNotifications = ({ autoConnect = true } = {}) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [inboxOnly]);
 
   const markRead = useCallback(async (id) => {
     await notificationService.markRead(id);
@@ -46,15 +48,24 @@ export const useNotifications = ({ autoConnect = true } = {}) => {
     }
   }, []);
 
-  // WebSocket handler
+  // WebSocket handler — strictly scoped to current active user
   const handleWsMessage = useCallback((data) => {
     if (!data?.event) return;
+
+    // Filter events targeted to specific users
+    if (data.user_id && currentUserId && data.user_id !== currentUserId) return;
+    if (data.recipient_id && currentUserId && data.recipient_id !== currentUserId) return;
+
     switch (data.event) {
       case 'init':
         setUnreadCount(data.unread_count ?? 0);
         break;
       case 'new_notification':
         if (data.notification) {
+          // If inbox-only view, only add actionable types
+          if (inboxOnly && !['ticket_assigned', 'mention', 'comment'].includes(data.notification.type)) {
+            break;
+          }
           setNotifications((prev) => [data.notification, ...prev]);
           setUnreadCount((prev) => prev + 1);
         }
@@ -73,7 +84,7 @@ export const useNotifications = ({ autoConnect = true } = {}) => {
       default:
         break;
     }
-  }, []);
+  }, [currentUserId, inboxOnly]);
 
   useEffect(() => {
     fetchNotifications();

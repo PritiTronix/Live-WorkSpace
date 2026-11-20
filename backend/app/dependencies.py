@@ -1,12 +1,12 @@
 from typing import List, Optional, Callable, Dict
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.core.config import settings
 from backend.app.database import get_db
-from backend.app.models import User
+from backend.app.models import User, Membership
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_PREFIX}/auth/login",
@@ -25,7 +25,39 @@ ROLE_HIERARCHY: Dict[str, int] = {
 }
 
 
+def is_onboarding_or_profile_path(path: str, method: str) -> bool:
+    clean_path = path.rstrip("/")
+    api_prefix = settings.API_V1_PREFIX.rstrip("/")
+
+    # Health checks & API docs
+    if clean_path in ("/health", "/health/db", "/docs", "/openapi.json", "/redoc"):
+        return True
+
+    # Auth endpoints (/api/v1/auth/...)
+    if clean_path.startswith(f"{api_prefix}/auth"):
+        return True
+
+    # Profile endpoints (/api/v1/users/me, /api/v1/users/me/avatar)
+    if clean_path == f"{api_prefix}/users/me" or clean_path.startswith(f"{api_prefix}/users/me/"):
+        return True
+
+    # Onboarding: POST /api/v1/organizations (create organization)
+    if method == "POST" and clean_path == f"{api_prefix}/organizations":
+        return True
+
+    # Onboarding: join endpoints
+    if clean_path == f"{api_prefix}/organizations/join" or clean_path.startswith(f"{api_prefix}/organizations/join/"):
+        return True
+    if clean_path.startswith(f"{api_prefix}/organizations/join-requests/mine"):
+        return True
+    if clean_path.endswith("/cancel") and f"{api_prefix}/organizations/join-requests/" in clean_path:
+        return True
+
+    return False
+
+
 async def get_current_active_user(
+    request: Request = None,
     token: Optional[str] = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db)
 ) -> User:
@@ -33,6 +65,7 @@ async def get_current_active_user(
     Authoritative authentication dependency.
     Validates JWT token signature, expiration, and algorithm.
     Fetches the active user from database without insecure fallbacks.
+    Dynamically enforces organization membership for organization-scoped endpoints.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,6 +97,42 @@ async def get_current_active_user(
             detail="Inactive user account. Contact your workspace administrator.",
         )
 
+    # Server-side authorization: users without active organization can only call onboarding, profile, and auth
+    if request is not None and not is_onboarding_or_profile_path(request.url.path, request.method):
+        # Verify active membership in memberships table
+        membership = None
+        if user.organization_id:
+            m_res = await db.execute(
+                select(Membership).where(
+                    Membership.user_id == user.id,
+                    Membership.organization_id == user.organization_id,
+                    Membership.status == "active"
+                )
+            )
+            membership = m_res.scalars().first()
+
+        if not membership:
+            # Fallback: check if user has any active membership
+            any_m = await db.execute(
+                select(Membership).where(
+                    Membership.user_id == user.id,
+                    Membership.status == "active"
+                )
+            )
+            membership = any_m.scalars().first()
+
+        if membership:
+            user.organization_id = membership.organization_id
+            user.role = membership.role
+        elif user.organization_id:
+            # User has legacy organization_id not yet migrated into memberships table
+            pass
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "organization_required", "message": "User has no active organization membership. Please complete organization onboarding."},
+            )
+
     return user
 
 
@@ -91,7 +160,7 @@ async def get_current_tenant_id(
     if not current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User has no associated organization workspace",
+            detail={"code": "organization_required", "message": "User has no associated organization workspace"},
         )
     return current_user.organization_id
 

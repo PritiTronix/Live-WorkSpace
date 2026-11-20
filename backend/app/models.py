@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey, text
+from sqlalchemy import String, Text, Boolean, Integer, DateTime, ForeignKey, text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 from backend.app.database import Base
 
@@ -20,11 +20,19 @@ class Organization(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    logo_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    size_range: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     plan: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default=None)
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=True)
 
-    users: Mapped[list["User"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    users: Mapped[list["User"]] = relationship(back_populates="organization", foreign_keys="[User.organization_id]")
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
     projects: Mapped[list["Project"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    join_codes: Mapped[list["OrganizationJoinCode"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
+    join_requests: Mapped[list["JoinRequest"]] = relationship(back_populates="organization", cascade="all, delete-orphan")
 
 
 class User(Base):
@@ -55,7 +63,8 @@ class User(Base):
     organization_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
-    organization: Mapped[Optional["Organization"]] = relationship(back_populates="users")
+    organization: Mapped[Optional["Organization"]] = relationship(back_populates="users", foreign_keys=[organization_id])
+    memberships: Mapped[list["Membership"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     project_memberships: Mapped[list["ProjectMember"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     led_projects: Mapped[list["Project"]] = relationship("Project", back_populates="lead", foreign_keys="[Project.lead_id]")
 
@@ -123,14 +132,14 @@ class ProjectSprint(Base):
     __tablename__ = "project_sprints"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="active")  # planned, active, completed
+    status: Mapped[str] = mapped_column(String(50), default="active", server_default="active")  # planned, active, completed
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    target_points: Mapped[int] = mapped_column(Integer, default=0)
-    completed_points: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    target_points: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    completed_points: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, server_default=text("now()"))
 
     project: Mapped["Project"] = relationship(back_populates="sprints")
 
@@ -139,14 +148,14 @@ class ProjectMilestone(Base):
     __tablename__ = "project_milestones"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id"), nullable=False)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), default="planned")  # planned, on_track, at_risk, completed, overdue
-    progress_pct: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(50), default="planned", server_default="planned")  # planned, on_track, at_risk, completed, overdue
+    progress_pct: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    owner_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    owner_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, server_default=text("now()"))
 
     project: Mapped["Project"] = relationship(back_populates="milestones")
     owner: Mapped[Optional["User"]] = relationship("User")
@@ -338,7 +347,7 @@ class Task(Base):
     project_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("projects.id"), nullable=True)
     assignee_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
     reporter_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
-    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, default="org_01")
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False)
 
     # Synonym for backwards-compatibility with assigned_to_id
     assigned_to_id = synonym("assignee_id")
@@ -472,14 +481,85 @@ class SupportRequest(Base):
     __tablename__ = "support_requests"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False, index=True)
-    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id"), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="open")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    status: Mapped[str] = mapped_column(String(50), default="open", server_default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, server_default=text("now()"))
 
     user: Mapped["User"] = relationship("User")
     organization: Mapped["Organization"] = relationship("Organization")
+
+
+# ---------------------------------------------------------------------------
+# Organization Onboarding & Membership Models (Phase 1)
+# ---------------------------------------------------------------------------
+
+class Membership(Base):
+    __tablename__ = "memberships"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(50), nullable=False, default="member")  # owner, admin, member
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="active", index=True)  # active, suspended
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "organization_id", name="uq_memberships_user_org"),
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="memberships")
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="memberships")
+
+
+class OrganizationJoinCode(Base):
+    __tablename__ = "organization_join_codes"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    code_hash: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    created_by: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    max_uses: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    use_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="join_codes")
+    creator: Mapped[Optional["User"]] = relationship("User", foreign_keys=[created_by])
+
+
+class JoinRequest(Base):
+    __tablename__ = "join_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending", index=True)  # pending, approved, rejected, cancelled, expired
+    message: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    decided_by: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    decision_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+    organization: Mapped["Organization"] = relationship("Organization", back_populates="join_requests")
+    decider: Mapped[Optional["User"]] = relationship("User", foreign_keys=[decided_by])
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
+    organization_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
+    actor_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+    organization: Mapped[Optional["Organization"]] = relationship("Organization")
+    actor: Mapped[Optional["User"]] = relationship("User", foreign_keys=[actor_id])
 

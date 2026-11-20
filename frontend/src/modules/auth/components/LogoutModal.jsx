@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LogOut, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { authService, DEFAULT_USER } from '../../../services/api';
+import { authService } from '../../../services/api';
 import Modal from '../../design-system/components/Modal';
 import Avatar from '../../../components/common/Avatar';
 
@@ -13,7 +13,7 @@ import Avatar from '../../../components/common/Avatar';
 export const LogoutModal = ({
   isOpen,
   onClose,
-  currentUser = DEFAULT_USER,
+  currentUser = null,
   triggerRef,
 }) => {
   const navigate = useNavigate();
@@ -75,25 +75,27 @@ export const LogoutModal = ({
         </p>
 
         {/* Current User Session Card */}
-        <div className="w-full p-3.5 rounded-xl bg-canvas-main border border-border-subtle/80 flex items-center gap-3 text-left mb-4">
-          <Avatar
-            src={currentUser?.avatar_url}
-            name={currentUser?.full_name || 'Active User'}
-            size="lg"
-            ring="ring-1 ring-border-subtle flex-shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <span className="font-label-md text-label-md text-text-primary truncate block font-semibold">
-              {currentUser?.full_name || 'Active User'}
-            </span>
-            <span className="font-body-sm text-body-sm text-text-secondary truncate block">
-              {currentUser?.email || ''}
+        {currentUser && (currentUser.full_name || currentUser.email) ? (
+          <div className="w-full p-3.5 rounded-xl bg-canvas-main border border-border-subtle/80 flex items-center gap-3 text-left mb-4">
+            <Avatar
+              src={currentUser?.avatar_url}
+              name={currentUser?.full_name || 'Active User'}
+              size="lg"
+              ring="ring-1 ring-border-subtle flex-shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <span className="font-label-md text-label-md text-text-primary truncate block font-semibold">
+                {currentUser?.full_name || 'Active User'}
+              </span>
+              <span className="font-body-sm text-body-sm text-text-secondary truncate block">
+                {currentUser?.email || ''}
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-sm text-xs font-semibold">
+              Active
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-label-sm text-xs font-semibold">
-            Active
-          </span>
-        </div>
+        ) : null}
 
         {/* Notice */}
         <div className="w-full flex items-start gap-2 p-2.5 rounded-lg bg-canvas-lavender/60 border border-border-subtle/60 text-text-secondary text-left font-body-sm text-xs">

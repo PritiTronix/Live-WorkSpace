@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 
 from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
-from backend.app.models import Task, Ticket, Project, User
+from backend.app.models import Task, Ticket, Project, User, Membership
 from backend.app.schemas import (
     AnalyticsDashboardResponse,
     AnalyticsKPIMetrics,
@@ -379,8 +379,19 @@ async def get_analytics_dashboard(
     squad_sla: List[SquadSLAComplianceItem] = []
 
     # 9. Employee Workload Table (Derived strictly from real ticket assignments)
-    u_res = await db.execute(select(User).where(User.organization_id == org_id))
-    org_users = u_res.scalars().all()
+    mem_users = (
+        await db.execute(
+            select(User)
+            .join(Membership, Membership.user_id == User.id)
+            .where(Membership.organization_id == org_id, Membership.status == "active")
+        )
+    ).scalars().all()
+    legacy_users = (await db.execute(select(User).where(User.organization_id == org_id))).scalars().all()
+    org_users_map = {u.id: u for u in mem_users}
+    for u in legacy_users:
+        if u.id not in org_users_map:
+            org_users_map[u.id] = u
+    org_users = list(org_users_map.values())
 
     employees: List[EmployeeWorkloadItem] = []
     for u in org_users[:15]:

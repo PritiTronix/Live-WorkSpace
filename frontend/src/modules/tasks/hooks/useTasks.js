@@ -9,6 +9,7 @@ import { safeCloseWebSocket } from '../../../services/api';
 export const useTasks = ({ isMyTasks = false, initialFilters = {}, autoConnect = true } = {}) => {
   const [tasks, setTasks] = useState([]);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -39,6 +40,16 @@ export const useTasks = ({ isMyTasks = false, initialFilters = {}, autoConnect =
 
       setTasks(data.items || []);
       setTotal(data.total || 0);
+      if (data.stats) {
+        setStats(data.stats);
+      } else if (data.todo_count !== undefined) {
+        setStats({
+          total: data.total || 0,
+          todo: data.todo_count || 0,
+          in_progress: data.in_progress_count || 0,
+          done: data.done_count || 0,
+        });
+      }
     } catch (err) {
       setError(err);
       setTasks([]);
@@ -178,6 +189,7 @@ export const useTasks = ({ isMyTasks = false, initialFilters = {}, autoConnect =
   return {
     tasks,
     total,
+    stats,
     loading,
     error,
     filters,
