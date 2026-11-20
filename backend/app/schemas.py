@@ -95,9 +95,22 @@ class OrganizationSummary(BaseSchema):
 
 class UserMembershipRead(BaseSchema):
     id: str
-    name: str
-    role: str
+    name: str = ""
+    role: str = "member"
     plan: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_orm_membership(cls, data: Any) -> Any:
+        if hasattr(data, "__table__") and getattr(data, "__tablename__", None) == "memberships":
+            org = getattr(data, "__dict__", {}).get("organization") or getattr(data, "organization", None)
+            return {
+                "id": getattr(data, "organization_id", getattr(data, "id", "")),
+                "name": getattr(org, "name", "") if org else "",
+                "role": getattr(data, "role", "member"),
+                "plan": getattr(org, "plan", None) if org else None,
+            }
+        return data
 
 
 class UserRead(UserBase):
@@ -123,7 +136,21 @@ class UserRead(UserBase):
             raw_dict["organization_summary"] = getattr(data, "organization_summary", None)
             mems = getattr(data, "__dict__", {}).get("memberships")
             if isinstance(mems, list):
-                raw_dict["memberships"] = mems
+                converted = []
+                for m in mems:
+                    if hasattr(m, "__table__") and getattr(m, "__tablename__", None) == "memberships":
+                        org = getattr(m, "__dict__", {}).get("organization") or getattr(m, "organization", None)
+                        converted.append(
+                            UserMembershipRead(
+                                id=getattr(m, "organization_id", getattr(m, "id", "")),
+                                name=getattr(org, "name", "") if org else "",
+                                role=getattr(m, "role", "member"),
+                                plan=getattr(org, "plan", None) if org else None,
+                            )
+                        )
+                    else:
+                        converted.append(m)
+                raw_dict["memberships"] = converted
             else:
                 raw_dict["memberships"] = []
             return raw_dict

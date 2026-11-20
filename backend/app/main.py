@@ -11,7 +11,12 @@ from backend.app.core.config import settings
 from backend.app.routes import api_router
 from backend.app.database import engine, Base, AsyncSessionLocal, get_db
 from backend.app.seed import seed_initial_data_if_empty
-from backend.app.middleware import SecurityHeadersMiddleware, RateLimitMiddleware, DevQueryLoggingMiddleware
+from backend.app.middleware import (
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware,
+    DevQueryLoggingMiddleware,
+    CatchAllErrorMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +48,9 @@ def create_application() -> FastAPI:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+
+    # Catch-all Error Handling Middleware (inside CORS middleware)
+    application.add_middleware(CatchAllErrorMiddleware)
 
     # Enterprise Security Headers Middleware
     application.add_middleware(SecurityHeadersMiddleware)
