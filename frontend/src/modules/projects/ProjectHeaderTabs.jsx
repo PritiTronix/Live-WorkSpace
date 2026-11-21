@@ -4,7 +4,7 @@ import ManageMembersModal from './ManageMembersModal';
 import EditProjectModal from './EditProjectModal';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
 import Avatar from '../../components/common/Avatar';
-import { authService } from '../../services/api';
+import { authService, resolveApiUrl } from '../../services/api';
 
 /**
  * Screen 38 & 39: Project Workspace Header & Tabs
@@ -200,7 +200,7 @@ export const ProjectHeaderTabs = ({ project, onProjectUpdated }) => {
                 {lead.avatar_url ? (
                   <img
                     className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-border-subtle"
-                    src={lead.avatar_url}
+                    src={resolveApiUrl(lead.avatar_url)}
                     alt={lead.full_name || "Project Lead"}
                   />
                 ) : (

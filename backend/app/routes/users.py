@@ -28,6 +28,7 @@ from backend.app.schemas import (
     OperationalVelocity, ActiveOperationalQueue, QueueItem, OrganizationSummary, UserMembershipRead
 )
 from backend.app.core.websockets import ws_manager
+from backend.app.utils.address_builder import generate_avatar_signed_url, verify_avatar_signature, build_public_url
 from backend.app.services.workforce import (
     get_organization_workforce_data,
     compute_user_presence,
@@ -101,15 +102,6 @@ def delete_user_avatar_file(user_id: str) -> None:
         logger.warning("Error scanning avatar directory for user %s: %s", user_id, e)
 
 
-def generate_avatar_signed_url(user_id: str) -> str:
-    sig = hmac.new(settings.SECRET_KEY.encode(), f"avatar:{user_id}".encode(), hashlib.sha256).hexdigest()[:16]
-    timestamp = int(datetime.now(timezone.utc).timestamp())
-    return f"{settings.API_V1_PREFIX}/users/{user_id}/avatar?sig={sig}&v={timestamp}"
-
-
-def verify_avatar_signature(user_id: str, sig: str) -> bool:
-    expected_sig = hmac.new(settings.SECRET_KEY.encode(), f"avatar:{user_id}".encode(), hashlib.sha256).hexdigest()[:16]
-    return hmac.compare_digest(sig, expected_sig)
 
 
 async def build_user_profile_response(user: User, db: AsyncSession) -> UserRead:

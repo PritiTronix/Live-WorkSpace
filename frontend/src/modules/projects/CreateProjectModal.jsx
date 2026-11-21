@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { projectsService } from '../../services/projectsService';
 import Avatar from '../../components/common/Avatar';
 import { lockScroll, unlockScroll } from '../../utils/scrollLock';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 const PRESET_ICONS = [
   'rocket_launch',
@@ -482,7 +483,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                       className="flex items-center gap-1 pl-1 pr-2 py-1 rounded-full bg-surface-card shadow-sm text-text-primary border border-border-subtle/50"
                     >
                       {member.avatar_url ? (
-                        <img className="w-5 h-5 rounded-full object-cover" src={member.avatar_url} alt={member.full_name} />
+                        <img className="w-5 h-5 rounded-full object-cover" src={resolveApiUrl(member.avatar_url)} alt={member.full_name} />
                       ) : (
                         <span className="w-5 h-5 rounded-full bg-secondary-container text-secondary flex items-center justify-center font-label-sm text-[10px] font-bold">
                           {member.full_name?.slice(0, 2).toUpperCase() || 'TM'}
@@ -531,7 +532,7 @@ export const CreateProjectModal = ({ isOpen, onClose, onProjectCreated }) => {
                       >
                         <div className="flex items-center gap-2">
                           {user.avatar_url ? (
-                            <img className="w-7 h-7 rounded-full object-cover" src={user.avatar_url} alt={user.full_name} />
+                            <img className="w-7 h-7 rounded-full object-cover" src={resolveApiUrl(user.avatar_url)} alt={user.full_name} />
                           ) : (
                             <span className="w-7 h-7 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm flex items-center justify-center font-bold">
                               {user.full_name?.slice(0, 2).toUpperCase() || 'U'}

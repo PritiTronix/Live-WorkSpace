@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { authService } from '../services/api';
+import { authService, resolveApiUrl } from '../services/api';
 
 /**
  * Checks whether an access token exists and is not expired.
@@ -323,7 +323,7 @@ export const LandingPage = () => {
                     <img
                       alt={currentUser.full_name || 'Profile'}
                       className="w-8 h-8 rounded-full object-cover ring-2 ring-border-subtle hover:ring-btn-primary transition-all"
-                      src={currentUser.avatar_url}
+                      src={resolveApiUrl(currentUser.avatar_url)}
                       onError={() => setAvatarError(true)}
                     />
                   ) : (

@@ -13,6 +13,7 @@ from backend.app.database import get_db
 from backend.app.dependencies import get_current_active_user
 from backend.app.models import ProjectFile, Project, ProjectActivity, User
 from backend.app.schemas import ProjectFileCreate, ProjectFileRead
+from backend.app.utils.address_builder import build_file_download_url, build_public_url
 
 router = APIRouter()
 
@@ -176,7 +177,7 @@ async def upload_file_multipart(
         name=safe_name,
         file_type=detected_type,
         size_bytes=size_bytes,
-        file_url=f"/api/v1/files/{safe_id}/download",
+        file_url=build_file_download_url(safe_id),
         is_pinned=False,
         linked_task_number=linked_task_number.strip() if linked_task_number else None,
         created_at=now,
@@ -258,7 +259,7 @@ async def create_project_file(
         name=safe_name,
         file_type=(file_in.file_type or "document").lower(),
         size_bytes=file_in.size_bytes or 1024,
-        file_url=file_in.file_url or f"/uploads/{safe_name}",
+        file_url=build_public_url(file_in.file_url or f"/uploads/{safe_name}"),
         is_pinned=bool(file_in.is_pinned),
         linked_task_number=file_in.linked_task_number,
         created_at=now,

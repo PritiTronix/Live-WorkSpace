@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { dashboardService, connectDashboardWebSocket, safeCloseWebSocket, authService } from '../../../services/api';
+import { dashboardService, connectDashboardWebSocket, safeCloseWebSocket, authService, resolveApiUrl } from '../../../services/api';
 import { useClock } from '../../../utils/greeting';
 import { pluralize } from '../../../utils/pluralize';
 import WelcomeModal from '../components/WelcomeModal';
@@ -1240,7 +1240,7 @@ export const DashboardOverviewPage = () => {
                         <div className="flex items-center gap-2">
                           {ticket.assignee_avatar ? (
                             <img
-                              src={ticket.assignee_avatar}
+                              src={resolveApiUrl(ticket.assignee_avatar)}
                               alt={ticket.assignee_name}
                               className="w-6 h-6 rounded-full object-cover ring-1 ring-border-subtle"
                             />
@@ -1305,7 +1305,7 @@ export const DashboardOverviewPage = () => {
                     </div>
                   ) : item.avatar ? (
                     <img
-                      src={item.avatar}
+                      src={resolveApiUrl(item.avatar)}
                       alt={item.actor}
                       className="w-7 h-7 rounded-full object-cover shrink-0 border border-border-subtle"
                     />

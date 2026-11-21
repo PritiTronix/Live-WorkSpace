@@ -34,6 +34,7 @@ from backend.app.models import (
     TicketActivity,
 )
 from fastapi.responses import FileResponse
+from backend.app.utils.address_builder import build_ticket_attachment_url, build_public_url
 from backend.app.schemas import (
     TicketCreate,
     TicketUpdate,
@@ -887,7 +888,7 @@ async def upload_ticket_attachment(
         uploader_id=current_user.id,
         name=safe_name,
         size_bytes=total_bytes,
-        file_url=f"/api/v1/tickets/{ticket.id}/attachments/{att_id}/download",
+        file_url=build_ticket_attachment_url(ticket.id, att_id),
         created_at=now,
     )
     db.add(att)

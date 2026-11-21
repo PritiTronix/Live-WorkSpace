@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { resolveApiUrl, getInitials } from '../../utils/apiUrl';
+
+export { getInitials };
 
 /**
  * Avatar component with automatic initials fallback when avatar_url is missing
@@ -14,6 +17,7 @@ export const Avatar = ({
   ring = '',
 }) => {
   const [imageError, setImageError] = useState(false);
+  const resolvedSrc = resolveApiUrl(src);
 
   // Reset error state if src changes
   useEffect(() => {
@@ -21,17 +25,6 @@ export const Avatar = ({
   }, [src]);
 
   const displayName = name || alt || 'User';
-
-  const getInitials = (str) => {
-    if (!str || typeof str !== 'string') return 'U';
-    const trimmed = str.trim();
-    if (!trimmed) return 'U';
-    const parts = trimmed.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
 
   const initials = getInitials(displayName);
 
@@ -47,11 +40,11 @@ export const Avatar = ({
 
   const isDicebear = typeof src === 'string' && src.toLowerCase().includes('dicebear.com');
 
-  if (src && !imageError && !isDicebear) {
+  if (resolvedSrc && !imageError && !isDicebear) {
     return (
       <img
-        src={src}
-        alt={displayName}
+        src={resolvedSrc}
+        alt=""
         onError={() => setImageError(true)}
         className={`${selectedSizeClass} ${shape} object-cover ${ring} ${className}`}
       />

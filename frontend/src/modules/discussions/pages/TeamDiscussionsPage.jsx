@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { discussionsService } from '../../../services/discussionsService';
 import CreateDiscussionModal from '../components/CreateDiscussionModal';
-import { DEFAULT_USER } from '../../../services/api';
+import { DEFAULT_USER, resolveApiUrl } from '../../../services/api';
 
 export const TeamDiscussionsPage = () => {
   const navigate = useNavigate();
@@ -229,7 +229,7 @@ export const TeamDiscussionsPage = () => {
           <div className="bg-surface-card rounded-xl shadow-sm border border-border-subtle p-space-md">
             <div className="flex items-start gap-space-sm">
               <img
-                src={DEFAULT_USER.avatar_url}
+                src={resolveApiUrl(DEFAULT_USER.avatar_url)}
                 alt="Alex Rivera"
                 className="w-10 h-10 rounded-full object-cover shrink-0 mt-0.5"
               />
@@ -338,7 +338,7 @@ export const TeamDiscussionsPage = () => {
                   <div className="flex items-start justify-between gap-space-sm">
                     <div className="flex items-center gap-space-sm">
                       <img
-                        src={author.avatar_url || DEFAULT_USER.avatar_url}
+                        src={resolveApiUrl(author.avatar_url || DEFAULT_USER.avatar_url)}
                         alt={author.full_name}
                         className="w-10 h-10 rounded-full object-cover shrink-0"
                       />

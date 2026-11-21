@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 /**
  * Screen 44: Project Files Tab
@@ -279,7 +280,7 @@ export const ProjectFilesTab = () => {
                       <div className="flex items-center justify-between text-text-muted font-body-sm text-[11px] pt-space-xs border-t border-border-subtle/40">
                         <span className="truncate">{f.uploader?.full_name || 'Team member'}</span>
                         <a
-                          href={f.file_url || `/api/v1/files/${f.id}/download`}
+                          href={resolveApiUrl(f.file_url || `/api/v1/files/${f.id}/download`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           download={f.name || 'file'}
@@ -345,7 +346,7 @@ export const ProjectFilesTab = () => {
                       <div className="flex items-center justify-between text-text-muted font-body-sm text-[11px] pt-space-xs border-t border-border-subtle/40">
                         <span className="truncate">{f.uploader?.full_name || 'Team member'}</span>
                         <a
-                          href={f.file_url || `/api/v1/files/${f.id}/download`}
+                          href={resolveApiUrl(f.file_url || `/api/v1/files/${f.id}/download`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           download={f.name || 'file'}

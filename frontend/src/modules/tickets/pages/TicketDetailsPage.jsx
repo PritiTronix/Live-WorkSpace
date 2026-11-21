@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ticketsService, createTicketsWebSocket } from '../../../services/ticketsService';
-import { authService } from '../../../services/api';
+import { authService, resolveApiUrl } from '../../../services/api';
 import { STATUS_CONFIG, SEVERITY_CONFIG, TICKET_STATUSES, TICKET_SEVERITIES } from '../constants/ticketConstants';
 
 export const TicketDetailsPage = () => {
@@ -763,7 +763,7 @@ export const TicketDetailsPage = () => {
                         </div>
                       </div>
                       <a
-                        href={file.file_url}
+                        href={resolveApiUrl(file.file_url)}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 text-text-muted hover:text-text-primary transition-colors"

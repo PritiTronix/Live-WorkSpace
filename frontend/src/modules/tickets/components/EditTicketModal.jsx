@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ticketsService } from '../../../services/ticketsService';
 import { projectsService } from '../../../services/projectsService';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 export const EditTicketModal = ({ isOpen, onClose, ticket, onUpdated }) => {
   const [formData, setFormData] = useState({
@@ -335,7 +336,7 @@ export const EditTicketModal = ({ isOpen, onClose, ticket, onUpdated }) => {
                       </div>
                     </div>
                     <a
-                      href={ticketsService.getAttachmentDownloadUrl(ticket.id, att.id)}
+                      href={resolveApiUrl(ticketsService.getAttachmentDownloadUrl(ticket.id, att.id))}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 text-text-muted hover:text-primary transition-colors"

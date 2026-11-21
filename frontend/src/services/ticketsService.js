@@ -1,4 +1,4 @@
-import { apiClient, authService, buildWebSocketUrl, safeCloseWebSocket } from './api';
+import { apiClient, authService, buildWebSocketUrl, safeCloseWebSocket, resolveApiUrl } from './api';
 
 /**
  * Tickets API Service
@@ -102,8 +102,7 @@ export const ticketsService = {
   },
 
   getAttachmentDownloadUrl: (ticketId, attachmentId) => {
-    const baseUrl = apiClient.defaults.baseURL || '/api/v1';
-    return `${baseUrl}/tickets/${ticketId}/attachments/${attachmentId}/download`;
+    return resolveApiUrl(`/api/v1/tickets/${ticketId}/attachments/${attachmentId}/download`);
   },
 
   createTicketsWebSocket: (workspaceId, onEvent) => createTicketsWebSocket(workspaceId, onEvent),

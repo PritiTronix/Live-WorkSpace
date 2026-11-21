@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 import {
   ChevronRight,
   ShieldCheck,
@@ -177,7 +178,7 @@ export const UserProfilePage = () => {
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden shadow-md ring-4 ring-[#F5F4FC] dark:ring-[#242542] bg-[#eeecff] dark:bg-[#2e2f41]">
                   {user?.avatar_url ? (
                     <img
-                      src={user.avatar_url}
+                      src={resolveApiUrl(user.avatar_url)}
                       alt={user?.full_name || 'Profile'}
                       className="w-full h-full object-cover"
                     />

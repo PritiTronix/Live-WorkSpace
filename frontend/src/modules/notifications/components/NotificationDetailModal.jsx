@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../../components/common/Modal';
 import { TYPE_META, resolveTargetRoute } from './NotificationItem';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 /** Format ISO string → relative label (e.g. "4m ago", "2h ago") */
 const formatRelative = (isoString) => {
@@ -124,7 +125,7 @@ export const NotificationDetailModal = ({
         <div className="flex items-start gap-4 p-4 rounded-2xl bg-canvas-main border border-border-subtle">
           {notification.actor?.avatar_url ? (
             <img
-              src={notification.actor.avatar_url}
+              src={resolveApiUrl(notification.actor.avatar_url)}
               alt={notification.actor.name || 'User'}
               className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-primary/20"
             />

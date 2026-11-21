@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { auditLogsService } from '../../../services/auditLogsService';
 import LogDetailDrawer from '../components/LogDetailDrawer';
 import AuditExportDialog from '../components/AuditExportDialog';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 export const SystemActivityLogsPage = () => {
   // Filters & Pagination State
@@ -480,7 +481,7 @@ export const SystemActivityLogsPage = () => {
                         <div className="w-6 h-6 rounded-full bg-canvas-lavender flex items-center justify-center font-bold text-primary text-[10px] flex-shrink-0">
                           {log.actor?.avatar_url ? (
                             <img
-                              src={log.actor.avatar_url}
+                              src={resolveApiUrl(log.actor.avatar_url)}
                               alt={log.actor.full_name}
                               className="w-6 h-6 rounded-full object-cover"
                             />

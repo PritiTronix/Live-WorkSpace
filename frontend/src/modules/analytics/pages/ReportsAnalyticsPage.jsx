@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { analyticsService } from '../../../services/analyticsService';
 import { projectsService } from '../../../services/projectsService';
 import AnalyticsExportModal from '../components/AnalyticsExportModal';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 export const ReportsAnalyticsPage = () => {
   // Filters state (Misleading squad filter removed F-08)
@@ -784,7 +785,7 @@ export const ReportsAnalyticsPage = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-canvas-lavender flex items-center justify-center font-bold text-primary text-xs">
                           {emp.avatar_url ? (
-                            <img src={emp.avatar_url} alt={emp.name} className="w-8 h-8 rounded-full object-cover" />
+                            <img src={resolveApiUrl(emp.avatar_url)} alt={emp.name} className="w-8 h-8 rounded-full object-cover" />
                           ) : (
                             emp.name.slice(0, 2).toUpperCase()
                           )}

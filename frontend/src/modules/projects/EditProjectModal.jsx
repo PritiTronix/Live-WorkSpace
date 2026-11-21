@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { projectsService } from '../../services/projectsService';
-import { authService } from '../../services/api';
+import { authService, resolveApiUrl } from '../../services/api';
 import Avatar from '../../components/common/Avatar';
 import Modal from '../design-system/components/Modal';
 
@@ -543,7 +543,7 @@ export const EditProjectModal = ({ project, isOpen, onClose, onProjectUpdated })
                   {member.user?.avatar_url ? (
                     <img
                       className="w-5 h-5 rounded-full object-cover"
-                      src={member.user.avatar_url}
+                      src={resolveApiUrl(member.user.avatar_url)}
                       alt={member.user.full_name || 'Member'}
                     />
                   ) : (

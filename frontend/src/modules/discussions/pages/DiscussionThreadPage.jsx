@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { discussionsService } from '../../../services/discussionsService';
-import { DEFAULT_USER } from '../../../services/api';
+import { DEFAULT_USER, resolveApiUrl } from '../../../services/api';
 import Avatar from '../../../components/common/Avatar';
 
 export const DiscussionThreadPage = () => {
@@ -260,7 +260,7 @@ export const DiscussionThreadPage = () => {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <a
-                href={discussion?.attachment_url || `/api/v1/files/download`}
+                href={resolveApiUrl(discussion?.attachment_url || `/api/v1/files/download`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 download="Architectural-Specification.pdf"

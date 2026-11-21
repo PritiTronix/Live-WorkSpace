@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 /** Map notification type → Material Symbol icon name + color classes */
 export const TYPE_META = {
@@ -117,7 +118,7 @@ export const NotificationItem = ({
       <div className="flex-shrink-0 relative mt-0.5">
         {notification.actor?.avatar_url ? (
           <img
-            src={notification.actor.avatar_url}
+            src={resolveApiUrl(notification.actor.avatar_url)}
             alt={notification.actor.name || 'User'}
             className="w-9 h-9 rounded-full object-cover ring-1 ring-border-subtle"
           />

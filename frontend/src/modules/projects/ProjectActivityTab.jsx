@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
 import Avatar from '../../components/common/Avatar';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 /**
  * Screen 45: Project Activity Tab
@@ -260,7 +261,7 @@ export const ProjectActivityTab = () => {
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <img className="w-6 h-6 rounded-full object-cover" src={mem.user?.avatar_url} alt="" />
+                    <img className="w-6 h-6 rounded-full object-cover" src={resolveApiUrl(mem.user?.avatar_url)} alt="" />
                     <span className="truncate">{mem.user?.full_name || 'Member'}</span>
                   </div>
                   <span className="font-body-sm text-[11px] text-text-muted">{mem.role}</span>

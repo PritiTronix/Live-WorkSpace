@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+import { resolveApiUrl } from '../utils/apiUrl';
 
 export const filesService = {
   listFiles: async (params = {}) => {
@@ -26,8 +27,7 @@ export const filesService = {
   },
 
   getDownloadUrl: (fileId) => {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-    return `${base}/files/${fileId}/download`;
+    return resolveApiUrl(`/api/v1/files/${fileId}/download`);
   },
 
   downloadFile: async (fileId, fileName = 'download') => {

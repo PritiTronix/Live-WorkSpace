@@ -7,6 +7,7 @@ from pydantic import (
     field_validator, model_validator, ValidationInfo, field_serializer
 )
 from backend.app.core.security import validate_password_strength
+from backend.app.utils.address_builder import build_public_url
 
 
 class BaseSchema(BaseModel):
@@ -42,8 +43,10 @@ class UserBase(BaseSchema):
     @field_validator("avatar_url", mode="before")
     @classmethod
     def sanitize_avatar(cls, v: Optional[str]) -> Optional[str]:
-        if v and isinstance(v, str) and "dicebear.com" in v.lower():
-            return None
+        if v and isinstance(v, str):
+            if "dicebear.com" in v.lower():
+                return None
+            return build_public_url(v)
         return v
 
 
@@ -279,6 +282,11 @@ class OrganizationBase(BaseSchema):
     size_range: Optional[str] = None
     logo_path: Optional[str] = None
 
+    @field_validator("logo_path", mode="before")
+    @classmethod
+    def sanitize_logo_path(cls, v: Optional[str]) -> Optional[str]:
+        return build_public_url(v)
+
     @field_serializer("industry_other", when_used="json-unless-none")
     def serialize_industry_other(self, v: Optional[str]) -> Optional[str]:
         if v:
@@ -344,6 +352,11 @@ class JoinCodeLookupResponse(BaseSchema):
     name: str
     logo_path: Optional[str] = None
 
+    @field_validator("logo_path", mode="before")
+    @classmethod
+    def sanitize_logo_path(cls, v: Optional[str]) -> Optional[str]:
+        return build_public_url(v)
+
 
 class JoinRequestCreate(BaseSchema):
     code: str = Field(..., min_length=1, max_length=100)
@@ -355,6 +368,15 @@ class JoinRequestUser(BaseSchema):
     full_name: str
     email: EmailStr
     avatar_url: Optional[str] = None
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def sanitize_avatar(cls, v: Optional[str]) -> Optional[str]:
+        if v and isinstance(v, str):
+            if "dicebear.com" in v.lower():
+                return None
+            return build_public_url(v)
+        return v
 
 
 class JoinRequestRead(BaseSchema):
@@ -372,6 +394,11 @@ class JoinRequestRead(BaseSchema):
     requester_name: Optional[str] = None
     requester_email: Optional[str] = None
     user: Optional[JoinRequestUser] = None
+
+    @field_validator("organization_logo", mode="before")
+    @classmethod
+    def sanitize_org_logo(cls, v: Optional[str]) -> Optional[str]:
+        return build_public_url(v)
 
 
 class JoinRequestDecision(BaseSchema):
@@ -673,6 +700,11 @@ class TicketAttachmentRead(BaseSchema):
     created_at: datetime
     uploader: Optional[UserRead] = None
 
+    @field_validator("file_url", mode="before")
+    @classmethod
+    def sanitize_file_url(cls, v: Optional[str]) -> str:
+        return build_public_url(v) or ""
+
 
 class TicketActivityRead(BaseSchema):
     id: str
@@ -783,6 +815,11 @@ class ProjectFileBase(BaseSchema):
     file_url: str = ""
     is_pinned: bool = False
     linked_task_number: Optional[str] = None
+
+    @field_validator("file_url", mode="before")
+    @classmethod
+    def sanitize_file_url(cls, v: Optional[str]) -> str:
+        return build_public_url(v) or ""
 
 
 class ProjectFileCreate(BaseSchema):
@@ -910,6 +947,15 @@ class EmployeeWorkloadItem(BaseSchema):
     active_tickets: int = 0
     active_capacity: Optional[int] = None
     capacity_status: Optional[str] = None
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def sanitize_avatar(cls, v: Optional[str]) -> Optional[str]:
+        if v and isinstance(v, str):
+            if "dicebear.com" in v.lower():
+                return None
+            return build_public_url(v)
+        return v
 
 
 class AnalyticsDashboardResponse(BaseSchema):

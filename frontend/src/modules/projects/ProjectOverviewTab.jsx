@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
 import projectsService from '../../services/projectsService';
-import { getApiErrorMessage } from '../../services/api';
+import { getApiErrorMessage, resolveApiUrl } from '../../services/api';
 
 /** Format error message safely, ensuring timeout errors show friendly text */
 const formatErrorMessage = (err) => {
@@ -336,7 +336,7 @@ export const ProjectOverviewTab = () => {
                     <div className="flex items-center justify-between font-body-sm text-body-sm text-text-secondary pt-0.5">
                       <div className="flex items-center gap-1.5">
                         {m.owner_avatar ? (
-                          <img className="w-5 h-5 rounded-full object-cover" src={m.owner_avatar} alt={m.owner || 'Owner'} />
+                          <img className="w-5 h-5 rounded-full object-cover" src={resolveApiUrl(m.owner_avatar)} alt={m.owner || 'Owner'} />
                         ) : (
                           <span className="material-symbols-outlined text-[16px] text-text-muted">person</span>
                         )}
@@ -398,7 +398,7 @@ export const ProjectOverviewTab = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
                       {w.avatar_url ? (
-                        <img className="w-7 h-7 rounded-full object-cover" src={w.avatar_url} alt={w.name} />
+                        <img className="w-7 h-7 rounded-full object-cover" src={resolveApiUrl(w.avatar_url)} alt={w.name} />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-[11px]">
                           {w.name?.charAt(0) || 'U'}

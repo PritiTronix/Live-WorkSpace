@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, BadgeCheck, Upload, Trash2, Lock, Shield, User, Phone, MessageSquare, Briefcase, AlertCircle, RefreshCw } from 'lucide-react';
 import { settingsService } from '../../../services/settingsService';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 const STANDARD_DEPARTMENTS = [
   'Engineering',
@@ -310,7 +311,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) =>
                   <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-xs bg-white dark:bg-[#1a1b32] border border-[#E5E5EF] dark:border-[#2e2f41] shrink-0">
                     {previewUrl ? (
                       <img
-                        src={previewUrl}
+                        src={resolveApiUrl(previewUrl)}
                         alt={formData.full_name || 'Profile'}
                         className="w-full h-full object-cover"
                       />

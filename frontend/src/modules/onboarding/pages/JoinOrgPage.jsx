@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, ArrowLeft, CheckCircle2, AlertCircle, Loader2, Building, RefreshCw } from 'lucide-react';
-import { organizationService, getApiErrorMessage } from '../../../services/api';
+import { organizationService, getApiErrorMessage, resolveApiUrl } from '../../../services/api';
 
 /**
  * JoinOrgPage
@@ -254,7 +254,7 @@ export const JoinOrgPage = () => {
               <div className="flex items-center gap-3.5 min-w-0">
                 {confirmedOrg.logo_path ? (
                   <img
-                    src={confirmedOrg.logo_path}
+                    src={resolveApiUrl(confirmedOrg.logo_path)}
                     alt={confirmedOrg.name}
                     className="w-12 h-12 rounded-xl object-cover border border-border-subtle shrink-0"
                   />

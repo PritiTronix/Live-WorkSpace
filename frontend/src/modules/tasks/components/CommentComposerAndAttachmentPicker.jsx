@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { taskService } from '../services/taskService';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 /**
  * Format bytes into human-readable size
@@ -342,7 +343,7 @@ export const CommentComposerAndAttachmentPicker = ({
                 </div>
 
                 <a
-                  href={att.file_url || `/api/v1/files/${att.id}/download`}
+                  href={resolveApiUrl(att.file_url || `/api/v1/files/${att.id}/download`)}
                   target="_blank"
                   rel="noopener noreferrer"
                   download={att.filename || 'attachment'}

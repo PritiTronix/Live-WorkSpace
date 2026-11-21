@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 import {
   ArrowLeft,
   Mail,
@@ -151,7 +152,7 @@ export const MemberProfilePage = () => {
               <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-xs bg-[#eeecff] dark:bg-[#2e2f41] border border-[#E5E5EF] dark:border-[#2e2f41] flex items-center justify-center font-extrabold text-3xl text-[#6040F0]">
                 {member.avatar_url ? (
                   <img
-                    src={member.avatar_url}
+                    src={resolveApiUrl(member.avatar_url)}
                     alt={member.full_name}
                     className="w-full h-full object-cover"
                   />

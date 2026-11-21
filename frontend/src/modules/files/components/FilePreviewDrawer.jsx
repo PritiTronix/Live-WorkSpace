@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { filesService } from '../../../services/filesService';
-import { DEFAULT_USER } from '../../../services/api';
+import { DEFAULT_USER, resolveApiUrl } from '../../../services/api';
 
 export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -163,7 +163,7 @@ export const FilePreviewDrawer = ({ file, isOpen, onClose, onFileDeleted }) => {
 
           <div className="flex items-center gap-3 p-3 bg-canvas-main rounded-xl border border-border-subtle">
             <img
-              src={uploader.avatar_url || DEFAULT_USER.avatar_url}
+              src={resolveApiUrl(uploader.avatar_url || DEFAULT_USER.avatar_url)}
               alt={uploader.full_name}
               className="w-10 h-10 rounded-full object-cover"
             />

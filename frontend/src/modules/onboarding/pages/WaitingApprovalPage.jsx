@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, ArrowLeft, Loader2, Building, Radio, RefreshCw } from 'lucide-react';
-import { organizationService, authService, connectNotificationsWebSocket, getApiErrorMessage } from '../../../services/api';
+import { organizationService, authService, connectNotificationsWebSocket, getApiErrorMessage, resolveApiUrl } from '../../../services/api';
 import { useAuth } from '../../../context/AuthContext';
 
 /**
@@ -200,7 +200,7 @@ export const WaitingApprovalPage = () => {
             <div className="flex items-center gap-3">
               {activeRequest.organization_logo ? (
                 <img
-                  src={activeRequest.organization_logo}
+                  src={resolveApiUrl(activeRequest.organization_logo)}
                   alt={activeRequest.organization_name || 'Organization'}
                   className="w-12 h-12 rounded-xl object-cover border border-border-subtle shrink-0"
                 />

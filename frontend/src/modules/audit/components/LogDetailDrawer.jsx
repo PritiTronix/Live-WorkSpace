@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auditLogsService } from '../../../services/auditLogsService';
 import { Link } from 'react-router-dom';
+import { resolveApiUrl } from '../../../utils/apiUrl';
 
 export const LogDetailDrawer = ({ logId, isOpen, onClose }) => {
   const [logDetail, setLogDetail] = useState(null);
@@ -147,7 +148,7 @@ export const LogDetailDrawer = ({ logId, isOpen, onClose }) => {
                     <div className="w-8 h-8 rounded-full bg-canvas-lavender flex items-center justify-center font-bold text-primary text-xs">
                       {logDetail?.actor?.avatar_url ? (
                         <img
-                          src={logDetail.actor.avatar_url}
+                          src={resolveApiUrl(logDetail.actor.avatar_url)}
                           alt={logDetail.actor.full_name}
                           className="w-8 h-8 rounded-full object-cover"
                         />

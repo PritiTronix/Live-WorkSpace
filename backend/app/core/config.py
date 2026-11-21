@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     API_V1_PREFIX: str = "/api/v1"
+    PUBLIC_API_BASE_URL: Optional[str] = None
 
     # Security
     SECRET_KEY: str = "default_secret_key_change_in_production"
@@ -50,6 +51,14 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+
+    @field_validator("PUBLIC_API_BASE_URL", mode="before")
+    @classmethod
+    def assemble_public_api_base_url(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        cleaned = v.strip().rstrip("/")
+        return cleaned if cleaned else None
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
